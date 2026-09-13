@@ -1,26 +1,101 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --background: #050505;
+  --foreground: #f5f5f5;
+
+  --ag7-black: #050505;
+  --ag7-surface: #0d0d0d;
+  --ag7-surface-soft: #141414;
+  --ag7-white: #f5f5f5;
+  --ag7-muted: #9a9a9a;
+  --ag7-border: rgba(255, 255, 255, 0.1);
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+
+  --font-sans: var(--font-dm-sans);
+  --font-display: var(--font-syne);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+/* Base-level resets belong in Tailwind's "base" layer — otherwise,
+   as plain unlayered CSS, they'd outrank every utility class
+   (including things like font-watermark on an h1-h6) regardless of
+   specificity, since unlayered CSS always wins over layered CSS. */
+@layer base {
+  * {
+    box-sizing: border-box;
+  }
+
+  html {
+    scroll-behavior: smooth;
+    background: var(--ag7-black);
+  }
+
+  body {
+    margin: 0;
+    background: var(--ag7-black);
+    color: var(--ag7-white);
+    font-family: var(--font-dm-sans), sans-serif;
+    overflow-x: hidden;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
+    font-family: var(--font-syne), sans-serif;
+  }
+
+  button,
+  a {
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  ::selection {
+    background: rgba(255, 255, 255, 0.18);
+    color: #ffffff;
   }
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+/* CoverflowCarousel's background-card spread/rotation/scale — a
+   plain media query rather than a JS viewport check, so the mobile
+   values are correct on the very first paint (no flash of the
+   desktop spacing before a client-only effect corrects it). */
+.coverflow-3d {
+  --cf-spread-base: 58;
+  --cf-spread-step: 42;
+  --cf-rotate-extra: 6;
+  --cf-scale-step: 0.16;
+}
+
+@media (max-width: 639px) {
+  .coverflow-3d {
+    --cf-spread-base: 42;
+    --cf-spread-step: 24;
+    --cf-rotate-extra: 6;
+    --cf-scale-step: 0.16;
+  }
+}
+
+@keyframes ag7-marquee {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+@keyframes ag7-progress {
+  from {
+    transform: scaleX(0);
+  }
+  to {
+    transform: scaleX(1);
+  }
 }

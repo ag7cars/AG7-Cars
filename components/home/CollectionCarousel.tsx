@@ -1,0 +1,146 @@
+"use client";
+
+import Image from "next/image";
+import Link from "next/link";
+import StackedDeckCarousel from "./StackedDeckCarousel";
+
+export type CollectionCar = {
+  id: string;
+  slug: string;
+  brand: string;
+  name: string;
+  price: number | null;
+  currency: string;
+  status: "available" | "booked" | "sold";
+  image: string | null;
+  color: string | null;
+  colorHex: string | null;
+};
+
+const statusStyles: Record<
+  CollectionCar["status"],
+  { label: string; dot: string; badge: string }
+> = {
+  available: {
+    label: "Available",
+    dot: "bg-emerald-400",
+    badge: "border-emerald-400/40 bg-black/70 text-emerald-300",
+  },
+  booked: {
+    label: "Booked",
+    dot: "bg-amber-400",
+    badge: "border-amber-400/40 bg-black/70 text-amber-300",
+  },
+  sold: {
+    label: "Sold",
+    dot: "bg-rose-400",
+    badge: "border-rose-400/40 bg-black/70 text-rose-300",
+  },
+};
+
+function formatPrice(price: number | null, currency: string) {
+  if (price === null) return "Price on request";
+
+  try {
+    return new Intl.NumberFormat(currency === "INR" ? "en-IN" : "en-US", {
+      style: "currency",
+      currency,
+      maximumFractionDigits: 0,
+    }).format(price);
+  } catch {
+    return `${currency} ${price.toLocaleString()}`;
+  }
+}
+
+function CarCardFace({ car, isFront }: { car: CollectionCar; isFront: boolean }) {
+  const status = statusStyles[car.status];
+
+  const cardInner = (
+    <div className="relative aspect-[3/4] w-full overflow-hidden rounded-3xl border border-white/5 bg-white/[0.06] shadow-2xl">
+      {car.image ? (
+        <Image
+          src={car.image}
+          alt={`${car.brand} ${car.name}`}
+          fill
+          sizes="(min-width: 1024px) 384px, (min-width: 640px) 320px, 280px"
+          className="object-cover"
+          priority={isFront}
+        />
+      ) : (
+        <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-white/10 to-white/[0.02]">
+          <span className="text-xs uppercase tracking-[0.3em] text-white/30">
+            No Image
+          </span>
+        </div>
+      )}
+
+      <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent" />
+
+      <div
+        className={`absolute left-4 top-4 flex items-center gap-1.5 rounded-full border ${status.badge} px-3 py-1 text-[11px] font-semibold shadow-lg backdrop-blur-md`}
+      >
+        <span className={`h-1.5 w-1.5 rounded-full ${status.dot}`} />
+        {status.label}
+      </div>
+
+      <div className="absolute inset-x-0 bottom-0 p-4 sm:p-5">
+        <p className="text-[11px] uppercase tracking-[0.2em] text-white/50">
+          {car.brand}
+        </p>
+        <h3 className="mt-1 truncate font-display text-lg font-semibold text-white sm:text-xl">
+          {car.name}
+        </h3>
+        <p className="mt-1 text-sm font-medium text-white/80">
+          {formatPrice(car.price, car.currency)}
+        </p>
+      </div>
+    </div>
+  );
+
+  if (!isFront) return cardInner;
+
+  return (
+    <Link
+      href={`/cars/${car.slug}`}
+      aria-label={`View details for ${car.brand} ${car.name}`}
+      className="block h-full w-full"
+    >
+      {cardInner}
+    </Link>
+  );
+}
+
+export default function CollectionCarousel({
+  cars,
+  sectionClass,
+}: {
+  cars: CollectionCar[];
+  sectionClass: string;
+}) {
+  return (
+    <section
+      id="collection"
+      className={`scroll-mt-0 relative overflow-hidden bg-black ${sectionClass}`}
+    >
+      <div className="relative mx-auto w-full max-w-[1440px] px-5 sm:px-8 lg:px-12 xl:px-16">
+        <div className="text-center sm:text-left">
+          <p className="text-xs font-medium uppercase tracking-[0.3em] text-white/40">
+            Discover
+          </p>
+
+          <h2 className="mt-4 font-display text-4xl font-semibold text-white sm:text-5xl">
+            AG7 Collection
+          </h2>
+        </div>
+
+        <StackedDeckCarousel
+          items={cars}
+          getKey={(car) => car.id}
+          autoAdvanceMs={4000}
+          renderCard={(car, isFront) => <CarCardFace car={car} isFront={isFront} />}
+          emptyMessage="No cars have been added to the collection yet. Check back soon."
+        />
+      </div>
+    </section>
+  );
+}

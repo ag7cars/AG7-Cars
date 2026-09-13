@@ -1,0 +1,249 @@
+"use client";
+
+import { useEffect, useState } from "react";
+import Image from "next/image";
+import Link from "next/link";
+
+/* ============================================================
+   BACKGROUND IMAGE SETS
+   Add/remove filenames here — everything else (rotation,
+   crossfade, timing) is automatic. Files must exist in
+   /public/images with these exact names (case-sensitive on
+   most hosting, so keep the capitalisation exactly as below).
+   ============================================================ */
+const DESKTOP_IMAGES = [
+  "/images/Home (1).png",
+  "/images/Home (3).png",
+  "/images/Home (4).png",
+  "/images/Home (5).png",
+];
+
+const MOBILE_IMAGES = [
+  "/images/home-mobile 1.jpeg",
+  "/images/home-mobile 2.jpeg",
+  "/images/home-mobile 3.png",
+  "/images/home-mobile 4.png",
+];
+
+const ROTATE_INTERVAL_MS = 3000;
+
+function useAutoRotate(length: number, intervalMs: number) {
+  const [index, setIndex] = useState(0);
+
+  useEffect(() => {
+    if (length <= 1) return;
+
+    const timer = setInterval(() => {
+      setIndex((current) => (current + 1) % length);
+    }, intervalMs);
+
+    return () => clearInterval(timer);
+  }, [length, intervalMs]);
+
+  return index;
+}
+
+function RotatingBackground({
+  images,
+  alt,
+  objectPosition,
+}: {
+  images: string[];
+  alt: string;
+  objectPosition: string;
+}) {
+  const activeIndex = useAutoRotate(images.length, ROTATE_INTERVAL_MS);
+
+  return (
+    <>
+      {images.map((src, index) => (
+        <Image
+          key={src}
+          src={src}
+          alt={alt}
+          fill
+          priority={index === 0}
+          sizes="100vw"
+          className={`object-cover transition-opacity duration-1000 ease-in-out ${
+            index === activeIndex ? "opacity-100" : "opacity-0"
+          }`}
+          style={{ objectPosition }}
+        />
+      ))}
+    </>
+  );
+}
+
+export default function Hero() {
+  return (
+    <section className="relative min-h-screen overflow-hidden bg-black">
+      {/* =========================================================
+          DESKTOP HERO
+          ========================================================= */}
+      <div className="absolute inset-0 hidden lg:block">
+        <RotatingBackground
+          images={DESKTOP_IMAGES}
+          alt="AG7 Cars collection"
+          objectPosition="center 55%"
+        />
+        <div className="absolute inset-0 bg-gradient-to-r from-black/95 via-black/65 to-black/10" />
+        <div className="absolute inset-x-0 bottom-0 h-40 bg-gradient-to-t from-black to-transparent" />
+      </div>
+
+      <div className="relative z-10 hidden min-h-screen lg:flex">
+        <div className="mx-auto flex w-full max-w-[1440px] items-center px-5 sm:px-8 lg:px-12 xl:px-16">
+          <div className="max-w-[620px]">
+            <p className="mb-6 text-sm font-medium uppercase tracking-[0.3em] text-white/70">
+              Exclusive Deals on Brand New & Pre-Owned Supercars and Premium Luxury Cars
+            </p>
+            <h1 className="font-display text-6xl font-semibold leading-[0.94] tracking-[-0.045em] text-white xl:text-7xl 2xl:text-[5.5rem]">
+              Built on Passion,
+              <br />
+              <span className="text-white/80">Driven by Trust.</span>
+            </h1>
+            <p className="mt-7 max-w-[570px] text-base leading-8 text-white/75 xl:text-lg">
+              Discover an exclusive collection of remarkable new and exceptional pre-owned supercars
+              and luxury automobiles, curated for those who expect nothing but the extraordinary.
+            </p>
+            <div className="mt-8 flex flex-wrap gap-3">
+              <Link
+                href="/cars"
+                className="inline-flex h-13 items-center justify-center rounded-full bg-white px-7 text-sm font-semibold tracking-wide text-black transition-all duration-300 hover:-translate-y-0.5 hover:bg-white/90"
+              >
+                Explore AG7 Collection
+              </Link>
+              <Link
+                href="#contact"
+                className="inline-flex h-13 items-center justify-center rounded-full border border-white/40 bg-white/5 px-7 text-sm font-semibold tracking-wide text-white backdrop-blur-md transition-all duration-300 hover:-translate-y-0.5 hover:border-white hover:bg-white/10"
+              >
+                Enquire Now
+              </Link>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* =========================================================
+          MOBILE / TABLET HERO
+
+          The background image sits behind two text blocks (top
+          and bottom), with the car meant to stay visible in the
+          clear band between them. Two things used to break that:
+            1. The gradient was a LEFT-TO-RIGHT dark fade (copied
+               from the desktop layout, where text sits on the
+               left). On a centered mobile layout that just
+               darkens one side of the photo for no reason and
+               does nothing to separate text from the car.
+            2. The spacer between the two text blocks could
+               shrink to near 0 on short screens, pushing both
+               text blocks together right on top of the car.
+
+          Fix: a TOP-and-BOTTOM gradient only (car band in the
+          middle stays clear), and a spacer with a real minimum
+          height so the two text blocks can never collapse onto
+          the middle of the photo.
+          ========================================================= */}
+
+      <div className="relative min-h-[100dvh] lg:hidden">
+        <div className="absolute inset-0 overflow-hidden">
+          <RotatingBackground
+            images={MOBILE_IMAGES}
+            alt="AG7 Cars collection"
+            objectPosition="center 62%"
+          />
+
+          {/* Dark band at the top (behind heading) and bottom
+              (behind description/buttons) — the middle strip is
+              left clear so the car stays visible. */}
+          <div className="absolute inset-0 bg-gradient-to-b from-black/80 via-transparent to-black/85" />
+          <div className="absolute inset-x-0 bottom-0 h-48 bg-gradient-to-t from-black/85 via-black/40 to-transparent" />
+        </div>
+
+        <div
+          className="
+            relative z-10 flex min-h-[100dvh] w-full max-w-[1440px] mx-auto
+            flex-col
+            px-5 sm:px-8
+          "
+          style={{
+            paddingTop: "calc(env(safe-area-inset-top) + clamp(4rem, 12vh, 6.5rem))",
+            paddingBottom: "calc(env(safe-area-inset-bottom) + clamp(2.5rem, 8vh, 4rem))",
+          }}
+        >
+          {/* TOP CONTENT */}
+          <div className="flex justify-center text-center">
+            <div className="w-full max-w-[650px]">
+              <p
+                className="mb-3 font-medium uppercase text-white/75"
+                style={{
+                  fontSize: "clamp(0.625rem, 2.2vh, 0.875rem)",
+                  letterSpacing: "0.2em",
+                }}
+              >
+                Pre-Owned Supercars
+                <span className="mx-2 text-white/40">•</span>
+                Luxury Cars
+                <span className="mx-2 text-white/40">•</span>
+                New Cars
+              </p>
+
+              <h1
+                className="font-display font-semibold text-white"
+                style={{
+                  fontSize: "clamp(1.75rem, 7.5vh, 3.5rem)",
+                  lineHeight: 1.02,
+                  letterSpacing: "-0.03em",
+                }}
+              >
+                Drive What
+                <br />
+                <span className="text-white/85">Moves You.</span>
+              </h1>
+            </div>
+          </div>
+
+          {/* Flexible spacer — this is where the car shows through.
+              Guaranteed minimum height so the two text blocks can
+              never converge on top of it, even on short screens. */}
+          <div className="flex-1 min-h-[3.5rem]" />
+
+          {/* BOTTOM CONTENT */}
+          <div className="flex justify-center text-center">
+            <div className="w-full max-w-[520px]">
+              <p
+                className="mx-auto max-w-[520px] text-white/80"
+                style={{
+                  fontSize: "clamp(0.75rem, 2.4vh, 1rem)",
+                  lineHeight: 1.5,
+                }}
+              >
+                Discover a curated collection of exceptional
+                pre-owned supercars, luxury automobiles and
+                remarkable new cars — selected for those who
+                expect more from every drive.
+              </p>
+
+              <div
+                className="flex flex-wrap justify-center gap-3"
+                style={{ marginTop: "clamp(1rem, 3vh, 1.75rem)" }}
+              >
+                <Link
+                  href="/cars"
+                  className="inline-flex h-12 items-center justify-center rounded-full bg-white px-6 text-sm font-semibold text-black transition-all duration-300 hover:-translate-y-0.5 hover:bg-white/90"
+                >
+                  Explore AG7 Collection
+                </Link>
+                <Link
+                  href="#contact"
+                  className="inline-flex h-12 items-center justify-center rounded-full border border-white/40 bg-black/20 px-6 text-sm font-semibold text-white backdrop-blur-md transition-all duration-300 hover:-translate-y-0.5 hover:border-white hover:bg-white/10"
+                >
+                  Enquire Now
+                </Link>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
