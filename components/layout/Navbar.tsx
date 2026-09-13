@@ -143,7 +143,11 @@ export default function Navbar() {
               onClick={handleTabClick("/")}
               className="flex items-center"
             >
-              <span className="font-display text-[28px] font-[413] tracking-[0.15em] text-white">
+              {/* 28px is the target size, but flat 28px on a narrow
+                  phone runs this text into the absolutely-centered
+                  logo next to it — scale up to that size only once
+                  there's room for it. */}
+              <span className="font-display text-base font-[413] tracking-[0.15em] text-white sm:text-xl lg:text-[28px]">
                 AG7 CARS
               </span>
             </Link>
