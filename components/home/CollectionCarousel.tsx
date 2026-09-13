@@ -75,7 +75,7 @@ function CarCardFace({ car, isFront }: { car: CollectionCar; isFront: boolean })
         </div>
       )}
 
-      <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent" />
+      <div className="absolute inset-0 bg-gradient-to-t from-black/95 via-black/35 via-30% to-transparent" />
 
       <div
         className={`absolute left-4 top-4 flex items-center gap-1.5 rounded-full border ${status.badge} px-3 py-1 text-[11px] font-semibold shadow-lg backdrop-blur-md`}
@@ -88,17 +88,17 @@ function CarCardFace({ car, isFront }: { car: CollectionCar; isFront: boolean })
         <p className="text-[11px] uppercase tracking-[0.2em] text-white/50">
           {car.brand}
         </p>
-        <h3 className="mt-1 truncate font-display text-lg font-semibold text-white sm:text-xl">
+        <h3 className="mt-1 line-clamp-2 font-display text-lg font-semibold leading-snug text-white sm:text-xl">
           {car.name}
         </h3>
-        <div className="mt-1 flex items-center gap-2">
+        <div className="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-0.5">
           <p className="text-sm font-medium text-white/80">
             {formatPrice(car.price, car.currency)}
           </p>
           {car.year && (
             <>
               <span className="text-white/30">•</span>
-              <p className="text-sm text-white/60">{car.year}</p>
+              <p className="text-sm text-white/60">Reg. Year: {car.year}</p>
             </>
           )}
         </div>

@@ -1,8 +1,15 @@
 import type { Metadata } from "next";
-import { Montserrat } from "next/font/google";
+import { DM_Sans, Montserrat } from "next/font/google";
 import "./globals.css";
 
-// Single font used for everything — body text and headings alike.
+// Body copy stays on the original DM Sans; Montserrat is reserved
+// for headings and the navbar wordmark (see globals.css).
+const dmSans = DM_Sans({
+  variable: "--font-dm-sans",
+  subsets: ["latin"],
+  display: "swap",
+});
+
 const montserrat = Montserrat({
   variable: "--font-montserrat",
   subsets: ["latin"],
@@ -48,7 +55,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className={montserrat.variable}>
+    <html lang="en" className={`${dmSans.variable} ${montserrat.variable}`}>
       <body>{children}</body>
     </html>
   );

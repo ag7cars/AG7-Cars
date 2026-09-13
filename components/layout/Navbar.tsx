@@ -222,7 +222,16 @@ export default function Navbar() {
               onClick={() => setMenuOpen(true)}
               aria-label="Open navigation menu"
               aria-expanded={menuOpen}
-              className="relative z-[101] flex h-11 w-11 touch-manipulation items-center justify-center rounded-full border border-white/20 bg-transparent shadow-lg transition-transform active:scale-95 xl:hidden"
+              tabIndex={menuOpen ? -1 : undefined}
+              // Was sitting at a higher z-index than the full-screen
+              // menu's own close button (z-[100]) and never hid
+              // itself, so both the hamburger and the X were visible
+              // and clickable at once, with the hamburger winning
+              // every tap in that corner — making the menu
+              // impossible to close from there.
+              className={`relative z-[101] flex h-11 w-11 touch-manipulation items-center justify-center rounded-full border border-white/20 bg-transparent shadow-lg transition-all duration-300 active:scale-95 xl:hidden ${
+                menuOpen ? "pointer-events-none opacity-0" : "opacity-100"
+              }`}
             >
               <span className="flex flex-col gap-1">
                 <span className="h-0.5 w-4 rounded-full bg-white" />

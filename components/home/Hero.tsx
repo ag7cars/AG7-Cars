@@ -184,15 +184,18 @@ export default function Hero({
             paddingBottom: "calc(env(safe-area-inset-bottom) + clamp(2.5rem, 8vh, 4rem))",
           }}
         >
-          {/* TOP CONTENT */}
+          {/* TOP CONTENT — a solid backdrop panel behind the text
+              (not just a gradient + text-shadow) so it stays legible
+              no matter how bright the uploaded photo behind it is;
+              the gradient/shadow alone weren't reliable across every
+              photo an admin might upload. */}
           <div className="flex justify-center text-center">
-            <div className="w-full max-w-[650px]">
+            <div className="w-full max-w-[650px] rounded-3xl bg-black/45 px-5 py-4 backdrop-blur-[3px]">
               <p
                 className="mb-3 font-medium uppercase text-white/75"
                 style={{
                   fontSize: "clamp(0.625rem, 2.2vh, 0.875rem)",
                   letterSpacing: "0.2em",
-                  textShadow: "0 2px 12px rgba(0,0,0,0.85)",
                 }}
               >
                 Pre-Owned Supercars
@@ -208,7 +211,6 @@ export default function Hero({
                   fontSize: "clamp(1.75rem, 7.5vh, 3.5rem)",
                   lineHeight: 1.02,
                   letterSpacing: "-0.03em",
-                  textShadow: "0 2px 16px rgba(0,0,0,0.85)",
                 }}
               >
                 Drive What
@@ -223,15 +225,16 @@ export default function Hero({
               never converge on top of it, even on short screens. */}
           <div className="flex-1 min-h-[3.5rem]" />
 
-          {/* BOTTOM CONTENT */}
+          {/* BOTTOM CONTENT — same solid-backdrop treatment as the
+              top block, for the same reason (guaranteed legibility
+              regardless of the photo). */}
           <div className="flex justify-center text-center">
             <div className="w-full max-w-[520px]">
               <p
-                className="mx-auto max-w-[520px] text-white/80"
+                className="mx-auto max-w-[520px] rounded-2xl bg-black/45 px-4 py-3 text-white/80 backdrop-blur-[3px]"
                 style={{
                   fontSize: "clamp(0.75rem, 2.4vh, 1rem)",
                   lineHeight: 1.5,
-                  textShadow: "0 2px 10px rgba(0,0,0,0.85)",
                 }}
               >
                 Discover a curated collection of exceptional
