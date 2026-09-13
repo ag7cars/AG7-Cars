@@ -12,6 +12,7 @@ import DeliveriesGallery, {
 import AboutStats from "@/components/home/AboutStats";
 import ContactSection from "@/components/home/ContactSection";
 import Footer from "@/components/layout/Footer";
+import { WhatsAppIcon } from "@/components/layout/icons";
 import { createClient } from "@/lib/supabase/server";
 
 export default async function Home() {
@@ -168,6 +169,45 @@ export default async function Home() {
           </h2>
 
           <ContactSection />
+        </div>
+      </section>
+
+      {/* =========================================================
+          WHATSAPP COMMUNITY
+          ========================================================= */}
+      <section
+        id="whatsapp-community"
+        className="scroll-mt-0 border-t border-white/5 bg-[#0b0b0b] py-16 sm:py-20 lg:py-24"
+      >
+        <div className="mx-auto w-full max-w-[1440px] px-5 sm:px-8 lg:px-12 xl:px-16">
+          <div className="flex flex-col items-center gap-6 rounded-3xl border border-white/10 bg-white/[0.03] px-6 py-12 text-center sm:px-10 sm:py-14">
+            <span className="flex h-14 w-14 items-center justify-center rounded-full bg-[#25D366]/15 text-[#25D366]">
+              <WhatsAppIcon className="h-7 w-7" />
+            </span>
+
+            <div>
+              <p className="text-xs font-medium uppercase tracking-[0.3em] text-white/40">
+                Stay Connected
+              </p>
+              <h2 className="mt-4 font-display text-3xl font-semibold text-white sm:text-4xl">
+                Join AG7 Community
+              </h2>
+              <p className="mx-auto mt-3 max-w-md text-white/60">
+                Get first access to new arrivals, live deals, and delivery
+                moments — straight on WhatsApp.
+              </p>
+            </div>
+
+            <a
+              href="https://chat.whatsapp.com/ChH3zhtTxNJ0fzMXl6RnUX"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex h-12 items-center justify-center gap-2 rounded-full bg-[#25D366] px-7 text-sm font-semibold text-black transition hover:bg-[#25D366]/90"
+            >
+              <WhatsAppIcon className="h-4 w-4" />
+              Join on WhatsApp
+            </a>
+          </div>
         </div>
       </section>
 

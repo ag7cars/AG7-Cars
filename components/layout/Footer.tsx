@@ -10,9 +10,11 @@ const quickLinks = [
 ];
 
 const socialLinks = [
-  { name: "Instagram", href: "#" },
-  { name: "Facebook", href: "#" },
-  { name: "YouTube", href: "#" },
+  { name: "Instagram", href: "https://www.instagram.com/AG7CarsOfficial" },
+  {
+    name: "Facebook",
+    href: "https://www.facebook.com/share/1D3agitBpX/?mibextid=wwXIfr",
+  },
 ];
 
 export default function Footer() {
@@ -87,6 +89,8 @@ export default function Footer() {
                 <li key={link.name}>
                   <a
                     href={link.href}
+                    target="_blank"
+                    rel="noopener noreferrer"
                     className="text-sm text-white/60 transition hover:text-white"
                   >
                     {link.name}
