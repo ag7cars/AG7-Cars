@@ -50,29 +50,6 @@ const ALIASES: Record<string, string> = {
   vw: "volkswagen",
 };
 
-// These logo files carry no fill color of their own (or one so dark
-// it's the same as the medallion's black face), so they render
-// invisible or near-invisible there — confirmed by rendering all 30
-// on a black square and eyeballing which ones vanished. Forcing them
-// to a flat white silhouette (see needsLightTreatment below) keeps
-// them legible; brands not in this set already have their own
-// contrast (BMW's colors, Toyota's red, Volkswagen's blue) and would
-// just get bleached by the same treatment.
-const DARK_LOGOS = new Set([
-  "audi",
-  "citroen",
-  "ferrari",
-  "nissan",
-  "mclaren",
-  "rolls-royce",
-  "lexus",
-  "maserati",
-  "jaguar",
-  "jlr",
-  "land-rover",
-  "lamborghini",
-]);
-
 function slugFor(brand: string): string {
   const normalized = brand.trim().toLowerCase().replace(/[^a-z0-9]+/g, " ").trim();
   return ALIASES[normalized] ?? normalized.replace(/\s+/g, "-");
@@ -83,10 +60,4 @@ function slugFor(brand: string): string {
 export function getBrandLogoPath(brand: string): string | null {
   const file = LOGO_FILES[slugFor(brand)];
   return file ? `/brand-logos/${file}` : null;
-}
-
-/** True if this brand's logo needs to be forced to a white
-    silhouette to stay visible against a black medallion face. */
-export function needsLightTreatment(brand: string): boolean {
-  return DARK_LOGOS.has(slugFor(brand));
 }

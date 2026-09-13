@@ -71,8 +71,8 @@ export default function Footer() {
                 </a>
               </li>
               <li>
-                <a href="mailto:AG7Cars@gmail.com" className="transition hover:text-white">
-                  AG7Cars@gmail.com
+                <a href="mailto:info@ag7cars.com" className="transition hover:text-white">
+                  info@ag7cars.com
                 </a>
               </li>
               <li>Indore, Madhya Pradesh</li>

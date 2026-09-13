@@ -1,39 +1,34 @@
 "use client";
 
 import { useState } from "react";
+import { WhatsAppIcon } from "@/components/layout/icons";
 
 const contactInfo = [
   {
     label: "Call Us",
     value: "+91 72477 77724",
     href: "tel:+917247777724",
-    external: false,
-  },
-  {
-    label: "WhatsApp",
-    value: "Message us on WhatsApp",
-    href: "https://wa.me/message/YRZISWIS5KV4C1",
-    external: true,
   },
   {
     label: "Email Us",
-    value: "AG7Cars@gmail.com",
-    href: "mailto:AG7Cars@gmail.com",
-    external: false,
+    value: "info@ag7cars.com",
+    href: "mailto:info@ag7cars.com",
   },
   {
     label: "Location",
     value: "Indore, Madhya Pradesh",
     href: undefined,
-    external: false,
   },
 ];
+
+const WHATSAPP_HREF = "https://wa.me/message/YRZISWIS5KV4C1";
 
 const inputClass =
   "w-full rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white outline-none transition placeholder:text-white/25 focus:border-white/30";
 
 export default function ContactSection() {
   const [submitted, setSubmitted] = useState(false);
+  const [intent, setIntent] = useState<"buy" | "sell">("buy");
 
   function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -51,7 +46,34 @@ export default function ContactSection() {
         </p>
 
         <div className="mt-8 space-y-5">
-          {contactInfo.map((item) => (
+          <div>
+            <p className="text-xs uppercase tracking-[0.2em] text-white/40">
+              {contactInfo[0].label}
+            </p>
+            <a
+              href={contactInfo[0].href}
+              className="mt-1 block text-lg text-white transition hover:text-white/70"
+            >
+              {contactInfo[0].value}
+            </a>
+          </div>
+
+          <div>
+            <p className="text-xs uppercase tracking-[0.2em] text-white/40">
+              WhatsApp
+            </p>
+            <a
+              href={WHATSAPP_HREF}
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label="Message us on WhatsApp"
+              className="mt-1.5 flex h-9 w-9 items-center justify-center rounded-full bg-[#25D366] text-black transition hover:bg-[#25D366]/85"
+            >
+              <WhatsAppIcon className="h-5 w-5" />
+            </a>
+          </div>
+
+          {contactInfo.slice(1).map((item) => (
             <div key={item.label}>
               <p className="text-xs uppercase tracking-[0.2em] text-white/40">
                 {item.label}
@@ -59,8 +81,6 @@ export default function ContactSection() {
               {item.href ? (
                 <a
                   href={item.href}
-                  target={item.external ? "_blank" : undefined}
-                  rel={item.external ? "noopener noreferrer" : undefined}
                   className="mt-1 block text-lg text-white transition hover:text-white/70"
                 >
                   {item.value}
@@ -92,6 +112,25 @@ export default function ContactSection() {
           </div>
         ) : (
           <form onSubmit={handleSubmit} className="space-y-4" suppressHydrationWarning>
+            <div className="grid grid-cols-2 gap-3" role="radiogroup" aria-label="I want to">
+              {(["buy", "sell"] as const).map((option) => (
+                <button
+                  key={option}
+                  type="button"
+                  role="radio"
+                  aria-checked={intent === option}
+                  onClick={() => setIntent(option)}
+                  className={`h-12 rounded-xl border text-sm font-semibold uppercase tracking-wide transition ${
+                    intent === option
+                      ? "border-white bg-white text-black"
+                      : "border-white/10 bg-white/5 text-white/60 hover:border-white/30 hover:text-white"
+                  }`}
+                >
+                  {option === "buy" ? "Buy" : "Sell"}
+                </button>
+              ))}
+            </div>
+
             <div className="grid gap-4 sm:grid-cols-2">
               <input
                 type="text"
@@ -103,19 +142,28 @@ export default function ContactSection() {
               <input
                 type="tel"
                 required
-                placeholder="Phone Number"
+                placeholder="Contact Number"
                 className={inputClass}
                 suppressHydrationWarning
               />
             </div>
 
-            <input
-              type="email"
-              required
-              placeholder="Email Address"
-              className={inputClass}
-              suppressHydrationWarning
-            />
+            <div className="grid gap-4 sm:grid-cols-2">
+              <input
+                type="text"
+                required
+                placeholder="City"
+                className={inputClass}
+                suppressHydrationWarning
+              />
+              <input
+                type="email"
+                required
+                placeholder="Email"
+                className={inputClass}
+                suppressHydrationWarning
+              />
+            </div>
 
             <textarea
               required

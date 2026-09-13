@@ -100,7 +100,7 @@ export default function DeliveriesBrowser({
       {videos.length > 0 && (
         <div>
           <h2 className="text-center font-display text-2xl font-semibold text-white sm:text-left sm:text-3xl">
-            AG7 Deliveries Videos
+            Videos
           </h2>
           <div className="mt-6">
             <DeliveryGrid deliveries={videos} />
@@ -111,7 +111,7 @@ export default function DeliveriesBrowser({
       {photos.length > 0 && (
         <div>
           <h2 className="text-center font-display text-2xl font-semibold text-white sm:text-left sm:text-3xl">
-            AG7 Deliveries Photos
+            Photos
           </h2>
           <div className="mt-6">
             <DeliveryGrid deliveries={photos} />

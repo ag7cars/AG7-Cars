@@ -137,11 +137,17 @@ export default function DeliveriesGallery({
     >
       <div className="relative mx-auto w-full max-w-[1440px] px-5 sm:px-8 lg:px-12 xl:px-16">
 
-        {/* ============ VIDEOS ============ */}
         <div className="text-center sm:text-left">
           <h2 className="font-display text-4xl font-semibold text-white sm:text-5xl">
-            AG7 Deliveries Videos
+            AG7 Deliveries
           </h2>
+        </div>
+
+        {/* ============ VIDEOS ============ */}
+        <div className="mt-10 text-center sm:text-left">
+          <h3 className="font-display text-xl font-semibold text-white/80 sm:text-2xl">
+            Videos
+          </h3>
         </div>
 
         <StackedDeckCarousel
@@ -162,9 +168,9 @@ export default function DeliveriesGallery({
 
         {/* ============ PHOTOS ============ */}
         <div className="mt-16 text-center sm:mt-20 sm:text-left">
-          <h2 className="font-display text-4xl font-semibold text-white sm:text-5xl">
-            AG7 Deliveries Photos
-          </h2>
+          <h3 className="font-display text-xl font-semibold text-white/80 sm:text-2xl">
+            Photos
+          </h3>
         </div>
 
         <StackedDeckCarousel

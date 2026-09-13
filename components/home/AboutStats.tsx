@@ -89,9 +89,9 @@ function CarSilhouette() {
 
 const stats: StatProps[] = [
   { value: 2023, label: "Established" },
-  { value: 70, suffix: "+", label: "Cars Delivered" },
-  { value: 50, suffix: "+", label: "Happy Customers" },
-  { value: 15, suffix: "+", label: "Premium Brands" },
+  { value: 120, suffix: "+", label: "Cars Delivered" },
+  { value: 100, suffix: "+", label: "Happy Customers" },
+  { value: 15, suffix: "+", label: "Brands" },
 ];
 
 function Stat({ value, suffix = "", label, active }: StatProps & { active: boolean }) {

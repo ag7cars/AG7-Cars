@@ -33,7 +33,7 @@ export default async function Home() {
 
   const { data: carsData } = await supabase
     .from("cars")
-    .select("id, slug, brand, name, price, currency, status, image_urls, color, color_hex")
+    .select("id, slug, brand, name, price, currency, status, image_urls, color, color_hex, year")
     .eq("is_published", true)
     // Sold and booked cars stay off the homepage teaser carousel —
     // it's meant to showcase what's actually available right now;
@@ -53,6 +53,7 @@ export default async function Home() {
     image: car.image_urls?.[0] ?? null,
     color: car.color,
     colorHex: car.color_hex,
+    year: car.year,
   }));
 
   const { data: dealsData } = await supabase

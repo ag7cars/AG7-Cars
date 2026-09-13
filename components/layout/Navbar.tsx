@@ -143,7 +143,7 @@ export default function Navbar() {
               onClick={handleTabClick("/")}
               className="flex items-center"
             >
-              <span className="font-display text-sm font-bold tracking-[0.15em] text-white sm:text-base lg:text-lg">
+              <span className="font-display text-[28px] font-[413] tracking-[0.15em] text-white">
                 AG7 CARS
               </span>
             </Link>

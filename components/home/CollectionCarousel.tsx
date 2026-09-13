@@ -15,6 +15,7 @@ export type CollectionCar = {
   image: string | null;
   color: string | null;
   colorHex: string | null;
+  year: number | null;
 };
 
 const statusStyles: Record<
@@ -90,9 +91,17 @@ function CarCardFace({ car, isFront }: { car: CollectionCar; isFront: boolean })
         <h3 className="mt-1 truncate font-display text-lg font-semibold text-white sm:text-xl">
           {car.name}
         </h3>
-        <p className="mt-1 text-sm font-medium text-white/80">
-          {formatPrice(car.price, car.currency)}
-        </p>
+        <div className="mt-1 flex items-center gap-2">
+          <p className="text-sm font-medium text-white/80">
+            {formatPrice(car.price, car.currency)}
+          </p>
+          {car.year && (
+            <>
+              <span className="text-white/30">•</span>
+              <p className="text-sm text-white/60">{car.year}</p>
+            </>
+          )}
+        </div>
       </div>
     </div>
   );

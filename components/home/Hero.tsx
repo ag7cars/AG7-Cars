@@ -103,7 +103,7 @@ export default function Hero({
       </div>
 
       <div className="relative z-10 hidden min-h-screen lg:flex">
-        <div className="mx-auto flex w-full max-w-[1440px] items-center px-5 sm:px-8 lg:px-12 xl:px-16">
+        <div className="mx-auto flex w-full max-w-[1440px] items-center px-5 pt-16 sm:px-8 lg:px-12 xl:px-16">
           <div className="max-w-[620px]">
             <p className="mb-6 text-sm font-medium uppercase tracking-[0.3em] text-white/70">
               Exclusive Deals on Brand New & Pre-Owned Supercars and Premium Luxury Cars
@@ -192,6 +192,7 @@ export default function Hero({
                 style={{
                   fontSize: "clamp(0.625rem, 2.2vh, 0.875rem)",
                   letterSpacing: "0.2em",
+                  textShadow: "0 2px 12px rgba(0,0,0,0.85)",
                 }}
               >
                 Pre-Owned Supercars
@@ -207,6 +208,7 @@ export default function Hero({
                   fontSize: "clamp(1.75rem, 7.5vh, 3.5rem)",
                   lineHeight: 1.02,
                   letterSpacing: "-0.03em",
+                  textShadow: "0 2px 16px rgba(0,0,0,0.85)",
                 }}
               >
                 Drive What
@@ -229,6 +231,7 @@ export default function Hero({
                 style={{
                   fontSize: "clamp(0.75rem, 2.4vh, 1rem)",
                   lineHeight: 1.5,
+                  textShadow: "0 2px 10px rgba(0,0,0,0.85)",
                 }}
               >
                 Discover a curated collection of exceptional
@@ -237,19 +240,23 @@ export default function Hero({
                 expect more from every drive.
               </p>
 
+              {/* flex-nowrap + tighter padding/gap than the desktop
+                  version — at px-6/gap-3 these two buttons combined
+                  were just wide enough to wrap onto their own lines
+                  on narrow phones (320-375px). */}
               <div
-                className="flex flex-wrap justify-center gap-3"
+                className="flex flex-nowrap justify-center gap-2"
                 style={{ marginTop: "clamp(1rem, 3vh, 1.75rem)" }}
               >
                 <Link
                   href="/cars"
-                  className="inline-flex h-12 items-center justify-center rounded-full bg-white px-6 text-sm font-semibold text-black transition-all duration-300 hover:-translate-y-0.5 hover:bg-white/90"
+                  className="inline-flex h-11 items-center justify-center whitespace-nowrap rounded-full bg-white px-3.5 text-xs font-semibold text-black transition-all duration-300 hover:-translate-y-0.5 hover:bg-white/90 sm:h-12 sm:px-6 sm:text-sm"
                 >
                   Explore AG7 Collection
                 </Link>
                 <Link
                   href="#contact"
-                  className="inline-flex h-12 items-center justify-center rounded-full border border-white/40 bg-black/20 px-6 text-sm font-semibold text-white backdrop-blur-md transition-all duration-300 hover:-translate-y-0.5 hover:border-white hover:bg-white/10"
+                  className="inline-flex h-11 items-center justify-center whitespace-nowrap rounded-full border border-white/40 bg-black/20 px-3.5 text-xs font-semibold text-white backdrop-blur-md transition-all duration-300 hover:-translate-y-0.5 hover:border-white hover:bg-white/10 sm:h-12 sm:px-6 sm:text-sm"
                 >
                   Enquire Now
                 </Link>
