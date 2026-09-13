@@ -198,11 +198,7 @@ export default function Hero({
                   letterSpacing: "0.2em",
                 }}
               >
-                Pre-Owned Supercars
-                <span className="mx-2 text-white/40">•</span>
-                Luxury Cars
-                <span className="mx-2 text-white/40">•</span>
-                New Cars
+                Exclusive Deals on Brand New &amp; Pre-Owned Supercars and Premium Luxury Cars
               </p>
 
               <h1
@@ -213,9 +209,9 @@ export default function Hero({
                   letterSpacing: "-0.03em",
                 }}
               >
-                Drive What
+                Built on Passion,
                 <br />
-                <span className="text-white/85">Moves You.</span>
+                <span className="text-white/85">Driven by Trust.</span>
               </h1>
             </div>
           </div>
@@ -237,10 +233,10 @@ export default function Hero({
                   lineHeight: 1.5,
                 }}
               >
-                Discover a curated collection of exceptional
-                pre-owned supercars, luxury automobiles and
-                remarkable new cars — selected for those who
-                expect more from every drive.
+                Discover an exclusive collection of remarkable
+                new and exceptional pre-owned supercars and
+                luxury automobiles, curated for those who expect
+                nothing but the extraordinary.
               </p>
 
               {/* flex-nowrap + tighter padding/gap than the desktop
