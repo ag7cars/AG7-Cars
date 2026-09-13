@@ -18,6 +18,19 @@ import { createClient } from "@/lib/supabase/server";
 export default async function Home() {
   const supabase = await createClient();
 
+  const { data: heroImagesData } = await supabase
+    .from("hero_images")
+    .select("slot, position, image_url")
+    .order("position", { ascending: true });
+
+  const desktopImages: string[] = [];
+  const mobileImages: string[] = [];
+
+  for (const row of heroImagesData ?? []) {
+    if (row.slot === "desktop") desktopImages.push(row.image_url);
+    if (row.slot === "mobile") mobileImages.push(row.image_url);
+  }
+
   const { data: carsData } = await supabase
     .from("cars")
     .select("id, slug, brand, name, price, currency, status, image_urls, color, color_hex")
@@ -125,7 +138,7 @@ export default async function Home() {
     <main className="min-h-screen bg-black">
       <Navbar />
 
-      <Hero />
+      <Hero desktopImages={desktopImages} mobileImages={mobileImages} />
 
       {/* Collection, Live Deals, and Deliveries each render their
           own full <section> (heading + carousel + color-reactive

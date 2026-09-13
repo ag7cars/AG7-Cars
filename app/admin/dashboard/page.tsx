@@ -30,6 +30,23 @@ export default async function AdminDashboardPage() {
         <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
 
           <a
+            href="/admin/dashboard/hero"
+            className="rounded-2xl border border-white/10 bg-white/[0.04] p-6 transition hover:-translate-y-1 hover:bg-white/[0.07]"
+          >
+            <p className="text-sm text-white/40">
+              Homepage
+            </p>
+
+            <h2 className="mt-2 text-xl font-semibold">
+              Hero Photos
+            </h2>
+
+            <p className="mt-2 text-sm text-white/50">
+              Change the rotating hero background photos for desktop and mobile.
+            </p>
+          </a>
+
+          <a
             href="/admin/dashboard/cars"
             className="rounded-2xl border border-white/10 bg-white/[0.04] p-6 transition hover:-translate-y-1 hover:bg-white/[0.07]"
           >

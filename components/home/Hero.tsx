@@ -6,19 +6,18 @@ import Link from "next/link";
 
 /* ============================================================
    BACKGROUND IMAGE SETS
-   Add/remove filenames here — everything else (rotation,
-   crossfade, timing) is automatic. Files must exist in
-   /public/images with these exact names (case-sensitive on
-   most hosting, so keep the capitalisation exactly as below).
+   Desktop and mobile photos are editable from the admin panel
+   (Admin Dashboard → Hero Photos) and passed in as props — these
+   are just the fallback shown if that table has no rows yet.
    ============================================================ */
-const DESKTOP_IMAGES = [
+const FALLBACK_DESKTOP_IMAGES = [
   "/images/Home (1).png",
   "/images/Home (3).png",
   "/images/Home (4).png",
   "/images/Home (5).png",
 ];
 
-const MOBILE_IMAGES = [
+const FALLBACK_MOBILE_IMAGES = [
   "/images/home-mobile 1.jpeg",
   "/images/home-mobile 2.jpeg",
   "/images/home-mobile 3.png",
@@ -74,7 +73,18 @@ function RotatingBackground({
   );
 }
 
-export default function Hero() {
+export default function Hero({
+  desktopImages,
+  mobileImages,
+}: {
+  desktopImages?: string[];
+  mobileImages?: string[];
+}) {
+  const resolvedDesktopImages =
+    desktopImages && desktopImages.length > 0 ? desktopImages : FALLBACK_DESKTOP_IMAGES;
+  const resolvedMobileImages =
+    mobileImages && mobileImages.length > 0 ? mobileImages : FALLBACK_MOBILE_IMAGES;
+
   return (
     <section className="relative min-h-screen overflow-hidden bg-black">
       {/* =========================================================
@@ -82,7 +92,7 @@ export default function Hero() {
           ========================================================= */}
       <div className="absolute inset-0 hidden lg:block">
         <RotatingBackground
-          images={DESKTOP_IMAGES}
+          images={resolvedDesktopImages}
           alt="AG7 Cars collection"
           objectPosition="center 55%"
         />
@@ -147,7 +157,7 @@ export default function Hero() {
       <div className="relative min-h-[100dvh] lg:hidden">
         <div className="absolute inset-0 overflow-hidden">
           <RotatingBackground
-            images={MOBILE_IMAGES}
+            images={resolvedMobileImages}
             alt="AG7 Cars collection"
             objectPosition="center 62%"
           />
