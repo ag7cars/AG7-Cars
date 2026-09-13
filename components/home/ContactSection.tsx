@@ -7,16 +7,25 @@ const contactInfo = [
     label: "Call Us",
     value: "+91 72477 77724",
     href: "tel:+917247777724",
+    external: false,
+  },
+  {
+    label: "WhatsApp",
+    value: "Message us on WhatsApp",
+    href: "https://wa.me/message/YRZISWIS5KV4C1",
+    external: true,
   },
   {
     label: "Email Us",
     value: "AG7Cars@gmail.com",
     href: "mailto:AG7Cars@gmail.com",
+    external: false,
   },
   {
     label: "Location",
     value: "Indore, Madhya Pradesh",
     href: undefined,
+    external: false,
   },
 ];
 
@@ -50,6 +59,8 @@ export default function ContactSection() {
               {item.href ? (
                 <a
                   href={item.href}
+                  target={item.external ? "_blank" : undefined}
+                  rel={item.external ? "noopener noreferrer" : undefined}
                   className="mt-1 block text-lg text-white transition hover:text-white/70"
                 >
                   {item.value}
