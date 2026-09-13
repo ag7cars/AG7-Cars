@@ -11,17 +11,17 @@ import Link from "next/link";
    are just the fallback shown if that table has no rows yet.
    ============================================================ */
 const FALLBACK_DESKTOP_IMAGES = [
-  "/images/Home (1).png",
-  "/images/Home (3).png",
-  "/images/Home (4).png",
-  "/images/Home (5).png",
+  "/images/Home (1).jpg",
+  "/images/Home (3).jpg",
+  "/images/Home (4).jpg",
+  "/images/Home (5).jpg",
 ];
 
 const FALLBACK_MOBILE_IMAGES = [
-  "/images/home-mobile 1.jpeg",
-  "/images/home-mobile 2.jpeg",
-  "/images/home-mobile 3.png",
-  "/images/home-mobile 4.png",
+  "/images/home-mobile 1.jpg",
+  "/images/home-mobile 2.jpg",
+  "/images/home-mobile 3.jpg",
+  "/images/home-mobile 4.jpg",
 ];
 
 const ROTATE_INTERVAL_MS = 3000;

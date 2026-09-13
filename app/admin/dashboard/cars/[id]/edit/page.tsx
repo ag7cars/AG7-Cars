@@ -20,7 +20,7 @@ export default async function EditCarPage({
   const { data: car } = await supabase
     .from("cars")
     .select(
-      "id, brand, name, price, currency, category, status, km_driven, year, manufacturing_year, ownership, fuel, body_type, engine, description, image_urls"
+      "id, brand, name, price, currency, category, status, km_driven, registration, year, manufacturing_year, ownership, fuel, body_type, engine, description, image_urls"
     )
     .eq("id", id)
     .maybeSingle();
@@ -61,6 +61,7 @@ export default async function EditCarPage({
             category: car.category as "Pre-Owned" | "New" | "Demo",
             status: car.status as "available" | "booked" | "sold",
             km_driven: car.km_driven ?? undefined,
+            registration: car.registration ?? undefined,
             year: car.year ?? undefined,
             manufacturing_year: car.manufacturing_year ?? undefined,
             ownership: car.ownership ?? undefined,

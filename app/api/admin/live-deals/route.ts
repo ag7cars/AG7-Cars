@@ -14,7 +14,7 @@ const liveDealSchema = z.object({
 
 const imageBucket = "car-images";
 const allowedImageTypes = new Set(["image/jpeg", "image/png", "image/webp"]);
-const maxImageSize = 10 * 1024 * 1024; // 10 MB
+const maxImageSize = 50 * 1024 * 1024; // 50 MB
 const maxFiles = 10;
 
 export async function POST(request: Request) {
@@ -62,7 +62,7 @@ export async function POST(request: Request) {
     for (const file of files) {
       if (!allowedImageTypes.has(file.type) || file.size > maxImageSize) {
         return NextResponse.json(
-          { error: "Images must be JPG, PNG, or WebP files smaller than 10 MB." },
+          { error: "Images must be JPG, PNG, or WebP files smaller than 50 MB." },
           { status: 400 }
         );
       }

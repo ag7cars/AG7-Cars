@@ -16,7 +16,7 @@ const liveDealUpdateSchema = z
 
 const imageBucket = "car-images";
 const allowedImageTypes = new Set(["image/jpeg", "image/png", "image/webp"]);
-const maxImageSize = 10 * 1024 * 1024;
+const maxImageSize = 50 * 1024 * 1024;
 
 function slugify(value: string) {
   return value
@@ -72,7 +72,7 @@ export async function PATCH(
     for (const file of newFiles) {
       if (!allowedImageTypes.has(file.type) || file.size > maxImageSize) {
         return NextResponse.json(
-          { error: "Images must be JPG, PNG, or WebP files smaller than 10 MB." },
+          { error: "Images must be JPG, PNG, or WebP files smaller than 50 MB." },
           { status: 400 }
         );
       }

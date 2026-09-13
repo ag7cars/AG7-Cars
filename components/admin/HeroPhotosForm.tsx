@@ -5,7 +5,7 @@ import Image from "next/image";
 
 type Slot = "desktop" | "mobile";
 
-const allowedTypes = "image/jpeg,image/png,image/webp";
+const allowedTypes = "image/jpeg";
 
 const SLOT_LABELS: Record<Slot, string> = {
   desktop: "Desktop",

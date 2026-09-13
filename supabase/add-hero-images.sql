@@ -41,12 +41,18 @@ create policy "Admins can update hero images" on public.hero_images
 -- MOBILE_IMAGES arrays exactly, so the hero looks identical to
 -- today until someone changes a photo through the admin form.
 insert into public.hero_images (slot, position, image_url) values
-  ('desktop', 1, '/images/Home (1).png'),
-  ('desktop', 2, '/images/Home (3).png'),
-  ('desktop', 3, '/images/Home (4).png'),
-  ('desktop', 4, '/images/Home (5).png'),
-  ('mobile', 1, '/images/home-mobile 1.jpeg'),
-  ('mobile', 2, '/images/home-mobile 2.jpeg'),
-  ('mobile', 3, '/images/home-mobile 3.png'),
-  ('mobile', 4, '/images/home-mobile 4.png')
-on conflict (slot, position) do nothing;
+  ('desktop', 1, '/images/Home (1).jpg'),
+  ('desktop', 2, '/images/Home (3).jpg'),
+  ('desktop', 3, '/images/Home (4).jpg'),
+  ('desktop', 4, '/images/Home (5).jpg'),
+  ('mobile', 1, '/images/home-mobile 1.jpg'),
+  ('mobile', 2, '/images/home-mobile 2.jpg'),
+  ('mobile', 3, '/images/home-mobile 3.jpg'),
+  ('mobile', 4, '/images/home-mobile 4.jpg')
+on conflict (slot, position) do update
+  set image_url = excluded.image_url
+  -- Only overwrites a row that's still pointing at a local default
+  -- image — never touches a slot you've already replaced with a
+  -- real upload through the admin form (those point at Supabase
+  -- Storage instead, not /images/...).
+  where public.hero_images.image_url like '/images/%';

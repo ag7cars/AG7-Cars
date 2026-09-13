@@ -15,6 +15,7 @@ const carUpdateSchema = z
     category: z.enum(["Pre-Owned", "New", "Demo"]),
     status: z.enum(["available", "booked", "sold"]),
     km_driven: z.number().nonnegative().nullable(),
+    registration: z.string().trim().nullable(),
     // 0 is a deliberate sentinel for "Unregistered" rather than a
     // real year, swapped for null before the range check runs.
     year: z
@@ -36,7 +37,7 @@ const carUpdateSchema = z
 
 const imageBucket = "car-images";
 const allowedImageTypes = new Set(["image/jpeg", "image/png", "image/webp"]);
-const maxImageSize = 10 * 1024 * 1024;
+const maxImageSize = 50 * 1024 * 1024;
 
 export async function PATCH(
   request: Request,
@@ -84,7 +85,7 @@ export async function PATCH(
     for (const file of newFiles) {
       if (!allowedImageTypes.has(file.type) || file.size > maxImageSize) {
         return NextResponse.json(
-          { error: "Images must be JPG, PNG, or WebP files smaller than 10 MB." },
+          { error: "Images must be JPG, PNG, or WebP files smaller than 50 MB." },
           { status: 400 }
         );
       }

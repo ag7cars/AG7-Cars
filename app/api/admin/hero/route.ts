@@ -9,8 +9,8 @@ const paramsSchema = z.object({
 });
 
 const imageBucket = "car-images";
-const allowedImageTypes = new Set(["image/jpeg", "image/png", "image/webp"]);
-const maxImageSize = 10 * 1024 * 1024; // 10 MB
+const allowedImageTypes = new Set(["image/jpeg"]);
+const maxImageSize = 50 * 1024 * 1024; // 50 MB
 
 export async function PUT(request: Request) {
   let supabase: Awaited<ReturnType<typeof createClient>> | null = null;
@@ -40,13 +40,13 @@ export async function PUT(request: Request) {
 
     if (!allowedImageTypes.has(file.type)) {
       return NextResponse.json(
-        { error: "Photo must be a JPG, PNG, or WebP file." },
+        { error: "Photo must be a JPG/JPEG file." },
         { status: 400 }
       );
     }
 
     if (file.size > maxImageSize) {
-      return NextResponse.json({ error: "Photo is over the 10 MB limit." }, { status: 400 });
+      return NextResponse.json({ error: "Photo is over the 50 MB limit." }, { status: 400 });
     }
 
     supabase = await createClient();

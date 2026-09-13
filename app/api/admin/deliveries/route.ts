@@ -15,7 +15,7 @@ const imageBucket = "car-images";
 const allowedImageTypes = new Set(["image/jpeg", "image/png", "image/webp"]);
 const allowedVideoTypes = new Set(["video/mp4", "video/webm", "video/quicktime"]);
 
-const maxImageSize = 10 * 1024 * 1024; // 10 MB
+const maxImageSize = 50 * 1024 * 1024; // 50 MB
 const maxVideoSize = 80 * 1024 * 1024; // 80 MB
 const maxFiles = 10;
 
@@ -100,7 +100,7 @@ export async function POST(request: Request) {
         return NextResponse.json(
           {
             error: isImage
-              ? `"${file.name}" is over the 10 MB photo limit.`
+              ? `"${file.name}" is over the 50 MB photo limit.`
               : `"${file.name}" is over the 80 MB video limit.`,
           },
           { status: 400 }

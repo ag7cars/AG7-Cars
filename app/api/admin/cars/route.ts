@@ -11,6 +11,7 @@ const carSchema = z.object({
   category: z.enum(["Pre-Owned", "New", "Demo"]),
   status: z.enum(["available", "booked", "sold"]),
   km_driven: z.number().nonnegative().optional(),
+  registration: z.string().trim().optional(),
   // 0 is a deliberate sentinel for "Unregistered" rather than a real
   // year, swapped for undefined before the range check runs.
   year: z
@@ -31,7 +32,7 @@ const carSchema = z.object({
 
 const imageBucket = "car-images";
 const allowedImageTypes = new Set(["image/jpeg", "image/png", "image/webp"]);
-const maxImageSize = 10 * 1024 * 1024;
+const maxImageSize = 50 * 1024 * 1024;
 
 export async function POST(request: Request) {
   let uploadedPaths: string[] = [];
@@ -77,7 +78,7 @@ export async function POST(request: Request) {
     for (const file of files) {
       if (!allowedImageTypes.has(file.type) || file.size > maxImageSize) {
         return NextResponse.json(
-          { error: "Images must be JPG, PNG, or WebP files smaller than 10 MB." },
+          { error: "Images must be JPG, PNG, or WebP files smaller than 50 MB." },
           { status: 400 }
         );
       }

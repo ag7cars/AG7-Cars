@@ -14,6 +14,9 @@ const carSchema = z.object({
   category: z.enum(["Pre-Owned", "New", "Demo"]),
   status: z.enum(["available", "booked", "sold"]),
   km_driven: z.number().nonnegative().optional(),
+  // Free text — the RTO/state registration code, e.g. "MP 09", not
+  // the full plate number.
+  registration: z.string().trim().optional(),
   // 0 is a deliberate sentinel for "Unregistered" — the input's
   // setValueAs (below) swaps it for undefined before it ever reaches
   // this schema, so the range check only ever sees a real year.
@@ -56,6 +59,7 @@ export default function EditCarForm({ car }: { car: EditableCar }) {
       category: car.category,
       status: car.status,
       km_driven: car.km_driven,
+      registration: car.registration,
       year: car.year,
       manufacturing_year: car.manufacturing_year,
       ownership: car.ownership,
@@ -224,6 +228,14 @@ export default function EditCarForm({ car }: { car: EditableCar }) {
               {...register("km_driven", { valueAsNumber: true })}
               type="number"
               placeholder="8500"
+              className={inputClass}
+            />
+          </Field>
+
+          <Field label="Registration" error={errors.registration?.message}>
+            <input
+              {...register("registration")}
+              placeholder="MP 09"
               className={inputClass}
             />
           </Field>
