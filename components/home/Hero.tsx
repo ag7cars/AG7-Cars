@@ -88,9 +88,11 @@ export default function Hero({
   return (
     <section className="relative min-h-screen overflow-hidden bg-black">
       {/* =========================================================
-          DESKTOP HERO
+          DESKTOP HERO — the photo starts right below the (now
+          solid black) navbar instead of running full-bleed behind
+          it, matching the navbar's own height (h-24 at lg).
           ========================================================= */}
-      <div className="absolute inset-0 hidden lg:block">
+      <div className="absolute inset-x-0 bottom-0 top-24 hidden lg:block">
         <RotatingBackground
           images={resolvedDesktopImages}
           alt="AG7 Cars collection"
@@ -155,7 +157,9 @@ export default function Hero({
           ========================================================= */}
 
       <div className="relative min-h-[100dvh] lg:hidden">
-        <div className="absolute inset-0 overflow-hidden">
+        {/* Matches the navbar's own height at each breakpoint
+            (h-16 / sm:h-20) so the photo starts right below it. */}
+        <div className="absolute inset-x-0 bottom-0 top-16 overflow-hidden sm:top-20">
           <RotatingBackground
             images={resolvedMobileImages}
             alt="AG7 Cars collection"

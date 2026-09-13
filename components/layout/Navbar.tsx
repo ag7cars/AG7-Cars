@@ -120,8 +120,10 @@ export default function Navbar() {
 
   return (
     <header className="fixed inset-x-0 top-0 z-50 w-full">
-      {/* Full-width navbar background */}
-      <div className="w-full bg-black/30 backdrop-blur-xl">
+      {/* Full-width navbar background — solid black, not a
+          see-through blur, so the hero photo only ever shows
+          starting right below this bar (see Hero.tsx). */}
+      <div className="w-full bg-black">
 
         {/* Content container */}
         <div className="mx-auto w-full max-w-[1440px] px-5 sm:px-8 lg:px-12 xl:px-16">

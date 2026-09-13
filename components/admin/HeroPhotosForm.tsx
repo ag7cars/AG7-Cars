@@ -1,7 +1,9 @@
 "use client";
 
 import { useRef, useState } from "react";
-import Image from "next/image";
+import Cropper, { type Area } from "react-easy-crop";
+import "react-easy-crop/react-easy-crop.css";
+import { getCroppedImageFile } from "@/lib/cropImage";
 
 type Slot = "desktop" | "mobile";
 
@@ -11,6 +13,73 @@ const SLOT_LABELS: Record<Slot, string> = {
   desktop: "Desktop",
   mobile: "Mobile",
 };
+
+// Desktop hero photos crop to 16:9 (widescreen background); mobile
+// ones crop to 9:16 (portrait, matching a phone screen) — so every
+// photo in a slot always comes out the same shape as the others.
+const SLOT_ASPECT: Record<Slot, number> = {
+  desktop: 16 / 9,
+  mobile: 9 / 16,
+};
+
+function CropModal({
+  imageSrc,
+  aspect,
+  onCancel,
+  onConfirm,
+}: {
+  imageSrc: string;
+  aspect: number;
+  onCancel: () => void;
+  onConfirm: (pixelCrop: Area) => void;
+}) {
+  const [crop, setCrop] = useState({ x: 0, y: 0 });
+  const [zoom, setZoom] = useState(1);
+  const [croppedAreaPixels, setCroppedAreaPixels] = useState<Area | null>(null);
+
+  return (
+    <div className="fixed inset-0 z-[200] flex items-center justify-center bg-black/80 p-4">
+      <div className="w-full max-w-lg rounded-2xl border border-white/10 bg-zinc-950 p-5">
+        <p className="text-sm font-semibold text-white">
+          Crop photo ({aspect > 1 ? "16:9" : "9:16"})
+        </p>
+        <p className="mt-1 text-xs text-white/50">
+          Drag to reposition, scroll or pinch to zoom.
+        </p>
+
+        <div className="relative mt-4 h-[55vh] w-full overflow-hidden rounded-xl bg-black">
+          <Cropper
+            image={imageSrc}
+            crop={crop}
+            zoom={zoom}
+            aspect={aspect}
+            onCropChange={setCrop}
+            onZoomChange={setZoom}
+            onCropComplete={(_, areaPixels) => setCroppedAreaPixels(areaPixels)}
+          />
+        </div>
+
+        <div className="mt-4 flex items-center justify-end gap-3">
+          <button
+            type="button"
+            onClick={onCancel}
+            className="rounded-full border border-white/20 px-4 py-2 text-sm font-medium text-white/70 transition hover:border-white hover:text-white"
+          >
+            Cancel
+          </button>
+          <button
+            type="button"
+            disabled={!croppedAreaPixels}
+            onClick={() => croppedAreaPixels && onConfirm(croppedAreaPixels)}
+            className="rounded-full bg-white px-5 py-2 text-sm font-semibold text-black transition hover:bg-white/90 disabled:cursor-not-allowed disabled:opacity-40"
+          >
+            Crop & Upload
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
 
 function PhotoSlot({
   slot,
@@ -27,23 +96,42 @@ function PhotoSlot({
   const [preview, setPreview] = useState(imageUrl);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
+  const [cropSrc, setCropSrc] = useState<string | null>(null);
 
-  async function handleFile(event: React.ChangeEvent<HTMLInputElement>) {
+  function handleFile(event: React.ChangeEvent<HTMLInputElement>) {
     const file = event.target.files?.[0];
     event.target.value = "";
     if (!file) return;
 
     setError("");
-    setSaving(true);
+    setCropSrc(URL.createObjectURL(file));
+  }
 
-    const objectUrl = URL.createObjectURL(file);
-    setPreview(objectUrl);
+  function closeCrop() {
+    if (cropSrc) URL.revokeObjectURL(cropSrc);
+    setCropSrc(null);
+  }
+
+  async function handleCropConfirm(pixelCrop: Area) {
+    if (!cropSrc) return;
+
+    setSaving(true);
+    setError("");
 
     try {
+      const croppedFile = await getCroppedImageFile(
+        cropSrc,
+        pixelCrop,
+        `${slot}-${position}.jpg`
+      );
+
+      const localPreview = URL.createObjectURL(croppedFile);
+      setPreview(localPreview);
+
       const formData = new FormData();
       formData.append("slot", slot);
       formData.append("position", String(position));
-      formData.append("media", file);
+      formData.append("media", croppedFile);
 
       const response = await fetch("/api/admin/hero", {
         method: "PUT",
@@ -59,11 +147,12 @@ function PhotoSlot({
 
       setPreview(result.imageUrl);
       onReplaced(slot, position, result.imageUrl);
+      URL.revokeObjectURL(localPreview);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Something went wrong.");
       setPreview(imageUrl);
     } finally {
-      URL.revokeObjectURL(objectUrl);
+      closeCrop();
       setSaving(false);
     }
   }
@@ -103,6 +192,15 @@ function PhotoSlot({
       </div>
 
       {error && <p className="px-4 pb-3 text-xs text-red-400">{error}</p>}
+
+      {cropSrc && (
+        <CropModal
+          imageSrc={cropSrc}
+          aspect={SLOT_ASPECT[slot]}
+          onCancel={closeCrop}
+          onConfirm={handleCropConfirm}
+        />
+      )}
     </div>
   );
 }
@@ -144,8 +242,8 @@ export default function HeroPhotosForm({
 
       <p className="mt-4 text-sm text-white/50">
         {activeTab === "desktop"
-          ? "Shown as the rotating background on the desktop hero section."
-          : "Shown as the rotating background on the mobile/tablet hero section."}
+          ? "Shown as the rotating background on the desktop hero section. Photos crop to 16:9."
+          : "Shown as the rotating background on the mobile/tablet hero section. Photos crop to 9:16."}
       </p>
 
       <div className="mt-6 grid gap-5 sm:grid-cols-2">
