@@ -315,6 +315,90 @@ const statusDot: Record<BrowseCar["status"], string> = {
   sold: "bg-rose-400",
 };
 
+// Small stroke icons for the card's spec row — same visual language
+// (thin outline, rounded joins) as the full spec sheet on the car
+// detail page, just simplified down to read at this much smaller
+// size.
+type SpecFieldKey = "year" | "registration" | "ownership" | "fuel" | "km";
+
+function SpecFieldIcon({ field }: { field: SpecFieldKey }) {
+  const common = {
+    width: 11,
+    height: 11,
+    viewBox: "0 0 24 24",
+    fill: "none",
+    stroke: "currentColor",
+    strokeWidth: 1.8,
+    strokeLinecap: "round" as const,
+    strokeLinejoin: "round" as const,
+    className: "shrink-0 text-white/35",
+  };
+
+  switch (field) {
+    case "year":
+      return (
+        <svg {...common}>
+          <rect x="3" y="4.5" width="18" height="16" rx="2" />
+          <path d="M16 2.5v4M8 2.5v4M3 9.5h18" />
+        </svg>
+      );
+    case "registration":
+      return (
+        <svg {...common}>
+          <rect x="2.5" y="6" width="19" height="12" rx="2" />
+          <path d="M6.5 15h3M13 15h4.5" />
+        </svg>
+      );
+    case "ownership":
+      return (
+        <svg {...common}>
+          <circle cx="12" cy="8" r="3.5" />
+          <path d="M5 20c0-3.5 3-6 7-6s7 2.5 7 6" />
+        </svg>
+      );
+    case "fuel":
+      return (
+        <svg {...common}>
+          <path d="M5 21V6a2 2 0 0 1 2-2h5a2 2 0 0 1 2 2v15" />
+          <path d="M3 21h13" />
+          <path d="M14 9.5h1.5L18 12v5.5a1.5 1.5 0 0 1-1.5 1.5" />
+        </svg>
+      );
+    case "km":
+      return (
+        <svg {...common}>
+          <circle cx="12" cy="13" r="8" />
+          <path d="M12 13 15.2 9" />
+        </svg>
+      );
+  }
+}
+
+// One field in the spec row — icon + value, always rendered even when
+// the value is missing (shown as "—") so every card keeps the exact
+// same five slots instead of reflowing around whichever fields a
+// given car happens to have.
+function SpecField({
+  field,
+  value,
+  justify,
+}: {
+  field: SpecFieldKey;
+  value: string | null;
+  justify: "start" | "end" | "center";
+}) {
+  return (
+    <span
+      className={`inline-flex min-w-0 items-center gap-1 text-[9px] text-white/60 sm:text-[11px] ${
+        justify === "start" ? "justify-self-start" : justify === "end" ? "justify-self-end" : "justify-self-center"
+      }`}
+    >
+      <SpecFieldIcon field={field} />
+      <span className="truncate">{value ?? "—"}</span>
+    </span>
+  );
+}
+
 function CardGauge({ car, logoPath, km }: CardProps) {
   const { ref, revealed } = useTouchReveal<HTMLDivElement>();
 
@@ -404,13 +488,17 @@ function CardGauge({ car, logoPath, km }: CardProps) {
             card, regardless of how long a value is or whether it's
             missing (shown as "—" rather than collapsing that slot),
             so cards line up instead of wrapping to a different
-            number of lines depending on their data. */}
-        <div className="mt-2 grid grid-cols-2 gap-x-3 gap-y-1 text-[9px] text-white/50 sm:mt-3 sm:gap-x-4 sm:text-[11px]">
-          <span className="truncate text-left">{car.year ? `Reg: ${car.year}` : "—"}</span>
-          <span className="truncate text-right">{formatRegistration(car.registration) ?? "—"}</span>
-          <span className="truncate text-left">{car.ownership ?? "—"}</span>
-          <span className="truncate text-right">{car.fuel ?? "—"}</span>
-          <span className="col-span-2 truncate text-center">{km ?? "—"}</span>
+            number of lines depending on their data. Each field carries
+            a small icon rather than a bare label, for the same reason
+            the full spec sheet on the detail page does. */}
+        <div className="mt-2.5 grid grid-cols-2 gap-x-2 gap-y-1.5 rounded-xl border border-white/5 bg-white/[0.02] px-2.5 py-2 sm:mt-3 sm:gap-x-3 sm:gap-y-2 sm:px-3 sm:py-2.5">
+          <SpecField field="year" value={car.year ? `Reg: ${car.year}` : null} justify="start" />
+          <SpecField field="registration" value={formatRegistration(car.registration)} justify="end" />
+          <SpecField field="ownership" value={car.ownership} justify="start" />
+          <SpecField field="fuel" value={car.fuel} justify="end" />
+          <div className="col-span-2 flex justify-center border-t border-white/5 pt-1.5 sm:pt-2">
+            <SpecField field="km" value={km} justify="center" />
+          </div>
         </div>
 
         <div
