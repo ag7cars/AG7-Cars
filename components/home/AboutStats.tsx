@@ -74,60 +74,50 @@ function useCountUp(value: number, active: boolean) {
   return Math.round(value * progress);
 }
 
-// A simplified F1 silhouette — low nose cone, exposed front/rear
-// wheels, a raised cockpit halo, and a rear wing. A background
-// atmosphere element, not a literal illustration, so rough
-// proportions are fine as long as it reads as "an F1 car".
+// A classic-profile F1 silhouette (low nose, small windscreen bump
+// rather than a tall modern halo, sleek continuous body, subtle low
+// rear wing, big exposed wheels) — modeled on the shape of 90s-era
+// cars like the McLaren MP4, not any specific livery or sponsor
+// branding. A background atmosphere element, not a literal
+// illustration, so rough proportions are fine as long as it reads
+// clearly as "an F1 car".
 function F1CarSilhouette() {
   return (
-    <svg viewBox="0 0 320 100" className="h-full w-full" fill="currentColor">
-      {/* front wing */}
-      <rect x="2" y="74" width="44" height="6" rx="2" />
-      {/* nose cone */}
-      <path d="M22,74 L74,58 C82,55 90,53 90,47 L90,44 C90,41 87,39 84,39 L60,39 C50,39 41,43 34,50 L18,66 Z" />
-      {/* sidepod / body running back to the engine cover */}
-      <path d="M90,47 L152,42 C166,41 180,41 194,44 L228,51 C237,53 243,58 243,65 L243,73 L98,73 L90,58 Z" />
-      {/* cockpit + halo hoop */}
-      <path
-        d="M150,42 L150,29 C150,21 158,15 168,15 C178,15 186,21 186,29 L186,44"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="6"
-        strokeLinecap="round"
-      />
-      {/* engine cover taper to the rear wing mount */}
-      <path
-        d="M243,65 L282,58 C290,57 296,52 296,45 L296,38"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="6"
-        strokeLinecap="round"
-      />
-      {/* rear wing */}
-      <rect x="290" y="28" width="7" height="28" rx="2" />
-      <rect x="270" y="24" width="42" height="6" rx="2" />
-      {/* exposed wheels, sized larger than the body like a real F1 car */}
-      <circle cx="58" cy="76" r="20" />
-      <circle cx="258" cy="76" r="20" />
+    <svg viewBox="0 0 340 100" className="h-full w-full" fill="currentColor">
+      {/* front wing plate */}
+      <rect x="0" y="66" width="44" height="6" rx="1.5" />
+      {/* nose, low and pointed, rising back toward the cockpit */}
+      <path d="M18,66 L120,44 C128,42 132,38 132,32 L132,66 Z" />
+      {/* windscreen / cockpit bump — kept low, not a raised halo hoop */}
+      <path d="M120,44 C132,40 142,32 142,24 C142,16 150,10 160,10 C170,10 176,16 176,24 L176,44 Z" />
+      {/* body from the cockpit back through the sidepods to the engine cover */}
+      <path d="M132,66 L176,44 L248,50 C262,51 270,56 272,62 L272,66 Z" />
+      {/* low rear wing */}
+      <rect x="272" y="34" width="6" height="24" rx="1.5" />
+      <rect x="256" y="30" width="30" height="5" rx="1.5" />
+      {/* wheels, exposed and larger than the body */}
+      <circle cx="66" cy="70" r="20" />
+      <circle cx="250" cy="70" r="20" />
     </svg>
   );
 }
 
-// Tire smoke — a small cluster of blurred, staggered puffs trailing
-// the car. Two intensities: a faint wisp while it's still moving,
-// and a fuller cloud once it's parked (as if it just screeched to a
-// stop) — and it's meant to stay, not fade back out.
+// Tire smoke — a cluster of blurred, staggered puffs trailing the
+// car. Two intensities: a faint wisp while it's still moving, and a
+// fuller billowing cloud once it's parked (as if it just screeched
+// to a stop) — and it's meant to stay, not fade back out.
 function TireSmoke({ intensity }: { intensity: "none" | "light" | "full" }) {
   const opacity = intensity === "full" ? 1 : intensity === "light" ? 0.45 : 0;
 
   return (
     <div
-      className="pointer-events-none absolute -left-10 bottom-1 h-16 w-28 transition-opacity duration-700 ease-out sm:-left-12 sm:h-20 sm:w-36"
+      className="pointer-events-none absolute -left-14 bottom-0 h-20 w-36 transition-opacity duration-700 ease-out sm:-left-16 sm:h-24 sm:w-44"
       style={{ opacity }}
     >
-      <div className="absolute bottom-0 left-0 h-9 w-9 rounded-full bg-white/25 blur-xl sm:h-11 sm:w-11" />
-      <div className="absolute bottom-1 left-7 h-12 w-12 rounded-full bg-white/20 blur-xl sm:h-16 sm:w-16" />
-      <div className="absolute bottom-0 left-16 h-8 w-8 rounded-full bg-white/15 blur-lg sm:left-20 sm:h-10 sm:w-10" />
+      <div className="absolute bottom-0 left-0 h-11 w-11 rounded-full bg-white/25 blur-xl sm:h-14 sm:w-14" />
+      <div className="absolute bottom-2 left-8 h-16 w-16 rounded-full bg-white/22 blur-2xl sm:h-20 sm:w-20" />
+      <div className="absolute bottom-0 left-20 h-10 w-10 rounded-full bg-white/18 blur-xl sm:left-24 sm:h-12 sm:w-12" />
+      <div className="absolute bottom-3 left-28 h-8 w-8 rounded-full bg-white/12 blur-lg sm:left-32 sm:h-10 sm:w-10" />
     </div>
   );
 }
