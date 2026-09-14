@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import Image from "next/image";
 
 function easeOutCubic(t: number) {
   return 1 - Math.pow(1 - t, 3);
@@ -75,85 +74,106 @@ function useCountUp(value: number, active: boolean) {
   return Math.round(value * progress);
 }
 
-// The actual F1 car artwork (public/images/about-f1-car.jpg) is a
-// commissioned, original design — no real team livery, sponsor
-// branding, or car number — so it's safe to use as-is rather than
-// redrawn as an SVG. It already has motion streaks and tire smoke
-// baked in; a spinning overlay on each wheel and an extra trailing
-// smoke cluster (see TireSmoke below) layer on top of that.
-const CAR_IMAGE_SRC = "/images/about-f1-car.jpg";
-const CAR_ASPECT = 900 / 242; // matches the source file exactly — cropped tight to the car, no empty margin
+// A hand-drawn F1 silhouette in AG7's own black/white/gold palette —
+// no real team livery, sponsor branding, driver number, or helmet, so
+// there's nothing here that recreates anyone else's IP. Drawn flat
+// rather than photoreal so every shape (including each wheel) is a
+// plain SVG primitive we can position and spin exactly.
+const AG7_BLACK = "#0a0a0a";
+const AG7_WHITE = "#f5f5f5";
+const AG7_GOLD = "#e8c874";
+const AG7_TIRE = "#1c1c1c";
 
-// Percent-of-image-box positions for the two wheel centers, measured
-// against the source photo. Written as CSS custom properties so the
-// wheel overlay's own size/position math (in WheelSpinner) only has
-// to read them, not repeat these numbers.
-const REAR_WHEEL = { left: "23.1%", top: "57%" };
-const FRONT_WHEEL = { left: "81%", top: "56.2%" };
-const WHEEL_SIZE = { width: "12.3%", height: "46%" }; // circular once the box keeps CAR_ASPECT
+const REAR_WHEEL_X = 66;
+const FRONT_WHEEL_X = 250;
+const WHEEL_Y = 70;
+const WHEEL_R = 20;
 
-function WheelSpinner({ position, spinning }: { position: { left: string; top: string }; spinning: boolean }) {
+function Wheel({ cx, spinning }: { cx: number; spinning: boolean }) {
   return (
-    <div
-      className="absolute rounded-full"
+    <g
       style={{
-        left: position.left,
-        top: position.top,
-        width: WHEEL_SIZE.width,
-        height: WHEEL_SIZE.height,
-        transform: "translate(-50%, -50%)",
+        transformBox: "fill-box",
+        transformOrigin: "center",
         animation: spinning ? "ag7-wheel-spin 0.45s linear infinite" : undefined,
       }}
     >
-      <svg viewBox="0 0 100 100" className="h-full w-full">
-        <g stroke="rgba(255,255,255,0.5)" strokeWidth="7" strokeLinecap="round">
-          <line x1="50" y1="8" x2="50" y2="32" />
-          <line x1="50" y1="68" x2="50" y2="92" />
-          <line x1="8" y1="50" x2="32" y2="50" />
-          <line x1="68" y1="50" x2="92" y2="50" />
-          <line x1="21" y1="21" x2="38" y2="38" />
-          <line x1="62" y1="62" x2="79" y2="79" />
-          <line x1="79" y1="21" x2="62" y2="38" />
-          <line x1="38" y1="62" x2="21" y2="79" />
-        </g>
-      </svg>
-    </div>
+      <circle cx={cx} cy={WHEEL_Y} r={WHEEL_R} fill={AG7_TIRE} />
+      <circle cx={cx} cy={WHEEL_Y} r={WHEEL_R - 8} fill="none" stroke={AG7_GOLD} strokeWidth="2" />
+      <g stroke={AG7_GOLD} strokeWidth="2" strokeLinecap="round">
+        <line x1={cx} y1={WHEEL_Y - 10} x2={cx} y2={WHEEL_Y - 4} />
+        <line x1={cx} y1={WHEEL_Y + 4} x2={cx} y2={WHEEL_Y + 10} />
+        <line x1={cx - 10} y1={WHEEL_Y} x2={cx - 4} y2={WHEEL_Y} />
+        <line x1={cx + 4} y1={WHEEL_Y} x2={cx + 10} y2={WHEEL_Y} />
+        <line x1={cx - 8} y1={WHEEL_Y - 6} x2={cx - 4} y2={WHEEL_Y - 3} />
+        <line x1={cx + 4} y1={WHEEL_Y + 3} x2={cx + 8} y2={WHEEL_Y + 6} />
+        <line x1={cx + 8} y1={WHEEL_Y - 6} x2={cx + 4} y2={WHEEL_Y - 3} />
+        <line x1={cx - 4} y1={WHEEL_Y + 3} x2={cx - 8} y2={WHEEL_Y + 6} />
+      </g>
+      <circle cx={cx} cy={WHEEL_Y} r="3" fill={AG7_GOLD} />
+    </g>
   );
 }
 
-function F1CarPhoto({ spinning }: { spinning: boolean }) {
+function F1CarSilhouette({ spinning }: { spinning: boolean }) {
   return (
-    <div className="relative h-full" style={{ aspectRatio: CAR_ASPECT }}>
-      <Image
-        src={CAR_IMAGE_SRC}
-        alt="AG7 Cars — F1 car"
-        fill
-        className="object-contain"
-        sizes="(min-width: 640px) 320px, 240px"
+    <svg viewBox="0 0 340 100" className="h-full w-full overflow-visible">
+      {/* contact shadow, grounding the car */}
+      <ellipse cx="160" cy="93" rx="150" ry="6" fill="rgba(0,0,0,0.4)" />
+
+      {/* front wing */}
+      <rect x="0" y="66" width="44" height="6" rx="1.5" fill={AG7_GOLD} />
+
+      {/* nose, low and pointed, rising back toward the cockpit —
+          white with a gold tip accent */}
+      <path d="M18,66 L120,44 C128,42 132,38 132,32 L132,66 Z" fill={AG7_WHITE} />
+      <path d="M18,66 L58,57 L62,66 Z" fill={AG7_GOLD} />
+
+      {/* windscreen / cockpit opening */}
+      <path d="M120,44 C130,41 138,36 140,28 C142,20 148,15 156,14 L156,44 Z" fill={AG7_TIRE} />
+
+      {/* body from the cockpit back through the sidepods to the
+          engine cover — black with a gold lower stripe */}
+      <path d="M132,66 L176,44 L248,50 C262,51 270,56 272,62 L272,66 Z" fill={AG7_BLACK} />
+      <path d="M132,66 L176,53 L248,58 C258,59 264,62 266,66 Z" fill={AG7_GOLD} />
+
+      {/* halo — the protective hoop arching over the cockpit opening */}
+      <path
+        d="M140,28 C142,18 150,10 160,8 C170,10 176,17 176,26 L176,44"
+        fill="none"
+        stroke={AG7_TIRE}
+        strokeWidth="5"
+        strokeLinecap="round"
       />
-      <WheelSpinner position={REAR_WHEEL} spinning={spinning} />
-      <WheelSpinner position={FRONT_WHEEL} spinning={spinning} />
-    </div>
+
+      {/* low rear wing */}
+      <rect x="272" y="34" width="6" height="24" rx="1.5" fill={AG7_GOLD} />
+      <rect x="256" y="30" width="30" height="5" rx="1.5" fill={AG7_GOLD} />
+
+      {/* wheels, exposed and larger than the body, spokes spin while driving */}
+      <Wheel cx={REAR_WHEEL_X} spinning={spinning} />
+      <Wheel cx={FRONT_WHEEL_X} spinning={spinning} />
+    </svg>
   );
 }
 
-// Extra trailing tire smoke, layered behind the car's own baked-in
-// smoke (which sits at the rear wheel) to extend and intensify it.
-// Two intensities: a faint wisp while it's still moving, and a
-// fuller billowing cloud once it's parked (as if it just screeched
-// to a stop) — and it's meant to stay, not fade back out.
+// Tire smoke — a cluster of blurred, staggered puffs trailing the
+// rear wheel. Two intensities: a faint wisp while it's still moving,
+// and a fuller billowing cloud once it's parked (as if it just
+// screeched to a stop) — and it's meant to stay, not fade back out.
 function TireSmoke({ intensity }: { intensity: "none" | "light" | "full" }) {
-  const opacity = intensity === "full" ? 1 : intensity === "light" ? 0.45 : 0;
+  const opacity = intensity === "full" ? 1 : intensity === "light" ? 0.5 : 0;
 
   return (
     <div
-      className="pointer-events-none absolute bottom-2 left-0 h-20 w-32 -translate-x-[70%] transition-opacity duration-700 ease-out sm:h-24 sm:w-40"
+      className="pointer-events-none absolute -left-16 bottom-0 h-24 w-44 transition-opacity duration-700 ease-out sm:-left-20 sm:h-28 sm:w-52"
       style={{ opacity }}
     >
-      <div className="absolute bottom-0 left-0 h-11 w-11 rounded-full bg-white/25 blur-xl sm:h-14 sm:w-14" />
-      <div className="absolute bottom-2 left-8 h-16 w-16 rounded-full bg-white/22 blur-2xl sm:h-20 sm:w-20" />
-      <div className="absolute bottom-0 left-20 h-10 w-10 rounded-full bg-white/18 blur-xl sm:left-24 sm:h-12 sm:w-12" />
-      <div className="absolute bottom-3 left-28 h-8 w-8 rounded-full bg-white/12 blur-lg sm:left-32 sm:h-10 sm:w-10" />
+      <div className="absolute bottom-0 left-0 h-14 w-14 rounded-full bg-white/22 blur-xl sm:h-16 sm:w-16" />
+      <div className="absolute bottom-2 left-8 h-20 w-20 rounded-full bg-white/26 blur-2xl sm:h-24 sm:w-24" />
+      <div className="absolute bottom-0 left-20 h-14 w-14 rounded-full bg-white/18 blur-xl sm:left-24 sm:h-16 sm:w-16" />
+      <div className="absolute bottom-3 left-28 h-10 w-10 rounded-full bg-white/14 blur-lg sm:left-32 sm:h-12 sm:w-12" />
+      <div className="absolute bottom-1 left-36 h-8 w-8 rounded-full bg-white/10 blur-md sm:left-40 sm:h-9 sm:w-9" />
     </div>
   );
 }
@@ -209,33 +229,18 @@ export default function AboutStats() {
             percentage, which is why it's used here instead of
             translateX). It stays put once parked; only the smoke's
             intensity changes afterward, it never fades out. Wheels
-            spin while driving and stop once parked.
-
-            The parked offset is a CSS custom property, not a bare
-            px value: this box is only ~300px wide on a phone but can
-            run past 900px on desktop, and the car itself jumps width
-            at the sm: breakpoint. A single fixed px offset tuned for
-            desktop pushed the car to (or past) the box's LEFT edge on
-            mobile once "100% - offset" went negative.
-
-            No z-index here (unlike the old SVG version) — this is a
-            solid photo, not a translucent icon, so sitting above the
-            stats made "15+ / Brands" hard to read where they
-            overlapped. Left at the default stacking order instead,
-            so the stats grid (later in the DOM) paints over it and
-            stays legible; the car is still fully visible everywhere
-            else. */}
+            spin while driving and stop once parked. */}
         <div
-          className="pointer-events-none absolute top-1/2 h-[43px] -translate-y-1/2 [--f1-park-offset:172px] sm:h-[62px] sm:[--f1-park-offset:242px]"
+          className="pointer-events-none absolute top-1/2 z-10 h-16 -translate-y-1/2 sm:h-20"
           style={{
-            left: driving ? "calc(100% - var(--f1-park-offset))" : "-460px",
+            left: driving ? "calc(100% - 190px)" : "-320px",
             transitionProperty: "left",
             transitionDuration: `${DRIVE_DURATION_MS}ms`,
             transitionTimingFunction: "cubic-bezier(0.4,0,0.2,1)",
           }}
         >
-          <div className="relative h-full">
-            <F1CarPhoto spinning={driving && !revealed} />
+          <div className="relative h-full w-32 sm:w-40">
+            <F1CarSilhouette spinning={driving && !revealed} />
             <TireSmoke intensity={!driving ? "none" : revealed ? "full" : "light"} />
           </div>
         </div>
