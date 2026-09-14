@@ -137,15 +137,18 @@ export default function CollectionCarousel({
       className={`scroll-mt-0 relative overflow-hidden bg-black ${sectionClass}`}
     >
       <div className="relative mx-auto w-full max-w-[1440px] px-5 sm:px-8 lg:px-12 xl:px-16">
-        <div className="text-center sm:text-left">
+        <Link href="/cars" className="group inline-block text-center sm:text-left">
           <p className="text-xs font-medium uppercase tracking-[0.3em] text-white/40">
             Discover
           </p>
 
-          <h2 className="mt-4 font-display text-4xl font-semibold text-white sm:text-5xl">
+          <h2 className="mt-4 inline-flex items-center gap-3 font-display text-4xl font-semibold text-white transition-colors group-hover:text-white/80 sm:text-5xl">
             AG7 Collection
+            <span className="text-2xl transition-transform group-hover:translate-x-1 sm:text-3xl">
+              →
+            </span>
           </h2>
-        </div>
+        </Link>
 
         <StackedDeckCarousel
           items={cars}

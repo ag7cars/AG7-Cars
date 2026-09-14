@@ -40,7 +40,7 @@ export default async function Home() {
     // the full Collection page still lists every status.
     .eq("status", "available")
     .order("created_at", { ascending: false })
-    .limit(15);
+    .limit(20);
 
   const cars: CollectionCar[] = (carsData ?? []).map((car) => ({
     id: car.id,
@@ -61,7 +61,7 @@ export default async function Home() {
     .select("id, brand, name, original_price, deal_price, currency, image_urls, color, color_hex")
     .eq("is_published", true)
     .order("created_at", { ascending: false })
-    .limit(15);
+    .limit(20);
 
   const deals: LiveDeal[] = (dealsData ?? []).map((deal) => ({
     id: deal.id,
@@ -84,7 +84,7 @@ export default async function Home() {
     .eq("media_type", "video")
     .order("display_order", { ascending: true })
     .order("created_at", { ascending: false })
-    .limit(15);
+    .limit(20);
 
   const { data: deliveryPhotosData } = await supabase
     .from("deliveries")
@@ -93,7 +93,7 @@ export default async function Home() {
     .eq("media_type", "image")
     .order("display_order", { ascending: true })
     .order("created_at", { ascending: false })
-    .limit(15);
+    .limit(20);
 
   const mapDelivery = (delivery: {
     id: string;
