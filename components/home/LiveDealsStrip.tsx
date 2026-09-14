@@ -56,12 +56,8 @@ function DealCardContent({ deal, isFront }: { deal: LiveDeal; isFront: boolean }
 
       <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/25 to-transparent" />
 
-      <div className="absolute left-2 top-2 flex items-center gap-1 rounded-full border border-red-400/40 bg-black/70 px-1.5 py-0.5 text-[8px] font-bold uppercase tracking-wider text-red-300 backdrop-blur-md sm:left-3 sm:top-3 sm:px-2.5 sm:py-1 sm:text-[10px]">
-        <span className="relative flex h-1.5 w-1.5">
-          <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-red-400 opacity-75" />
-          <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-red-500" />
-        </span>
-        Live
+      <div className="absolute left-2 top-2 max-w-[40%] rounded-full border border-white/20 bg-black/70 px-2 py-0.5 text-[8px] font-bold uppercase tracking-wider text-white backdrop-blur-md sm:left-3 sm:top-3 sm:px-2.5 sm:py-1 sm:text-[10px]">
+        {deal.category}
       </div>
 
       <div className="absolute right-2 top-2 max-w-[55%] rounded-full bg-red-500 px-1.5 py-0.5 text-[8px] font-bold text-white sm:right-3 sm:top-3 sm:px-2.5 sm:py-1 sm:text-[10px]">
@@ -70,7 +66,7 @@ function DealCardContent({ deal, isFront }: { deal: LiveDeal; isFront: boolean }
 
       <div className="absolute inset-x-0 bottom-0 p-2.5 sm:p-4 lg:p-5">
         <p className="truncate text-[9px] uppercase tracking-[0.15em] text-white/50 sm:text-[11px] sm:tracking-[0.2em]">
-          {deal.brand} · {deal.category}
+          {deal.brand}
         </p>
         <h3 className="mt-0.5 truncate font-display text-sm font-semibold text-white sm:mt-1 sm:text-lg lg:text-xl">
           {deal.name}

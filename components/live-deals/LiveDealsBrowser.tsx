@@ -63,13 +63,9 @@ function DealCard({ deal }: { deal: BrowseDeal }) {
 
         <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-black/10" />
 
-        <div className="absolute left-2 top-2 flex items-center gap-1.5 rounded-full bg-black/70 px-2 py-1 backdrop-blur-md sm:left-3 sm:top-3 sm:px-2.5">
-          <span className="relative flex h-1.5 w-1.5">
-            <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-red-400 opacity-75" />
-            <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-red-500" />
-          </span>
-          <span className="text-[9px] font-bold uppercase tracking-wider text-red-300 sm:text-[10px]">
-            Live
+        <div className="absolute left-2 top-2 max-w-[45%] rounded-full border border-white/20 bg-black/70 px-2 py-1 backdrop-blur-md sm:left-3 sm:top-3 sm:px-2.5">
+          <span className="truncate text-[9px] font-bold uppercase tracking-wider text-white sm:text-[10px]">
+            {deal.category}
           </span>
         </div>
 
@@ -92,7 +88,7 @@ function DealCard({ deal }: { deal: BrowseDeal }) {
           text on a busy photo was hard to read at a glance. */}
       <div className="px-3 pt-3 sm:px-4 sm:pt-4">
         <p className="text-[9px] uppercase tracking-[0.25em] text-white/50 sm:text-[10px]">
-          {deal.brand} · {deal.category}
+          {deal.brand}
         </p>
         <h3 className="line-clamp-2 mt-0.5 font-display text-sm font-bold leading-snug text-white sm:text-lg">
           {deal.name}
