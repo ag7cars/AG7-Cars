@@ -74,13 +74,12 @@ function useCountUp(value: number, active: boolean) {
   return Math.round(value * progress);
 }
 
-// A classic-profile F1 silhouette (low nose, small windscreen bump
-// rather than a tall modern halo, sleek continuous body, subtle low
-// rear wing, big exposed wheels) — modeled on the shape of 90s-era
-// cars like the McLaren MP4, not any specific livery or sponsor
-// branding. A background atmosphere element, not a literal
-// illustration, so rough proportions are fine as long as it reads
-// clearly as "an F1 car".
+// A modern-profile F1 silhouette (low nose, cockpit halo hoop,
+// sleek continuous body, subtle rear wing, big exposed wheels) — a
+// generic shape, not any specific team's livery, colors, sponsor
+// branding, or car number. A background atmosphere element, not a
+// literal illustration, so rough proportions are fine as long as it
+// reads clearly as "an F1 car".
 function F1CarSilhouette() {
   return (
     <svg viewBox="0 0 340 100" className="h-full w-full" fill="currentColor">
@@ -88,10 +87,19 @@ function F1CarSilhouette() {
       <rect x="0" y="66" width="44" height="6" rx="1.5" />
       {/* nose, low and pointed, rising back toward the cockpit */}
       <path d="M18,66 L120,44 C128,42 132,38 132,32 L132,66 Z" />
-      {/* windscreen / cockpit bump — kept low, not a raised halo hoop */}
-      <path d="M120,44 C132,40 142,32 142,24 C142,16 150,10 160,10 C170,10 176,16 176,24 L176,44 Z" />
+      {/* windscreen / cockpit opening */}
+      <path d="M120,44 C130,41 138,36 140,28 C142,20 148,15 156,14 L156,44 Z" />
       {/* body from the cockpit back through the sidepods to the engine cover */}
       <path d="M132,66 L176,44 L248,50 C262,51 270,56 272,62 L272,66 Z" />
+      {/* halo — the protective hoop arching over the cockpit opening,
+          the clearest "modern F1" tell */}
+      <path
+        d="M140,28 C142,18 150,10 160,8 C170,10 176,17 176,26 L176,44"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="5"
+        strokeLinecap="round"
+      />
       {/* low rear wing */}
       <rect x="272" y="34" width="6" height="24" rx="1.5" />
       <rect x="256" y="30" width="30" height="5" rx="1.5" />
