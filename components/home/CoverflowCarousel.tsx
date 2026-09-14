@@ -125,8 +125,18 @@ export default function CoverflowCarousel<T>({
           const magnitude = Math.abs(signedOffset);
           const side = signedOffset === 0 ? 0 : signedOffset > 0 ? 1 : -1;
 
-          const opacity = magnitude === 0 ? 1 : 0.75 - (magnitude - 1) * 0.3;
-          const blurPx = blurSideCards && magnitude > 0 ? magnitude * 2.5 : 0;
+          // Spread/rotation/scale/opacity all read from a magnitude
+          // capped at 4 rather than the real (possibly much larger,
+          // with `range` raised to show a whole 20-item list) one —
+          // past that they'd keep growing forever and run off-screen,
+          // invert past zero scale, or go negative on opacity. Cards
+          // beyond the cap end up visually stacked at the same
+          // outermost spot instead, like the rest of a fanned deck
+          // peeking from behind the closest few; zIndex still uses
+          // the real magnitude so nearer cards stay on top.
+          const visualMagnitude = Math.min(magnitude, 4);
+          const opacity = magnitude === 0 ? 1 : Math.max(0.75 - (visualMagnitude - 1) * 0.2, 0.3);
+          const blurPx = blurSideCards && magnitude > 0 ? visualMagnitude * 2.5 : 0;
           const zIndex = 100 - magnitude;
 
           // The spread/rotation/scale for background cards are built
@@ -140,8 +150,8 @@ export default function CoverflowCarousel<T>({
             magnitude === 0
               ? "translateX(0%) rotateY(0deg) scale(1)"
               : `translateX(calc(${side} * (var(--cf-spread-base) * 1% + ${
-                  magnitude - 1
-                } * var(--cf-spread-step) * 1%))) rotateY(calc(${-side} * (28deg + ${magnitude} * var(--cf-rotate-extra) * 1deg))) scale(calc(1 - ${magnitude} * var(--cf-scale-step)))`;
+                  visualMagnitude - 1
+                } * var(--cf-spread-step) * 1%))) rotateY(calc(${-side} * (28deg + ${visualMagnitude} * var(--cf-rotate-extra) * 1deg))) scale(calc(1 - ${visualMagnitude} * var(--cf-scale-step)))`;
 
           const card = renderCard(item, isFront);
 

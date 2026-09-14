@@ -240,6 +240,15 @@ export default function EditCarForm({ car }: { car: EditableCar }) {
             />
           </Field>
 
+          <Field label="Manufacturing Year" error={errors.manufacturing_year?.message}>
+            <input
+              {...register("manufacturing_year", { valueAsNumber: true })}
+              type="number"
+              placeholder="2022"
+              className={inputClass}
+            />
+          </Field>
+
           <Field label="Registration Year" error={errors.year?.message}>
             <input
               {...register("year", {
@@ -254,15 +263,6 @@ export default function EditCarForm({ car }: { car: EditableCar }) {
               })}
               type="number"
               placeholder="2023, or 0 for Unregistered"
-              className={inputClass}
-            />
-          </Field>
-
-          <Field label="Manufacturing Year" error={errors.manufacturing_year?.message}>
-            <input
-              {...register("manufacturing_year", { valueAsNumber: true })}
-              type="number"
-              placeholder="2022"
               className={inputClass}
             />
           </Field>

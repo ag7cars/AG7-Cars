@@ -2,7 +2,11 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 
-const VISIBLE_DEPTH = 3;
+// High enough that every item in a full 20-card list stays mounted
+// and fanned out (rather than only the front few) — the fan/scale
+// math below is capped independently, so raising this no longer
+// pushes deep cards off-screen or into a negative scale.
+const VISIBLE_DEPTH = 20;
 
 export type StackedDeckCarouselProps<T> = {
   items: T[];
@@ -126,14 +130,23 @@ export default function StackedDeckCarousel<T>({
           const layoutDepth = Math.min(depth, VISIBLE_DEPTH);
 
           // Front card centered; depth 1 fans right, depth 2 fans
-          // left — a clearly visible peek on both sides.
+          // left, alternating — every card gets a slot instead of
+          // just the first couple. The offset/rotation/scale all
+          // taper off with Math.min/Math.max caps instead of growing
+          // linearly forever, so a 20-card fan converges into a
+          // tight, mostly-overlapped stack at each edge rather than
+          // running off-screen or inverting past zero scale.
           const side = layoutDepth === 0 ? 0 : layoutDepth % 2 === 1 ? 1 : -1;
-          const fanXPercent = layoutDepth === 0 ? 0 : side * (18 + layoutDepth * 8);
-          const rotateDeg = layoutDepth === 0 ? 0 : side * (5 + layoutDepth * 2);
-          const translateY = layoutDepth === 0 ? 0 : 8 + layoutDepth * 4;
-          const scale = 1 - layoutDepth * 0.08;
-          const opacity = hidden ? 0 : layoutDepth === 0 ? 1 : 0.9 - layoutDepth * 0.2;
-          const zIndex = hidden ? 0 : VISIBLE_DEPTH - layoutDepth;
+          const fanXPercent = layoutDepth === 0 ? 0 : side * Math.min(18 + layoutDepth * 8, 60);
+          const rotateDeg = layoutDepth === 0 ? 0 : side * Math.min(5 + layoutDepth * 2, 22);
+          const translateY = layoutDepth === 0 ? 0 : Math.min(8 + layoutDepth * 4, 36);
+          const scale = Math.max(1 - layoutDepth * 0.08, 0.55);
+          const opacity = hidden
+            ? 0
+            : layoutDepth === 0
+              ? 1
+              : Math.max(0.9 - layoutDepth * 0.12, 0.35);
+          const zIndex = hidden ? 0 : count - layoutDepth;
 
           const card = renderCard(item, isFront, side);
 
