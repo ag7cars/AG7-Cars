@@ -143,50 +143,42 @@ export default function DeliveriesGallery({
           </h2>
         </div>
 
-        {/* ============ VIDEOS ============ */}
-        <div className="mt-10 text-center sm:text-left">
-          <h3 className="font-display text-xl font-semibold text-white/80 sm:text-2xl">
-            Videos
-          </h3>
+        {/* Videos first, photos below — no "Videos"/"Photos"
+            sub-headings, just the two carousels stacked in order. */}
+        <div className="mt-8">
+          <StackedDeckCarousel
+            items={videos}
+            getKey={(delivery) => delivery.id}
+            autoAdvanceMs={5000}
+            paused={videoPlaying}
+            renderCard={(delivery, isFront, side) => (
+              <DeliveryCardFace
+                delivery={delivery}
+                isFront={isFront}
+                side={side}
+                onVideoPlayingChange={setVideoPlaying}
+              />
+            )}
+            emptyMessage="No delivery videos have been posted yet. Check back soon."
+          />
         </div>
 
-        <StackedDeckCarousel
-          items={videos}
-          getKey={(delivery) => delivery.id}
-          autoAdvanceMs={5000}
-          paused={videoPlaying}
-          renderCard={(delivery, isFront, side) => (
-            <DeliveryCardFace
-              delivery={delivery}
-              isFront={isFront}
-              side={side}
-              onVideoPlayingChange={setVideoPlaying}
-            />
-          )}
-          emptyMessage="No delivery videos have been posted yet. Check back soon."
-        />
-
-        {/* ============ PHOTOS ============ */}
-        <div className="mt-16 text-center sm:mt-20 sm:text-left">
-          <h3 className="font-display text-xl font-semibold text-white/80 sm:text-2xl">
-            Photos
-          </h3>
+        <div className="mt-16 sm:mt-20">
+          <StackedDeckCarousel
+            items={photos}
+            getKey={(delivery) => delivery.id}
+            autoAdvanceMs={5000}
+            renderCard={(delivery, isFront, side) => (
+              <DeliveryCardFace
+                delivery={delivery}
+                isFront={isFront}
+                side={side}
+                onVideoPlayingChange={noop}
+              />
+            )}
+            emptyMessage="No delivery photos have been posted yet. Check back soon."
+          />
         </div>
-
-        <StackedDeckCarousel
-          items={photos}
-          getKey={(delivery) => delivery.id}
-          autoAdvanceMs={5000}
-          renderCard={(delivery, isFront, side) => (
-            <DeliveryCardFace
-              delivery={delivery}
-              isFront={isFront}
-              side={side}
-              onVideoPlayingChange={noop}
-            />
-          )}
-          emptyMessage="No delivery photos have been posted yet. Check back soon."
-        />
       </div>
     </section>
   );

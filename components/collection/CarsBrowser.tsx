@@ -3,7 +3,7 @@
 import { useMemo, useRef, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { getBrandLogoPath } from "@/lib/brandLogos";
+import { getBrandLogoPath, needsLightTreatment } from "@/lib/brandLogos";
 import { useTouchReveal } from "@/lib/useTouchReveal";
 
 export type BrowseCar = {
@@ -361,7 +361,7 @@ function CardGauge({ car, logoPath, km }: CardProps) {
                 alt={car.brand}
                 width={140}
                 height={64}
-                className="relative h-6 w-auto max-w-[38px] object-contain drop-shadow-[0_1px_2px_rgba(0,0,0,0.4)] brightness-0 invert sm:h-7 sm:max-w-[44px]"
+                className={`relative h-6 w-auto max-w-[38px] object-contain drop-shadow-[0_1px_2px_rgba(0,0,0,0.4)] sm:h-7 sm:max-w-[44px] ${needsLightTreatment(car.brand) ? "brightness-0 invert" : ""}`}
               />
             ) : (
               <span className="relative text-[11px] font-bold uppercase text-white sm:text-xs">

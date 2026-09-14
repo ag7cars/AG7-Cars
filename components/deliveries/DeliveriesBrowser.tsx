@@ -95,29 +95,12 @@ export default function DeliveriesBrowser({
   const videos = deliveries.filter((delivery) => delivery.mediaType === "video");
   const photos = deliveries.filter((delivery) => delivery.mediaType === "image");
 
+  // Videos first, photos below — no "Videos"/"Photos" sub-headings,
+  // the page's own "AG7 Deliveries" heading above covers both.
   return (
     <div className="space-y-14">
-      {videos.length > 0 && (
-        <div>
-          <h2 className="text-center font-display text-2xl font-semibold text-white sm:text-left sm:text-3xl">
-            Videos
-          </h2>
-          <div className="mt-6">
-            <DeliveryGrid deliveries={videos} />
-          </div>
-        </div>
-      )}
-
-      {photos.length > 0 && (
-        <div>
-          <h2 className="text-center font-display text-2xl font-semibold text-white sm:text-left sm:text-3xl">
-            Photos
-          </h2>
-          <div className="mt-6">
-            <DeliveryGrid deliveries={photos} />
-          </div>
-        </div>
-      )}
+      {videos.length > 0 && <DeliveryGrid deliveries={videos} />}
+      {photos.length > 0 && <DeliveryGrid deliveries={photos} />}
     </div>
   );
 }

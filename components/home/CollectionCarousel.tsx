@@ -3,7 +3,6 @@
 import Image from "next/image";
 import Link from "next/link";
 import StackedDeckCarousel from "./StackedDeckCarousel";
-import { getBrandLogoPath } from "@/lib/brandLogos";
 
 export type CollectionCar = {
   id: string;
@@ -56,7 +55,6 @@ function formatPrice(price: number | null, currency: string) {
 
 function CarCardFace({ car, isFront }: { car: CollectionCar; isFront: boolean }) {
   const status = statusStyles[car.status];
-  const logoPath = getBrandLogoPath(car.brand);
 
   const cardInner = (
     <div className="relative aspect-[3/4] w-full overflow-hidden rounded-3xl border border-white/5 bg-white/[0.06] shadow-2xl">
@@ -84,48 +82,31 @@ function CarCardFace({ car, isFront }: { car: CollectionCar; isFront: boolean })
       <div className="absolute inset-x-0 bottom-0 h-1/2 bg-gradient-to-t from-black/95 via-black/40 via-40% to-transparent" />
 
       <div
-        className={`absolute left-4 top-4 flex items-center gap-1.5 rounded-full border ${status.badge} px-3 py-1 text-[11px] font-semibold shadow-lg backdrop-blur-md`}
+        className={`absolute left-3 top-3 flex items-center gap-1 rounded-full border ${status.badge} px-2 py-0.5 text-[10px] font-semibold shadow-lg backdrop-blur-md`}
       >
         <span className={`h-1.5 w-1.5 rounded-full ${status.dot}`} />
         {status.label}
       </div>
 
       {car.year && (
-        <div className="absolute right-4 top-4 rounded-full border border-white/20 bg-black/70 px-3 py-1 text-[11px] font-medium text-white/80 shadow-lg backdrop-blur-md">
-          Reg. Year: {car.year}
+        <div className="absolute right-3 top-3 rounded-full border border-white/20 bg-black/70 px-2 py-0.5 text-[10px] font-medium text-white/80 shadow-lg backdrop-blur-md">
+          Reg: {car.year}
         </div>
       )}
 
-      {/* Brand shown as its own logo badge (black face, white mark —
-          same treatment as the Collection page's cards) instead of
-          small uppercase text, which line up with the model name +
-          price in one compact row so the text block covers less of
+      {/* Text only (no logo) — brand, name, and price all sized down
+          a step from the first pass so this block covers less of
           the photo. */}
-      <div className="absolute inset-x-0 bottom-0 flex items-center gap-3 p-4 sm:p-5">
-        <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-black shadow-lg ring-1 ring-white/10 sm:h-11 sm:w-11">
-          {logoPath ? (
-            <Image
-              src={logoPath}
-              alt={car.brand}
-              width={80}
-              height={40}
-              className="h-5 w-auto max-w-[26px] object-contain brightness-0 invert sm:h-5.5"
-            />
-          ) : (
-            <span className="text-[10px] font-bold uppercase text-white">
-              {car.brand.slice(0, 3)}
-            </span>
-          )}
-        </span>
-
-        <div className="min-w-0">
-          <h3 className="line-clamp-2 font-display text-base font-semibold leading-snug text-white sm:text-lg">
-            {car.name}
-          </h3>
-          <p className="mt-0.5 text-sm font-medium text-white/80">
-            {formatPrice(car.price, car.currency)}
-          </p>
-        </div>
+      <div className="absolute inset-x-0 bottom-0 p-3 sm:p-4">
+        <p className="text-[10px] uppercase tracking-[0.15em] text-white/50">
+          {car.brand}
+        </p>
+        <h3 className="line-clamp-2 font-display text-sm font-semibold leading-snug text-white sm:text-base">
+          {car.name}
+        </h3>
+        <p className="mt-0.5 text-xs font-medium text-white/80">
+          {formatPrice(car.price, car.currency)}
+        </p>
       </div>
     </div>
   );

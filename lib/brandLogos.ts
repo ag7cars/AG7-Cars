@@ -50,6 +50,32 @@ const ALIASES: Record<string, string> = {
   vw: "volkswagen",
 };
 
+// These logo files render as photorealistic badges (chrome/gradient
+// shading, e.g. BMW's roundel) or are otherwise too dark to read on
+// the medallion's black face. Forcing brightness-0+invert on a flat
+// silhouette logo (Ferrari's prancing horse, Audi's rings) makes it
+// a clean white mark; doing the same to a gradient-shaded badge like
+// BMW's crushes every internal color boundary to solid black and
+// then solid white, erasing the whole design — confirmed by
+// rendering all 30 on a black square and eyeballing which ones
+// vanished or turned into a blank shape. Brands not in this set keep
+// their own natural colors (BMW's colors, Toyota's red, Volkswagen's
+// blue), which already read fine against black.
+const DARK_LOGOS = new Set([
+  "audi",
+  "citroen",
+  "ferrari",
+  "nissan",
+  "mclaren",
+  "rolls-royce",
+  "lexus",
+  "maserati",
+  "jaguar",
+  "jlr",
+  "land-rover",
+  "lamborghini",
+]);
+
 function slugFor(brand: string): string {
   const normalized = brand.trim().toLowerCase().replace(/[^a-z0-9]+/g, " ").trim();
   return ALIASES[normalized] ?? normalized.replace(/\s+/g, "-");
@@ -60,4 +86,12 @@ function slugFor(brand: string): string {
 export function getBrandLogoPath(brand: string): string | null {
   const file = LOGO_FILES[slugFor(brand)];
   return file ? `/brand-logos/${file}` : null;
+}
+
+/** True if this brand's logo needs to be forced to a white
+    silhouette to stay visible/legible against a black medallion
+    face — see DARK_LOGOS above for why this isn't just "all of
+    them". */
+export function needsLightTreatment(brand: string): boolean {
+  return DARK_LOGOS.has(slugFor(brand));
 }
