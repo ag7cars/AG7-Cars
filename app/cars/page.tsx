@@ -9,7 +9,7 @@ export default async function CarsPage() {
   const { data: carsData } = await supabase
     .from("cars")
     .select(
-      "id, slug, brand, name, price, currency, status, image_urls, year, manufacturing_year, ownership, fuel, km_driven, body_type, category"
+      "id, slug, brand, name, price, currency, status, image_urls, year, manufacturing_year, registration, ownership, fuel, km_driven, body_type, category"
     )
     .eq("is_published", true)
     .order("created_at", { ascending: false });
@@ -25,6 +25,7 @@ export default async function CarsPage() {
     image: car.image_urls?.[0] ?? null,
     year: car.year,
     manufacturingYear: car.manufacturing_year,
+    registration: car.registration,
     ownership: car.ownership,
     fuel: car.fuel,
     kmDriven: car.km_driven,

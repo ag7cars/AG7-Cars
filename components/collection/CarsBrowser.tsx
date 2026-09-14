@@ -17,6 +17,7 @@ export type BrowseCar = {
   image: string | null;
   year: number | null;
   manufacturingYear: number | null;
+  registration: string | null;
   ownership: string | null;
   fuel: string | null;
   kmDriven: number | null;
@@ -379,7 +380,10 @@ function CardGauge({ car, logoPath, km }: CardProps) {
         }`}
       >
         <div className="text-center">
-          <h3 className="line-clamp-2 font-display text-sm font-bold leading-snug text-white sm:text-lg">
+          <p className="text-[10px] font-semibold uppercase tracking-[0.15em] text-white/50 sm:text-[11px]">
+            {car.brand}
+          </p>
+          <h3 className="line-clamp-2 mt-0.5 font-display text-sm font-bold leading-snug text-white sm:text-lg">
             {car.name}
           </h3>
         </div>
@@ -387,6 +391,7 @@ function CardGauge({ car, logoPath, km }: CardProps) {
         <div className="mt-1.5 flex flex-wrap items-center justify-center gap-x-2 gap-y-1 text-[9px] text-white/50 sm:mt-2 sm:text-[11px]">
           {[
             car.year ? `Reg: ${car.year}` : null,
+            car.registration,
             car.ownership,
             car.fuel,
             km,

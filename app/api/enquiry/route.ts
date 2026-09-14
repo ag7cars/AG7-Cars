@@ -87,12 +87,31 @@ export async function POST(request: Request) {
       </div>
     `;
 
+    // A plain-text alternative alongside the HTML — spam filters treat
+    // HTML-only mail (especially from a brand-new sending domain) as
+    // a meaningful negative signal, and this costs nothing to add.
+    const text = [
+      `New ${intentLabel} Enquiry`,
+      listing ? `Regarding: ${listing.label}\n${listing.url}` : null,
+      "",
+      `Name: ${name}`,
+      `Phone: ${phone}`,
+      `Email: ${email}`,
+      `City: ${city}`,
+      "",
+      "Message:",
+      message,
+    ]
+      .filter((line) => line !== null)
+      .join("\n");
+
     const { error } = await resendClient().emails.send({
       from: FROM_EMAIL,
       to: TO_EMAIL,
       replyTo: email,
       subject,
       html,
+      text,
     });
 
     if (error) {

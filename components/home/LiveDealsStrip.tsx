@@ -29,9 +29,7 @@ function formatPrice(price: number, currency: string) {
 }
 
 function DealCardContent({ deal, isFront }: { deal: LiveDeal; isFront: boolean }) {
-  const discount = Math.round(
-    ((deal.originalPrice - deal.dealPrice) / deal.originalPrice) * 100
-  );
+  const savings = deal.originalPrice - deal.dealPrice;
 
   return (
     <div
@@ -65,8 +63,8 @@ function DealCardContent({ deal, isFront }: { deal: LiveDeal; isFront: boolean }
         Live
       </div>
 
-      <div className="absolute right-2 top-2 rounded-full bg-white px-1.5 py-0.5 text-[8px] font-bold text-black sm:right-3 sm:top-3 sm:px-2.5 sm:py-1 sm:text-[10px]">
-        {discount}% OFF
+      <div className="absolute right-2 top-2 max-w-[55%] rounded-full bg-white px-1.5 py-0.5 text-[8px] font-bold text-black sm:right-3 sm:top-3 sm:px-2.5 sm:py-1 sm:text-[10px]">
+        Save {formatPrice(savings, deal.currency)}
       </div>
 
       <div className="absolute inset-x-0 bottom-0 p-2.5 sm:p-4 lg:p-5">
@@ -117,7 +115,7 @@ export default function LiveDealsStrip({
             </p>
           </div>
 
-          <h2 className="mt-4 font-display text-3xl font-semibold text-white transition-colors group-hover:text-white/80 sm:text-4xl">
+          <h2 className="mt-4 font-display text-3xl font-semibold text-white underline decoration-white/25 underline-offset-[6px] transition-colors group-hover:text-white/80 group-hover:decoration-white/60 sm:text-4xl">
             Limited-Period Offers
           </h2>
         </Link>
