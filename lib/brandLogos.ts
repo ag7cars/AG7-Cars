@@ -74,6 +74,7 @@ const DARK_LOGOS = new Set([
   "jlr",
   "land-rover",
   "lamborghini",
+  "mini",
 ]);
 
 function slugFor(brand: string): string {

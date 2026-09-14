@@ -63,7 +63,7 @@ function DealCardContent({ deal, isFront }: { deal: LiveDeal; isFront: boolean }
         Live
       </div>
 
-      <div className="absolute right-2 top-2 max-w-[55%] rounded-full bg-white px-1.5 py-0.5 text-[8px] font-bold text-black sm:right-3 sm:top-3 sm:px-2.5 sm:py-1 sm:text-[10px]">
+      <div className="absolute right-2 top-2 max-w-[55%] rounded-full bg-red-500 px-1.5 py-0.5 text-[8px] font-bold text-white sm:right-3 sm:top-3 sm:px-2.5 sm:py-1 sm:text-[10px]">
         Save {formatPrice(savings, deal.currency)}
       </div>
 

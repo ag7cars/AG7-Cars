@@ -16,7 +16,7 @@ const allowedImageTypes = new Set(["image/jpeg", "image/png", "image/webp"]);
 const allowedVideoTypes = new Set(["video/mp4", "video/webm", "video/quicktime"]);
 
 const maxImageSize = 50 * 1024 * 1024; // 50 MB
-const maxVideoSize = 80 * 1024 * 1024; // 80 MB
+const maxVideoSize = 150 * 1024 * 1024; // 150 MB
 const maxFiles = 10;
 
 export async function POST(request: Request) {
