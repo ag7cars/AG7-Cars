@@ -82,15 +82,15 @@ function useCountUp(value: number, active: boolean) {
 // baked in; a spinning overlay on each wheel and an extra trailing
 // smoke cluster (see TireSmoke below) layer on top of that.
 const CAR_IMAGE_SRC = "/images/about-f1-car.jpg";
-const CAR_ASPECT = 900 / 450; // matches the source file exactly
+const CAR_ASPECT = 900 / 242; // matches the source file exactly — cropped tight to the car, no empty margin
 
 // Percent-of-image-box positions for the two wheel centers, measured
 // against the source photo. Written as CSS custom properties so the
 // wheel overlay's own size/position math (in WheelSpinner) only has
 // to read them, not repeat these numbers.
-const REAR_WHEEL = { left: "21.7%", top: "57.3%" };
-const FRONT_WHEEL = { left: "79.8%", top: "57.3%" };
-const WHEEL_SIZE = { width: "12.2%", height: "24.4%" }; // circular once the box keeps CAR_ASPECT
+const REAR_WHEEL = { left: "23.1%", top: "57%" };
+const FRONT_WHEEL = { left: "81%", top: "56.2%" };
+const WHEEL_SIZE = { width: "12.3%", height: "46%" }; // circular once the box keeps CAR_ASPECT
 
 function WheelSpinner({ position, spinning }: { position: { left: string; top: string }; spinning: boolean }) {
   return (
@@ -212,12 +212,11 @@ export default function AboutStats() {
             spin while driving and stop once parked.
 
             The parked offset is a CSS custom property, not a bare
-            340px: this box is only ~300px wide on a phone but can
-            run past 900px on desktop, and the car itself jumps from
-            160px to 224px wide at the sm: breakpoint. A single fixed
-            px offset tuned for desktop pushed the car to (or past)
-            the box's LEFT edge on mobile once "100% - 340px" went
-            negative.
+            px value: this box is only ~300px wide on a phone but can
+            run past 900px on desktop, and the car itself jumps width
+            at the sm: breakpoint. A single fixed px offset tuned for
+            desktop pushed the car to (or past) the box's LEFT edge on
+            mobile once "100% - offset" went negative.
 
             No z-index here (unlike the old SVG version) — this is a
             solid photo, not a translucent icon, so sitting above the
@@ -227,7 +226,7 @@ export default function AboutStats() {
             stays legible; the car is still fully visible everywhere
             else. */}
         <div
-          className="pointer-events-none absolute top-1/2 h-20 -translate-y-1/2 [--f1-park-offset:175px] sm:h-28 sm:[--f1-park-offset:340px]"
+          className="pointer-events-none absolute top-1/2 h-[43px] -translate-y-1/2 [--f1-park-offset:172px] sm:h-[62px] sm:[--f1-park-offset:242px]"
           style={{
             left: driving ? "calc(100% - var(--f1-park-offset))" : "-460px",
             transitionProperty: "left",
