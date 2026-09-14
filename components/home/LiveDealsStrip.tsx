@@ -117,11 +117,8 @@ export default function LiveDealsStrip({
             </p>
           </div>
 
-          <h2 className="mt-4 inline-flex items-center gap-3 font-display text-3xl font-semibold text-white transition-colors group-hover:text-white/80 sm:text-4xl">
+          <h2 className="mt-4 font-display text-3xl font-semibold text-white transition-colors group-hover:text-white/80 sm:text-4xl">
             Limited-Time Offers
-            <span className="text-xl transition-transform group-hover:translate-x-1 sm:text-2xl">
-              →
-            </span>
           </h2>
         </Link>
 

@@ -17,6 +17,7 @@ export type BrowseCar = {
   image: string | null;
   year: number | null;
   manufacturingYear: number | null;
+  ownership: string | null;
   fuel: string | null;
   kmDriven: number | null;
   bodyType: string | null;
@@ -384,11 +385,19 @@ function CardGauge({ car, logoPath, km }: CardProps) {
         </div>
 
         <div className="mt-3 flex flex-wrap items-center justify-center gap-x-2 gap-y-1 text-[9px] text-white/50 sm:mt-4 sm:text-[11px]">
-          {car.year && <span>{car.year}</span>}
-          {car.year && car.fuel && <span className="text-white/20">•</span>}
-          {car.fuel && <span>{car.fuel}</span>}
-          {car.fuel && km && <span className="text-white/20">•</span>}
-          {km && <span>{km}</span>}
+          {[
+            car.year ? `Reg: ${car.year}` : null,
+            car.ownership,
+            car.fuel,
+            km,
+          ]
+            .filter((part): part is string => Boolean(part))
+            .map((part, index) => (
+              <span key={index} className="flex items-center gap-2">
+                {index > 0 && <span className="text-white/20">•</span>}
+                {part}
+              </span>
+            ))}
         </div>
 
         <div

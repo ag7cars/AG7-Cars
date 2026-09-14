@@ -142,11 +142,8 @@ export default function CollectionCarousel({
             Discover
           </p>
 
-          <h2 className="mt-4 inline-flex items-center gap-3 font-display text-4xl font-semibold text-white transition-colors group-hover:text-white/80 sm:text-5xl">
+          <h2 className="mt-4 font-display text-4xl font-semibold text-white transition-colors group-hover:text-white/80 sm:text-5xl">
             AG7 Collection
-            <span className="text-2xl transition-transform group-hover:translate-x-1 sm:text-3xl">
-              →
-            </span>
           </h2>
         </Link>
 

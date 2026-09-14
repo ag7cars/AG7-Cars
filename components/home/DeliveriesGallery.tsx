@@ -139,11 +139,8 @@ export default function DeliveriesGallery({
       <div className="relative mx-auto w-full max-w-[1440px] px-5 sm:px-8 lg:px-12 xl:px-16">
 
         <Link href="/deliveries" className="group inline-block text-center sm:text-left">
-          <h2 className="inline-flex items-center gap-3 font-display text-4xl font-semibold text-white transition-colors group-hover:text-white/80 sm:text-5xl">
+          <h2 className="font-display text-4xl font-semibold text-white transition-colors group-hover:text-white/80 sm:text-5xl">
             AG7 Deliveries
-            <span className="text-2xl transition-transform group-hover:translate-x-1 sm:text-3xl">
-              →
-            </span>
           </h2>
         </Link>
 
