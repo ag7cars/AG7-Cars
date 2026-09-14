@@ -50,6 +50,18 @@ function formatKm(km: number | null) {
   return `${km.toLocaleString("en-IN")} km`;
 }
 
+// Only the state + RTO code is shown publicly (e.g. "MP 09"), never
+// the full plate — admins sometimes type extra notes after it (a
+// series/number, a parenthetical), which this trims off rather than
+// showing the raw value verbatim.
+function formatRegistration(value: string | null) {
+  if (!value) return null;
+  const match = value.trim().match(/^([A-Za-z]{2})\s*-?\s*(\d{1,2})/);
+  if (!match) return value.trim();
+  const [, state, code] = match;
+  return `${state.toUpperCase()} ${code.padStart(2, "0")}`;
+}
+
 /* ============================================================
    FILTER DEFINITIONS
    ============================================================ */
@@ -388,21 +400,17 @@ function CardGauge({ car, logoPath, km }: CardProps) {
           </h3>
         </div>
 
-        <div className="mt-1.5 flex flex-wrap items-center justify-center gap-x-2 gap-y-1 text-[9px] text-white/50 sm:mt-2 sm:text-[11px]">
-          {[
-            car.year ? `Reg: ${car.year}` : null,
-            car.registration,
-            car.ownership,
-            car.fuel,
-            km,
-          ]
-            .filter((part): part is string => Boolean(part))
-            .map((part, index) => (
-              <span key={index} className="flex items-center gap-2">
-                {index > 0 && <span className="text-white/20">•</span>}
-                {part}
-              </span>
-            ))}
+        {/* Fixed 5-slot grid — same position for every field on every
+            card, regardless of how long a value is or whether it's
+            missing (shown as "—" rather than collapsing that slot),
+            so cards line up instead of wrapping to a different
+            number of lines depending on their data. */}
+        <div className="mt-2 grid grid-cols-2 gap-x-3 gap-y-1 text-[9px] text-white/50 sm:mt-3 sm:gap-x-4 sm:text-[11px]">
+          <span className="truncate text-left">{car.year ? `Reg: ${car.year}` : "—"}</span>
+          <span className="truncate text-right">{formatRegistration(car.registration) ?? "—"}</span>
+          <span className="truncate text-left">{car.ownership ?? "—"}</span>
+          <span className="truncate text-right">{car.fuel ?? "—"}</span>
+          <span className="col-span-2 truncate text-center">{km ?? "—"}</span>
         </div>
 
         <div
