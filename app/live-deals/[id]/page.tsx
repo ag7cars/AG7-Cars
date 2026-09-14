@@ -43,6 +43,15 @@ export default async function LiveDealDetailPage({
   );
   const savings = deal.original_price - deal.deal_price;
 
+  // Carries this deal along to the homepage contact form as query
+  // params (read there via useSearchParams) so the enquiry email says
+  // exactly which deal someone's claiming, not just "an enquiry."
+  const enquiryParams = new URLSearchParams({
+    deal: deal.id,
+    dealLabel: `${deal.brand} ${deal.name} — ${formatPrice(deal.deal_price, deal.currency)}`,
+  });
+  const enquiryHref = `/?${enquiryParams.toString()}#contact`;
+
   return (
     <main className="min-h-screen bg-black">
       <Navbar />
@@ -131,7 +140,7 @@ export default async function LiveDealDetailPage({
 
               <div className="mt-10 flex flex-wrap gap-3">
                 <Link
-                  href="/#contact"
+                  href={enquiryHref}
                   className="inline-flex h-12 items-center justify-center rounded-full bg-red-500 px-7 text-sm font-semibold text-white transition hover:bg-red-400"
                 >
                   Claim This Deal

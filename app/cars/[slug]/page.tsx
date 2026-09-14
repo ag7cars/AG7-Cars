@@ -136,6 +136,15 @@ export default async function CarDetailPage({
   const status = statusStyles[car.status] ?? statusStyles.available;
   const km = formatKm(car.km_driven);
 
+  // Carries this car along to the homepage contact form as query
+  // params (read there via useSearchParams) so the enquiry email says
+  // exactly which car someone's asking about, not just "an enquiry."
+  const enquiryParams = new URLSearchParams({
+    car: car.slug,
+    carLabel: `${car.brand} ${car.name} — ${formatPrice(car.price, car.currency)}`,
+  });
+  const enquiryHref = `/?${enquiryParams.toString()}#contact`;
+
   // Fixed order per the dealership's own spec-sheet convention —
   // everything else (body type, engine, options list, etc.) goes in
   // the free-text Description instead of its own row here.
@@ -229,7 +238,7 @@ export default async function CarDetailPage({
 
               <div className="mt-10 flex flex-wrap gap-3">
                 <Link
-                  href="/#contact"
+                  href={enquiryHref}
                   className="inline-flex h-12 items-center justify-center rounded-full bg-white px-7 text-sm font-semibold text-black transition hover:bg-white/90"
                 >
                   Enquire Now
