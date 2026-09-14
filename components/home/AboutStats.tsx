@@ -74,20 +74,21 @@ function useCountUp(value: number, active: boolean) {
   return Math.round(value * progress);
 }
 
-// A hand-drawn F1 silhouette in AG7's own black/white/gold palette —
-// no real team livery, sponsor branding, driver number, or helmet, so
-// there's nothing here that recreates anyone else's IP. Drawn flat
-// rather than photoreal so every shape (including each wheel) is a
-// plain SVG primitive we can position and spin exactly.
-const AG7_BLACK = "#0a0a0a";
+// A hand-drawn, chunky cartoon rally car in AG7's own black/white/gold
+// palette — no real team livery, sponsor branding, driver number, or
+// helmet, so there's nothing here that recreates anyone else's IP.
+// Drawn flat rather than photoreal so every shape (including each
+// wheel) is a plain SVG primitive we can position, spin, and bounce
+// exactly. The body is white/gold rather than black so it still reads
+// clearly against the stats box's own black background.
 const AG7_WHITE = "#f5f5f5";
 const AG7_GOLD = "#e8c874";
 const AG7_TIRE = "#1c1c1c";
 
-const REAR_WHEEL_X = 66;
-const FRONT_WHEEL_X = 250;
-const WHEEL_Y = 70;
-const WHEEL_R = 20;
+const REAR_WHEEL_X = 75;
+const FRONT_WHEEL_X = 235;
+const WHEEL_Y = 78;
+const WHEEL_R = 22;
 
 function Wheel({ cx, spinning }: { cx: number; spinning: boolean }) {
   return (
@@ -115,44 +116,64 @@ function Wheel({ cx, spinning }: { cx: number; spinning: boolean }) {
   );
 }
 
-function F1CarSilhouette({ spinning }: { spinning: boolean }) {
+function AG7RallyCar({ spinning }: { spinning: boolean }) {
   return (
-    <svg viewBox="0 0 340 100" className="h-full w-full overflow-visible">
-      {/* contact shadow, grounding the car */}
-      <ellipse cx="160" cy="93" rx="150" ry="6" fill="rgba(0,0,0,0.4)" />
+    <svg viewBox="0 0 320 110" className="h-full w-full overflow-visible">
+      {/* soft ground contact mark — a faint highlight rather than a
+          dark shadow, since a dark shadow would be invisible against
+          this box's own black background */}
+      <ellipse cx="150" cy="100" rx="130" ry="5" fill="rgba(255,255,255,0.06)" />
 
-      {/* front wing */}
-      <rect x="0" y="66" width="44" height="6" rx="1.5" fill={AG7_GOLD} />
+      {/* Body + wheels bounce together while driving, like a kart
+          bobbing over uneven ground; the ground mark above stays put
+          so it doesn't look like it's floating. */}
+      <g
+        style={{
+          transformBox: "fill-box",
+          transformOrigin: "center",
+          animation: spinning ? "ag7-car-bounce 0.3s ease-in-out infinite" : undefined,
+        }}
+      >
+        {/* rear spoiler, on a stalk above the stubby tail */}
+        <rect x="38" y="24" width="26" height="6" rx="2" fill={AG7_GOLD} />
+        <rect x="50" y="28" width="4" height="22" rx="2" fill={AG7_GOLD} />
 
-      {/* nose, low and pointed, rising back toward the cockpit —
-          white with a gold tip accent */}
-      <path d="M18,66 L120,44 C128,42 132,38 132,32 L132,66 Z" fill={AG7_WHITE} />
-      <path d="M18,66 L58,57 L62,66 Z" fill={AG7_GOLD} />
+        {/* stubby tail, flush with the main chassis block */}
+        <rect x="48" y="50" width="22" height="28" rx="8" fill={AG7_WHITE} />
 
-      {/* windscreen / cockpit opening */}
-      <path d="M120,44 C130,41 138,36 140,28 C142,20 148,15 156,14 L156,44 Z" fill={AG7_TIRE} />
+        {/* main chassis block */}
+        <rect x="68" y="44" width="160" height="34" rx="10" fill={AG7_WHITE} />
 
-      {/* body from the cockpit back through the sidepods to the
-          engine cover — black with a gold lower stripe */}
-      <path d="M132,66 L176,44 L248,50 C262,51 270,56 272,62 L272,66 Z" fill={AG7_BLACK} />
-      <path d="M132,66 L176,53 L248,58 C258,59 264,62 266,66 Z" fill={AG7_GOLD} />
+        {/* nose, wedging forward to a rounded point, with a small
+            gold tip accent */}
+        <path d="M228,45 L266,59 Q272,61 266,63 L228,77 Z" fill={AG7_WHITE} />
+        <path d="M256,57 L266,59 Q270,61 266,63 L256,65 Z" fill={AG7_GOLD} />
 
-      {/* halo — the protective hoop arching over the cockpit opening */}
-      <path
-        d="M140,28 C142,18 150,10 160,8 C170,10 176,17 176,26 L176,44"
-        fill="none"
-        stroke={AG7_TIRE}
-        strokeWidth="5"
-        strokeLinecap="round"
-      />
+        {/* cockpit headrest hump, with a dark visor slot */}
+        <rect x="130" y="22" width="50" height="26" rx="12" fill={AG7_GOLD} />
+        <rect x="138" y="28" width="34" height="9" rx="4" fill={AG7_TIRE} />
 
-      {/* low rear wing */}
-      <rect x="272" y="34" width="6" height="24" rx="1.5" fill={AG7_GOLD} />
-      <rect x="256" y="30" width="30" height="5" rx="1.5" fill={AG7_GOLD} />
+        {/* side intake vent */}
+        <rect x="95" y="54" width="22" height="14" rx="3" fill={AG7_TIRE} />
 
-      {/* wheels, exposed and larger than the body, spokes spin while driving */}
-      <Wheel cx={REAR_WHEEL_X} spinning={spinning} />
-      <Wheel cx={FRONT_WHEEL_X} spinning={spinning} />
+        {/* number roundel */}
+        <circle cx="200" cy="61" r="10" fill={AG7_WHITE} stroke={AG7_GOLD} strokeWidth="2" />
+        <text
+          x="200"
+          y="65.5"
+          textAnchor="middle"
+          fontSize="12"
+          fontWeight="700"
+          fill={AG7_TIRE}
+          fontFamily="var(--font-montserrat), sans-serif"
+        >
+          7
+        </text>
+
+        {/* wheels, chunky and larger than usual, spokes spin while driving */}
+        <Wheel cx={REAR_WHEEL_X} spinning={spinning} />
+        <Wheel cx={FRONT_WHEEL_X} spinning={spinning} />
+      </g>
     </svg>
   );
 }
@@ -223,13 +244,14 @@ export default function AboutStats() {
         <div className="pointer-events-none absolute -left-16 -top-24 h-72 w-72 rounded-full bg-[#e8c874]/10 blur-[90px]" />
         <div className="pointer-events-none absolute -bottom-24 -right-10 h-72 w-72 rounded-full bg-white/5 blur-[100px]" />
 
-        {/* F1 car — drives in from the left and parks at the right
+        {/* Rally car — drives in from the left and parks at the right
             edge of this box (not the viewport — "left" resolves
             against this relative container, unlike a transform
             percentage, which is why it's used here instead of
             translateX). It stays put once parked; only the smoke's
             intensity changes afterward, it never fades out. Wheels
-            spin while driving and stop once parked. */}
+            spin and the body bounces while driving, both stop once
+            parked. */}
         <div
           className="pointer-events-none absolute top-1/2 z-10 h-16 -translate-y-1/2 sm:h-20"
           style={{
@@ -240,7 +262,7 @@ export default function AboutStats() {
           }}
         >
           <div className="relative h-full w-32 sm:w-40">
-            <F1CarSilhouette spinning={driving && !revealed} />
+            <AG7RallyCar spinning={driving && !revealed} />
             <TireSmoke intensity={!driving ? "none" : revealed ? "full" : "light"} />
           </div>
         </div>
