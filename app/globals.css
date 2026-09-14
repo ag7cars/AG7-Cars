@@ -99,3 +99,9 @@
     transform: scaleX(1);
   }
 }
+
+@keyframes ag7-wheel-spin {
+  to {
+    transform: translate(-50%, -50%) rotate(360deg);
+  }
+}
