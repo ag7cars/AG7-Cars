@@ -74,16 +74,61 @@ function useCountUp(value: number, active: boolean) {
   return Math.round(value * progress);
 }
 
-// A simplified low-slung sports-car silhouette — a background
+// A simplified F1 silhouette — low nose cone, exposed front/rear
+// wheels, a raised cockpit halo, and a rear wing. A background
 // atmosphere element, not a literal illustration, so rough
-// proportions are fine as long as it reads as "a car" in motion.
-function CarSilhouette() {
+// proportions are fine as long as it reads as "an F1 car".
+function F1CarSilhouette() {
   return (
-    <svg viewBox="0 0 300 100" className="h-full w-full" fill="currentColor">
-      <path d="M8,78 C8,78 16,54 42,48 L66,32 C86,18 128,13 158,17 L198,24 C218,27 232,34 246,49 L278,54 C289,56 294,64 294,72 L294,79 C294,84 289,87 284,87 L268,87 C268,74 258,64 246,64 C234,64 224,74 224,87 L88,87 C88,74 78,64 66,64 C54,64 44,74 44,87 L18,87 C12,87 8,83 8,78 Z" />
-      <circle cx="66" cy="87" r="15" />
-      <circle cx="246" cy="87" r="15" />
+    <svg viewBox="0 0 320 100" className="h-full w-full" fill="currentColor">
+      {/* front wing */}
+      <rect x="2" y="74" width="44" height="6" rx="2" />
+      {/* nose cone */}
+      <path d="M22,74 L74,58 C82,55 90,53 90,47 L90,44 C90,41 87,39 84,39 L60,39 C50,39 41,43 34,50 L18,66 Z" />
+      {/* sidepod / body running back to the engine cover */}
+      <path d="M90,47 L152,42 C166,41 180,41 194,44 L228,51 C237,53 243,58 243,65 L243,73 L98,73 L90,58 Z" />
+      {/* cockpit + halo hoop */}
+      <path
+        d="M150,42 L150,29 C150,21 158,15 168,15 C178,15 186,21 186,29 L186,44"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="6"
+        strokeLinecap="round"
+      />
+      {/* engine cover taper to the rear wing mount */}
+      <path
+        d="M243,65 L282,58 C290,57 296,52 296,45 L296,38"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="6"
+        strokeLinecap="round"
+      />
+      {/* rear wing */}
+      <rect x="290" y="28" width="7" height="28" rx="2" />
+      <rect x="270" y="24" width="42" height="6" rx="2" />
+      {/* exposed wheels, sized larger than the body like a real F1 car */}
+      <circle cx="58" cy="76" r="20" />
+      <circle cx="258" cy="76" r="20" />
     </svg>
+  );
+}
+
+// Tire smoke — a small cluster of blurred, staggered puffs trailing
+// the car. Two intensities: a faint wisp while it's still moving,
+// and a fuller cloud once it's parked (as if it just screeched to a
+// stop) — and it's meant to stay, not fade back out.
+function TireSmoke({ intensity }: { intensity: "none" | "light" | "full" }) {
+  const opacity = intensity === "full" ? 1 : intensity === "light" ? 0.45 : 0;
+
+  return (
+    <div
+      className="pointer-events-none absolute -left-10 bottom-1 h-16 w-28 transition-opacity duration-700 ease-out sm:-left-12 sm:h-20 sm:w-36"
+      style={{ opacity }}
+    >
+      <div className="absolute bottom-0 left-0 h-9 w-9 rounded-full bg-white/25 blur-xl sm:h-11 sm:w-11" />
+      <div className="absolute bottom-1 left-7 h-12 w-12 rounded-full bg-white/20 blur-xl sm:h-16 sm:w-16" />
+      <div className="absolute bottom-0 left-16 h-8 w-8 rounded-full bg-white/15 blur-lg sm:left-20 sm:h-10 sm:w-10" />
+    </div>
   );
 }
 
@@ -132,20 +177,24 @@ export default function AboutStats() {
         <div className="pointer-events-none absolute -left-16 -top-24 h-72 w-72 rounded-full bg-[#e8c874]/10 blur-[90px]" />
         <div className="pointer-events-none absolute -bottom-24 -right-10 h-72 w-72 rounded-full bg-white/5 blur-[100px]" />
 
-        {/* Car sweep — silhouette + trailing speed-streak crossing
-            left to right, then fading as the stats take over. */}
+        {/* F1 car — drives in from the left and parks at the right
+            edge of this box (not the viewport — "left" resolves
+            against this relative container, unlike a transform
+            percentage, which is why it's used here instead of
+            translateX). It stays put once parked; only the smoke's
+            intensity changes afterward, it never fades out. */}
         <div
-          className="pointer-events-none absolute inset-x-0 top-1/2 flex h-16 -translate-y-1/2 items-center transition-[transform,opacity] ease-[cubic-bezier(0.4,0,0.2,1)] sm:h-20"
+          className="pointer-events-none absolute top-1/2 z-10 h-16 -translate-y-1/2 sm:h-20"
           style={{
-            transform: driving ? "translateX(115vw)" : "translateX(-40vw)",
+            left: driving ? "calc(100% - 190px)" : "-320px",
+            transitionProperty: "left",
             transitionDuration: `${DRIVE_DURATION_MS}ms`,
-            opacity: revealed ? 0 : 1,
-            transitionProperty: "transform, opacity",
+            transitionTimingFunction: "cubic-bezier(0.4,0,0.2,1)",
           }}
         >
-          <div className="h-px w-24 shrink-0 bg-gradient-to-r from-transparent to-white/40 sm:w-36" />
-          <div className="h-12 w-32 shrink-0 text-white/50 sm:h-16 sm:w-40">
-            <CarSilhouette />
+          <div className="relative h-full w-32 text-white/60 sm:w-40">
+            <F1CarSilhouette />
+            <TireSmoke intensity={!driving ? "none" : revealed ? "full" : "light"} />
           </div>
         </div>
 
