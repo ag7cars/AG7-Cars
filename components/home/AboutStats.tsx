@@ -74,38 +74,54 @@ function useCountUp(value: number, active: boolean) {
   return Math.round(value * progress);
 }
 
-// A modern-profile F1 silhouette (low nose, cockpit halo hoop,
-// sleek continuous body, subtle rear wing, big exposed wheels) — a
-// generic shape, not any specific team's livery, colors, sponsor
-// branding, or car number. A background atmosphere element, not a
-// literal illustration, so rough proportions are fine as long as it
-// reads clearly as "an F1 car".
+// A generic red-and-white F1 silhouette — flat filled shapes with a
+// grounding contact shadow, in the same clean illustration language
+// as the reference photos, but an invented color scheme with no
+// team livery, sponsor branding, or car number.
+const F1_RED = "#e2231a";
+const F1_WHITE = "#f5f5f5";
+const F1_DARK = "#3a3a3a";
+
 function F1CarSilhouette() {
   return (
-    <svg viewBox="0 0 340 100" className="h-full w-full" fill="currentColor">
-      {/* front wing plate */}
-      <rect x="0" y="66" width="44" height="6" rx="1.5" />
-      {/* nose, low and pointed, rising back toward the cockpit */}
-      <path d="M18,66 L120,44 C128,42 132,38 132,32 L132,66 Z" />
+    <svg viewBox="0 0 340 100" className="h-full w-full">
+      {/* contact shadow, grounding the car */}
+      <ellipse cx="160" cy="93" rx="150" ry="6" fill="rgba(0,0,0,0.4)" />
+
+      {/* front wing */}
+      <rect x="0" y="66" width="44" height="6" rx="1.5" fill={F1_RED} />
+
+      {/* nose, low and pointed, rising back toward the cockpit —
+          white with a red tip accent */}
+      <path d="M18,66 L120,44 C128,42 132,38 132,32 L132,66 Z" fill={F1_WHITE} />
+      <path d="M18,66 L58,57 L62,66 Z" fill={F1_RED} />
+
       {/* windscreen / cockpit opening */}
-      <path d="M120,44 C130,41 138,36 140,28 C142,20 148,15 156,14 L156,44 Z" />
-      {/* body from the cockpit back through the sidepods to the engine cover */}
-      <path d="M132,66 L176,44 L248,50 C262,51 270,56 272,62 L272,66 Z" />
-      {/* halo — the protective hoop arching over the cockpit opening,
-          the clearest "modern F1" tell */}
+      <path d="M120,44 C130,41 138,36 140,28 C142,20 148,15 156,14 L156,44 Z" fill={F1_DARK} />
+
+      {/* body from the cockpit back through the sidepods to the
+          engine cover — white with a red lower stripe */}
+      <path d="M132,66 L176,44 L248,50 C262,51 270,56 272,62 L272,66 Z" fill={F1_WHITE} />
+      <path d="M132,66 L176,53 L248,58 C258,59 264,62 266,66 Z" fill={F1_RED} />
+
+      {/* halo — the protective hoop arching over the cockpit opening */}
       <path
         d="M140,28 C142,18 150,10 160,8 C170,10 176,17 176,26 L176,44"
         fill="none"
-        stroke="currentColor"
+        stroke={F1_DARK}
         strokeWidth="5"
         strokeLinecap="round"
       />
+
       {/* low rear wing */}
-      <rect x="272" y="34" width="6" height="24" rx="1.5" />
-      <rect x="256" y="30" width="30" height="5" rx="1.5" />
-      {/* wheels, exposed and larger than the body */}
-      <circle cx="66" cy="70" r="20" />
-      <circle cx="250" cy="70" r="20" />
+      <rect x="272" y="34" width="6" height="24" rx="1.5" fill={F1_RED} />
+      <rect x="256" y="30" width="30" height="5" rx="1.5" fill={F1_RED} />
+
+      {/* wheels, exposed and larger than the body, with a simple hub */}
+      <circle cx="66" cy="70" r="20" fill={F1_DARK} />
+      <circle cx="66" cy="70" r="7" fill={F1_WHITE} />
+      <circle cx="250" cy="70" r="20" fill={F1_DARK} />
+      <circle cx="250" cy="70" r="7" fill={F1_WHITE} />
     </svg>
   );
 }
@@ -190,7 +206,7 @@ export default function AboutStats() {
             transitionTimingFunction: "cubic-bezier(0.4,0,0.2,1)",
           }}
         >
-          <div className="relative h-full w-32 text-white/60 sm:w-40">
+          <div className="relative h-full w-32 sm:w-40">
             <F1CarSilhouette />
             <TireSmoke intensity={!driving ? "none" : revealed ? "full" : "light"} />
           </div>
