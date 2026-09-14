@@ -379,12 +379,12 @@ function CardGauge({ car, logoPath, km }: CardProps) {
         }`}
       >
         <div className="text-center">
-          <h3 className="line-clamp-2 min-h-10 font-display text-sm font-bold leading-snug text-white sm:min-h-12 sm:text-lg">
+          <h3 className="line-clamp-2 font-display text-sm font-bold leading-snug text-white sm:text-lg">
             {car.name}
           </h3>
         </div>
 
-        <div className="mt-3 flex flex-wrap items-center justify-center gap-x-2 gap-y-1 text-[9px] text-white/50 sm:mt-4 sm:text-[11px]">
+        <div className="mt-1.5 flex flex-wrap items-center justify-center gap-x-2 gap-y-1 text-[9px] text-white/50 sm:mt-2 sm:text-[11px]">
           {[
             car.year ? `Reg: ${car.year}` : null,
             car.ownership,
