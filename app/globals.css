@@ -100,18 +100,3 @@
   }
 }
 
-@keyframes ag7-wheel-spin {
-  to {
-    transform: rotate(360deg);
-  }
-}
-
-@keyframes ag7-car-bounce {
-  0%,
-  100% {
-    transform: translateY(0);
-  }
-  50% {
-    transform: translateY(-3px);
-  }
-}

@@ -106,7 +106,7 @@ export default function LiveDealsStrip({
       className={`scroll-mt-0 relative overflow-hidden border-y border-white/5 bg-gradient-to-b from-red-500/[0.06] via-black to-black ${sectionClass}`}
     >
       <div className="relative mx-auto w-full max-w-[1440px] px-5 sm:px-8 lg:px-12 xl:px-16">
-        <Link href="/live-deals" className="group inline-block text-center sm:text-left">
+        <Link href="/live-deals" className="group block text-center sm:text-left">
           <div className="flex items-center justify-center gap-3 sm:justify-start">
             <span className="relative flex h-2.5 w-2.5">
               <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-red-400 opacity-75" />
@@ -118,7 +118,7 @@ export default function LiveDealsStrip({
           </div>
 
           <h2 className="mt-4 font-display text-3xl font-semibold text-white transition-colors group-hover:text-white/80 sm:text-4xl">
-            Limited-Time Offers
+            Limited-Period Offers
           </h2>
         </Link>
 
