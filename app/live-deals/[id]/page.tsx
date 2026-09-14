@@ -28,7 +28,7 @@ export default async function LiveDealDetailPage({
   const { data: deal } = await supabase
     .from("live_deals")
     .select(
-      "id, brand, name, original_price, deal_price, currency, image_urls, color, description"
+      "id, brand, name, original_price, deal_price, currency, category, image_urls, color, description"
     )
     .eq("id", id)
     .eq("is_published", true)
@@ -94,7 +94,9 @@ export default async function LiveDealDetailPage({
                 </div>
 
                 <div className="px-5 pt-4 sm:px-6">
-                  <p className="text-xs uppercase tracking-[0.3em] text-white/40">{deal.brand}</p>
+                  <p className="text-xs uppercase tracking-[0.3em] text-white/40">
+                    {deal.brand} · {deal.category}
+                  </p>
                   <h1 className="mt-1 font-display text-2xl font-semibold text-white sm:text-3xl">
                     {deal.name}
                   </h1>

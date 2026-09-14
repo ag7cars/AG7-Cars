@@ -10,6 +10,7 @@ const liveDealUpdateSchema = z
     original_price: z.number().positive(),
     deal_price: z.number().positive(),
     currency: z.string().trim().min(1),
+    category: z.enum(["Pre-Owned", "New", "Demo"]),
     description: z.string().nullable(),
   })
   .partial();

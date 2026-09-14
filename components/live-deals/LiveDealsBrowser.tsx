@@ -11,6 +11,7 @@ export type BrowseDeal = {
   originalPrice: number;
   dealPrice: number;
   currency: string;
+  category: string;
   image: string | null;
 };
 
@@ -90,7 +91,9 @@ function DealCard({ deal }: { deal: BrowseDeal }) {
       {/* Brand/model live in the solid panel, not over the photo —
           text on a busy photo was hard to read at a glance. */}
       <div className="px-3 pt-3 sm:px-4 sm:pt-4">
-        <p className="text-[9px] uppercase tracking-[0.25em] text-white/50 sm:text-[10px]">{deal.brand}</p>
+        <p className="text-[9px] uppercase tracking-[0.25em] text-white/50 sm:text-[10px]">
+          {deal.brand} · {deal.category}
+        </p>
         <h3 className="line-clamp-2 mt-0.5 font-display text-sm font-bold leading-snug text-white sm:text-lg">
           {deal.name}
         </h3>

@@ -10,7 +10,7 @@ export default async function LiveDealsPage() {
 
   const { data: dealsData } = await supabase
     .from("live_deals")
-    .select("id, brand, name, original_price, deal_price, currency, image_urls")
+    .select("id, brand, name, original_price, deal_price, currency, category, image_urls")
     .eq("is_published", true)
     .order("display_order", { ascending: true })
     .order("created_at", { ascending: false });
@@ -22,6 +22,7 @@ export default async function LiveDealsPage() {
     originalPrice: deal.original_price,
     dealPrice: deal.deal_price,
     currency: deal.currency,
+    category: deal.category,
     image: deal.image_urls?.[0] ?? null,
   }));
 

@@ -19,7 +19,7 @@ export default async function EditLiveDealPage({
 
   const { data: deal } = await supabase
     .from("live_deals")
-    .select("id, brand, name, original_price, deal_price, currency, description, image_urls")
+    .select("id, brand, name, original_price, deal_price, currency, category, description, image_urls")
     .eq("id", id)
     .maybeSingle();
 
@@ -57,6 +57,7 @@ export default async function EditLiveDealPage({
             original_price: deal.original_price,
             deal_price: deal.deal_price,
             currency: deal.currency,
+            category: deal.category,
             description: deal.description ?? undefined,
             image_urls: deal.image_urls ?? [],
           }}

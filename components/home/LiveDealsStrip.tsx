@@ -11,6 +11,7 @@ export type LiveDeal = {
   originalPrice: number;
   dealPrice: number;
   currency: string;
+  category: string;
   image: string | null;
   color: string | null;
   colorHex: string | null;
@@ -69,7 +70,7 @@ function DealCardContent({ deal, isFront }: { deal: LiveDeal; isFront: boolean }
 
       <div className="absolute inset-x-0 bottom-0 p-2.5 sm:p-4 lg:p-5">
         <p className="truncate text-[9px] uppercase tracking-[0.15em] text-white/50 sm:text-[11px] sm:tracking-[0.2em]">
-          {deal.brand}
+          {deal.brand} · {deal.category}
         </p>
         <h3 className="mt-0.5 truncate font-display text-sm font-semibold text-white sm:mt-1 sm:text-lg lg:text-xl">
           {deal.name}

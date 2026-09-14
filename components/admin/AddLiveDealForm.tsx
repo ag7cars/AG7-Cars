@@ -11,6 +11,7 @@ const liveDealSchema = z.object({
   original_price: z.number({ error: "Original price is required" }).positive("Enter a valid price"),
   deal_price: z.number({ error: "Deal price is required" }).positive("Enter a valid price"),
   currency: z.string().trim().min(1),
+  category: z.enum(["Pre-Owned", "New", "Demo"]),
   description: z.string().optional(),
 });
 
@@ -34,6 +35,7 @@ export default function AddLiveDealForm() {
 
     defaultValues: {
       currency: "INR",
+      category: "Pre-Owned",
     },
   });
 
@@ -117,7 +119,7 @@ export default function AddLiveDealForm() {
 
       setMessage("Live deal successfully published.");
 
-      reset({ currency: "INR" });
+      reset({ currency: "INR", category: "Pre-Owned" });
       setImages([]);
     } catch (error) {
       setMessage(
@@ -209,6 +211,21 @@ export default function AddLiveDealForm() {
               placeholder="8200000"
               className={inputClass}
             />
+          </Field>
+
+          <Field
+            label="Category"
+            error={errors.category?.message}
+          >
+            <select
+              {...register("category")}
+              className={selectClass}
+              style={{ colorScheme: "dark" }}
+            >
+              <option value="Pre-Owned" style={optionStyle}>Pre-Owned</option>
+              <option value="New" style={optionStyle}>New</option>
+              <option value="Demo" style={optionStyle}>Demo</option>
+            </select>
           </Field>
 
         </div>
