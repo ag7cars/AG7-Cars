@@ -10,6 +10,8 @@ import DeliveriesGallery, {
   type Delivery,
 } from "@/components/home/DeliveriesGallery";
 import AboutStats from "@/components/home/AboutStats";
+import FounderSection from "@/components/home/FounderSection";
+import TestimonialsSection from "@/components/home/TestimonialsSection";
 import ContactSection from "@/components/home/ContactSection";
 import Footer from "@/components/layout/Footer";
 import { WhatsAppIcon } from "@/components/layout/icons";
@@ -119,6 +121,36 @@ export default async function Home() {
   const deliveryVideos: Delivery[] = (deliveryVideosData ?? []).map(mapDelivery);
   const deliveryPhotos: Delivery[] = (deliveryPhotosData ?? []).map(mapDelivery);
 
+  const { data: founderData } = await supabase
+    .from("founder_profile")
+    .select("name, title, message, photo_url")
+    .eq("id", "main")
+    .maybeSingle();
+
+  const founder = founderData
+    ? {
+        name: founderData.name,
+        title: founderData.title,
+        message: founderData.message,
+        photoUrl: founderData.photo_url,
+      }
+    : null;
+
+  const { data: testimonialsData } = await supabase
+    .from("testimonials")
+    .select("id, customer_name, photo_url, message")
+    .eq("is_published", true)
+    .order("display_order", { ascending: true })
+    .order("created_at", { ascending: false })
+    .limit(12);
+
+  const testimonials = (testimonialsData ?? []).map((testimonial) => ({
+    id: testimonial.id,
+    customerName: testimonial.customer_name,
+    photoUrl: testimonial.photo_url,
+    message: testimonial.message,
+  }));
+
   // Every section below takes up one full device screen (100dvh —
   // the "dynamic" viewport unit, which correctly accounts for
   // mobile browser chrome showing/hiding), and its content starts
@@ -166,8 +198,21 @@ export default async function Home() {
       >
         <div className="mx-auto w-full max-w-[1440px] px-5 sm:px-8 lg:px-12 xl:px-16">
           <AboutStats />
+          <FounderSection founder={founder} />
         </div>
       </section>
+
+      {/* =========================================================
+          TESTIMONIALS
+          ========================================================= */}
+      {testimonials.length > 0 && (
+        <section
+          id="testimonials"
+          className={`scroll-mt-0 bg-black ${sectionClass}`}
+        >
+          <TestimonialsSection testimonials={testimonials} />
+        </section>
+      )}
 
       {/* =========================================================
           CONTACT

@@ -165,6 +165,40 @@ export default async function AdminDashboardPage() {
             </p>
           </a>
 
+          <a
+            href="/admin/dashboard/testimonials"
+            className="rounded-2xl border border-white/10 bg-white/[0.04] p-6 transition hover:-translate-y-1 hover:bg-white/[0.07]"
+          >
+            <p className="text-sm text-white/40">
+              About Us
+            </p>
+
+            <h2 className="mt-2 text-xl font-semibold">
+              Manage Testimonials
+            </h2>
+
+            <p className="mt-2 text-sm text-white/50">
+              View, add and edit customer testimonials shown on the homepage.
+            </p>
+          </a>
+
+          <a
+            href="/admin/dashboard/founder"
+            className="rounded-2xl border border-white/10 bg-white/[0.04] p-6 transition hover:-translate-y-1 hover:bg-white/[0.07]"
+          >
+            <p className="text-sm text-white/40">
+              About Us
+            </p>
+
+            <h2 className="mt-2 text-xl font-semibold">
+              Founder Details
+            </h2>
+
+            <p className="mt-2 text-sm text-white/50">
+              Update the founder&apos;s name, photo and their thoughts.
+            </p>
+          </a>
+
         </div>
 
       </div>

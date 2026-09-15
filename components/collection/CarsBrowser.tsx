@@ -315,210 +315,85 @@ const statusDot: Record<BrowseCar["status"], string> = {
   sold: "bg-rose-400",
 };
 
-// Small stroke icons for the card's spec row — same visual language
-// (thin outline, rounded joins) as the full spec sheet on the car
-// detail page, just simplified down to read at this much smaller
-// size.
-type SpecFieldKey = "year" | "registration" | "ownership" | "fuel" | "km";
-
-function SpecFieldIcon({ field }: { field: SpecFieldKey }) {
-  const common = {
-    width: 11,
-    height: 11,
-    viewBox: "0 0 24 24",
-    fill: "none",
-    stroke: "currentColor",
-    strokeWidth: 1.8,
-    strokeLinecap: "round" as const,
-    strokeLinejoin: "round" as const,
-    className: "shrink-0 text-white/35",
-  };
-
-  switch (field) {
-    case "year":
-      return (
-        <svg {...common}>
-          <rect x="3" y="4.5" width="18" height="16" rx="2" />
-          <path d="M16 2.5v4M8 2.5v4M3 9.5h18" />
-        </svg>
-      );
-    case "registration":
-      return (
-        <svg {...common}>
-          <rect x="2.5" y="6" width="19" height="12" rx="2" />
-          <path d="M6.5 15h3M13 15h4.5" />
-        </svg>
-      );
-    case "ownership":
-      return (
-        <svg {...common}>
-          <circle cx="12" cy="8" r="3.5" />
-          <path d="M5 20c0-3.5 3-6 7-6s7 2.5 7 6" />
-        </svg>
-      );
-    case "fuel":
-      return (
-        <svg {...common}>
-          <path d="M5 21V6a2 2 0 0 1 2-2h5a2 2 0 0 1 2 2v15" />
-          <path d="M3 21h13" />
-          <path d="M14 9.5h1.5L18 12v5.5a1.5 1.5 0 0 1-1.5 1.5" />
-        </svg>
-      );
-    case "km":
-      return (
-        <svg {...common}>
-          <circle cx="12" cy="13" r="8" />
-          <path d="M12 13 15.2 9" />
-        </svg>
-      );
-  }
-}
-
-// One field in the spec row — icon + value, always rendered even when
-// the value is missing (shown as "—") so every card keeps the exact
-// same five slots instead of reflowing around whichever fields a
-// given car happens to have.
-function SpecField({
-  field,
-  value,
-  justify,
-}: {
-  field: SpecFieldKey;
-  value: string | null;
-  justify: "start" | "end" | "center";
-}) {
-  return (
-    <span
-      className={`inline-flex min-w-0 items-center gap-1 text-[9px] text-white/60 sm:text-[11px] ${
-        justify === "start" ? "justify-self-start" : justify === "end" ? "justify-self-end" : "justify-self-center"
-      }`}
-    >
-      <SpecFieldIcon field={field} />
-      <span className="truncate">{value ?? "—"}</span>
-    </span>
-  );
-}
-
 function CardGauge({ car, logoPath, km }: CardProps) {
   const { ref, revealed } = useTouchReveal<HTMLDivElement>();
 
   return (
     <div ref={ref} className="relative flex h-full flex-col">
-      <div className="relative aspect-[4/5] w-full">
-        <div className="absolute inset-0 overflow-hidden rounded-[28px]">
-          {car.image ? (
-            <Image
-              src={car.image}
-              alt={`${car.brand} ${car.name}`}
-              fill
-              sizes="(min-width: 1024px) 380px, (min-width: 640px) 45vw, 46vw"
-              className={`object-cover transition-transform duration-700 ease-out group-hover:scale-105 ${revealed ? "scale-105" : ""}`}
-            />
-          ) : (
-            <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-white/10 to-white/[0.02]">
-              <span className="text-[10px] uppercase tracking-[0.3em] text-white/30">No Image</span>
-            </div>
-          )}
-
-          <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-black/20" />
-
-          <div className="absolute right-3 top-3 flex items-center gap-1.5 rounded-full bg-black/70 px-2.5 py-1 backdrop-blur-md sm:right-4 sm:top-4">
-            <span className={`h-1.5 w-1.5 shrink-0 rounded-full ${statusDot[car.status]}`} />
-            <span className="text-[9px] font-semibold uppercase tracking-wider text-white sm:text-[10px]">
-              {statusStyles[car.status].label}
-            </span>
-          </div>
-        </div>
-
-        {/* Gauge medallion — sibling of the clipped photo layer above,
-            so it can overlap the rounded corner without being cropped.
-            Black face: every mark here (BMW's colored roundel,
-            Mercedes' chrome badge, Range Rover's white ambigram) reads
-            clearly against it in its own original colors. */}
-        <div className="absolute -bottom-7 left-1/2 -translate-x-1/2 sm:-bottom-8">
-          <div className={`relative flex h-14 w-14 items-center justify-center overflow-hidden rounded-full bg-black shadow-2xl ring-1 ring-white/10 transition-transform duration-500 group-hover:scale-105 sm:h-16 sm:w-16 ${revealed ? "scale-105" : ""}`}>
-            <svg viewBox="0 0 100 100" className="absolute inset-0 h-full w-full -rotate-90">
-              <circle cx="50" cy="50" r="46" fill="none" stroke="rgba(255,255,255,0.12)" strokeWidth="3" />
-              <circle
-                cx="50"
-                cy="50"
-                r="46"
-                fill="none"
-                stroke="white"
-                strokeWidth="3"
-                strokeLinecap="round"
-                pathLength={100}
-                strokeDasharray={100}
-                strokeDashoffset={revealed ? 6 : 100}
-                className="transition-[stroke-dashoffset] duration-[1100ms] ease-out group-hover:[stroke-dashoffset:6]"
-              />
-            </svg>
-            {logoPath ? (
-              <Image
-                src={logoPath}
-                alt={car.brand}
-                width={140}
-                height={64}
-                className={`relative h-6 w-auto max-w-[38px] object-contain drop-shadow-[0_1px_2px_rgba(0,0,0,0.4)] sm:h-7 sm:max-w-[44px] ${needsLightTreatment(car.brand) ? "brightness-0 invert" : ""}`}
-              />
-            ) : (
-              <span className="relative text-[11px] font-bold uppercase text-white sm:text-xs">
-                {car.brand.slice(0, 3)}
-              </span>
-            )}
-          </div>
-        </div>
-      </div>
-
-      <div
-        className={`mt-3 flex-1 rounded-[24px] border bg-[#0a0a0a] px-4 pb-4 pt-8 transition-colors duration-500 group-hover:border-white/30 sm:px-5 sm:pb-5 sm:pt-10 ${
-          revealed ? "border-white/30" : "border-white/10"
-        }`}
-      >
-        <div className="text-center">
-          <p className="text-[10px] font-semibold uppercase tracking-[0.15em] text-white/50 sm:text-[11px]">
+      {/* Info sits above the photo now — brand/name/status on one
+          line, every spec on a single wrapping line below — instead
+          of a separate panel under the image, so the photo itself
+          can run full and uncluttered. */}
+      <div className="flex items-start justify-between gap-2">
+        <div className="min-w-0">
+          <p className="text-[9px] font-semibold uppercase tracking-[0.15em] text-white/50 sm:text-[10px]">
             {car.brand}
           </p>
-          <h3 className="line-clamp-2 mt-0.5 font-display text-sm font-bold leading-snug text-white sm:text-lg">
+          <h3 className="line-clamp-1 font-display text-xs font-bold leading-snug text-white sm:text-base">
             {car.name}
           </h3>
         </div>
+        <span className="flex shrink-0 items-center gap-1.5 rounded-full bg-white/5 px-2 py-1">
+          <span className={`h-1.5 w-1.5 shrink-0 rounded-full ${statusDot[car.status]}`} />
+          <span className="text-[8.5px] font-semibold uppercase tracking-wider text-white sm:text-[9.5px]">
+            {statusStyles[car.status].label}
+          </span>
+        </span>
+      </div>
 
-        {/* Fixed 5-slot grid — same position for every field on every
-            card, regardless of how long a value is or whether it's
-            missing (shown as "—" rather than collapsing that slot),
-            so cards line up instead of wrapping to a different
-            number of lines depending on their data. Each field carries
-            a small icon rather than a bare label, for the same reason
-            the full spec sheet on the detail page does. */}
-        <div className="mt-2.5 grid grid-cols-2 gap-x-2 gap-y-1.5 rounded-xl border border-white/5 bg-white/[0.02] px-2.5 py-2 sm:mt-3 sm:gap-x-3 sm:gap-y-2 sm:px-3 sm:py-2.5">
-          <SpecField field="year" value={car.year ? `Reg: ${car.year}` : null} justify="start" />
-          <SpecField field="registration" value={formatRegistration(car.registration)} justify="end" />
-          <SpecField field="ownership" value={car.ownership} justify="start" />
-          <SpecField field="fuel" value={car.fuel} justify="end" />
-          <div className="col-span-2 flex justify-center border-t border-white/5 pt-1.5 sm:pt-2">
-            <SpecField field="km" value={km} justify="center" />
+      <div className="mt-1 flex flex-wrap items-center gap-x-1.5 gap-y-0.5 text-[9px] text-white/50 sm:text-[10.5px]">
+        {car.year && <span>Reg: {car.year}</span>}
+        {formatRegistration(car.registration) && <span>· {formatRegistration(car.registration)}</span>}
+        {car.ownership && <span>· {car.ownership}</span>}
+        {car.fuel && <span>· {car.fuel}</span>}
+        {km && <span>· {km}</span>}
+      </div>
+
+      <div className="relative mt-2 aspect-[4/5] w-full overflow-hidden rounded-2xl sm:mt-3">
+        {car.image ? (
+          <Image
+            src={car.image}
+            alt={`${car.brand} ${car.name}`}
+            fill
+            sizes="(min-width: 1024px) 380px, (min-width: 640px) 45vw, 46vw"
+            className={`object-cover transition-transform duration-700 ease-out group-hover:scale-105 ${revealed ? "scale-105" : ""}`}
+          />
+        ) : (
+          <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-white/10 to-white/[0.02]">
+            <span className="text-[10px] uppercase tracking-[0.3em] text-white/30">No Image</span>
           </div>
-        </div>
+        )}
 
-        <div
-          className={`mt-4 flex items-center border-t border-white/10 pt-3 sm:mt-5 sm:pt-4 ${
-            car.status === "sold" ? "justify-end" : "justify-between"
+        {logoPath && (
+          <div className="absolute bottom-2.5 right-2.5 flex h-8 w-8 items-center justify-center rounded-full bg-black/70 backdrop-blur-md sm:h-9 sm:w-9">
+            <Image
+              src={logoPath}
+              alt={car.brand}
+              width={100}
+              height={48}
+              className={`h-4 w-auto max-w-[24px] object-contain sm:h-[18px] sm:max-w-[28px] ${needsLightTreatment(car.brand) ? "brightness-0 invert" : ""}`}
+            />
+          </div>
+        )}
+      </div>
+
+      <div
+        className={`mt-2 flex items-center sm:mt-3 ${
+          car.status === "sold" ? "justify-end" : "justify-between"
+        }`}
+      >
+        {/* Sold cars no longer show a price — it's off the market,
+            so quoting a figure for it doesn't make sense anymore. */}
+        {car.status !== "sold" && (
+          <p className="text-sm font-bold text-white sm:text-lg">{formatPrice(car.price, car.currency)}</p>
+        )}
+        <span
+          className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full border text-xs transition-all duration-300 group-hover:border-white group-hover:bg-white group-hover:text-black sm:h-8 sm:w-8 sm:text-sm ${
+            revealed ? "border-white bg-white text-black" : "border-white/20 text-white"
           }`}
         >
-          {/* Sold cars no longer show a price — it's off the market,
-              so quoting a figure for it doesn't make sense anymore. */}
-          {car.status !== "sold" && (
-            <p className="text-sm font-bold text-white sm:text-lg">{formatPrice(car.price, car.currency)}</p>
-          )}
-          <span
-            className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full border text-xs transition-all duration-300 group-hover:border-white group-hover:bg-white group-hover:text-black sm:h-8 sm:w-8 sm:text-sm ${
-              revealed ? "border-white bg-white text-black" : "border-white/20 text-white"
-            }`}
-          >
-            →
-          </span>
-        </div>
+          →
+        </span>
       </div>
     </div>
   );
