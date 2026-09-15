@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import StackedDeckCarousel from "./StackedDeckCarousel";
@@ -124,6 +125,40 @@ function CarCardFace({ car, isFront }: { car: CollectionCar; isFront: boolean })
   );
 }
 
+// Mobile-only: shows 4 cars at a time in a 2x2 grid, swapping to the
+// next 4 every 10s — the desktop stacked-deck carousel below sm
+// handles one card at a time instead, so this only ever mounts/runs
+// under that breakpoint's visibility class.
+function CollectionGridMobile({ cars }: { cars: CollectionCar[] }) {
+  const pageSize = 4;
+  const pageCount = Math.max(1, Math.ceil(cars.length / pageSize));
+  const [page, setPage] = useState(0);
+
+  useEffect(() => {
+    if (pageCount <= 1) return;
+    const id = setInterval(() => setPage((p) => (p + 1) % pageCount), 10000);
+    return () => clearInterval(id);
+  }, [pageCount]);
+
+  if (cars.length === 0) {
+    return (
+      <p className="mt-10 rounded-3xl border border-white/10 bg-white/[0.03] p-8 text-center text-sm text-white/50 sm:hidden">
+        No cars have been added to the collection yet. Check back soon.
+      </p>
+    );
+  }
+
+  const visible = cars.slice(page * pageSize, page * pageSize + pageSize);
+
+  return (
+    <div className="mt-10 grid grid-cols-2 gap-3 sm:hidden">
+      {visible.map((car) => (
+        <CarCardFace key={car.id} car={car} isFront />
+      ))}
+    </div>
+  );
+}
+
 export default function CollectionCarousel({
   cars,
   sectionClass,
@@ -147,13 +182,17 @@ export default function CollectionCarousel({
           </h2>
         </Link>
 
-        <StackedDeckCarousel
-          items={cars}
-          getKey={(car) => car.id}
-          autoAdvanceMs={4000}
-          renderCard={(car, isFront) => <CarCardFace car={car} isFront={isFront} />}
-          emptyMessage="No cars have been added to the collection yet. Check back soon."
-        />
+        <CollectionGridMobile cars={cars} />
+
+        <div className="hidden sm:block">
+          <StackedDeckCarousel
+            items={cars}
+            getKey={(car) => car.id}
+            autoAdvanceMs={4000}
+            renderCard={(car, isFront) => <CarCardFace car={car} isFront={isFront} />}
+            emptyMessage="No cars have been added to the collection yet. Check back soon."
+          />
+        </div>
       </div>
     </section>
   );
