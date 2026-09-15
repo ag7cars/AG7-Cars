@@ -106,22 +106,22 @@ function CarCardFace({ car, isFront }: { car: CollectionCar; isFront: boolean })
       <div className="absolute inset-x-0 bottom-0 h-2/5 bg-gradient-to-t from-black/95 to-transparent" />
 
       <div className="absolute inset-x-0 top-0 p-3 sm:p-4">
-        {/* Status badge sits alone on its own row, right-aligned —
-            brand and name each get the full card width on the rows
-            below instead of sharing it with the badge and having to
-            truncate/wrap. */}
-        <div className="flex justify-end">
+        {/* Brand + status share the first row again — both sized down
+            just enough that a long brand like "Mercedes-Benz" still
+            fits next to the badge without truncating or pushing the
+            name row down further. */}
+        <div className="flex items-center justify-between gap-1.5">
+          <p className="min-w-0 truncate text-[8px] uppercase tracking-[0.08em] text-white/60 sm:text-[10px] sm:tracking-[0.15em]">
+            {car.brand}
+          </p>
+
           <div
-            className={`flex shrink-0 items-center gap-1 rounded-full border ${status.badge} px-1.5 py-0.5 text-[7.5px] font-semibold shadow-lg backdrop-blur-md sm:text-[9px]`}
+            className={`flex shrink-0 items-center gap-0.5 rounded-full border ${status.badge} px-1 py-0.5 text-[7px] font-semibold shadow-lg backdrop-blur-md sm:gap-1 sm:px-1.5 sm:text-[9px]`}
           >
             <span className={`h-1 w-1 shrink-0 rounded-full ${status.dot}`} />
             {status.label}
           </div>
         </div>
-
-        <p className="mt-1 truncate text-[9px] uppercase tracking-[0.15em] text-white/60 sm:text-[10px]">
-          {car.brand}
-        </p>
 
         <h3 className="truncate font-display text-sm font-semibold leading-snug text-white sm:text-base">
           {car.name}
