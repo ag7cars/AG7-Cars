@@ -17,6 +17,10 @@ export type CollectionCar = {
   color: string | null;
   colorHex: string | null;
   year: number | null;
+  registration: string | null;
+  ownership: string | null;
+  fuel: string | null;
+  kmDriven: number | null;
 };
 
 const statusStyles: Record<
@@ -54,6 +58,22 @@ function formatPrice(price: number | null, currency: string) {
   }
 }
 
+function formatKm(km: number | null) {
+  if (km === null) return null;
+  if (km === 0) return "Brand New";
+  return `${km.toLocaleString("en-IN")} km`;
+}
+
+// Only the state + RTO code is shown publicly (e.g. "MP 09"), same as
+// the full Collection page — never the raw plate value as typed.
+function formatRegistration(value: string | null) {
+  if (!value) return null;
+  const match = value.trim().match(/^([A-Za-z]{2})\s*-?\s*(\d{1,2})/);
+  if (!match) return value.trim();
+  const [, state, code] = match;
+  return `${state.toUpperCase()} ${code.padStart(2, "0")}`;
+}
+
 function CarCardFace({ car, isFront }: { car: CollectionCar; isFront: boolean }) {
   const status = statusStyles[car.status];
 
@@ -76,36 +96,43 @@ function CarCardFace({ car, isFront }: { car: CollectionCar; isFront: boolean })
         </div>
       )}
 
-      {/* Kept to just the bottom strip now that the text block is a
-          single compact row — the old full-height gradient darkened
-          more of the photo than the (now smaller) text actually
-          needs. */}
-      <div className="absolute inset-x-0 bottom-0 h-1/2 bg-gradient-to-t from-black/95 via-black/40 via-40% to-transparent" />
+      {/* Two gradients — a taller one at the top carries the brand,
+          name, status and full spec line; a smaller one at the
+          bottom carries just the price — so both text blocks stay
+          legible over the photo instead of a plain overlay. */}
+      <div className="absolute inset-x-0 top-0 h-2/3 bg-gradient-to-b from-black/85 via-black/35 via-45% to-transparent" />
+      <div className="absolute inset-x-0 bottom-0 h-1/3 bg-gradient-to-t from-black/90 to-transparent" />
 
-      <div
-        className={`absolute left-3 top-3 flex items-center gap-1 rounded-full border ${status.badge} px-2 py-0.5 text-[10px] font-semibold shadow-lg backdrop-blur-md`}
-      >
-        <span className={`h-1.5 w-1.5 rounded-full ${status.dot}`} />
-        {status.label}
+      <div className="absolute inset-x-0 top-0 p-3 sm:p-4">
+        <div className="flex items-start justify-between gap-2">
+          <div className="min-w-0">
+            <p className="text-[9px] uppercase tracking-[0.15em] text-white/60 sm:text-[10px]">
+              {car.brand}
+            </p>
+            <h3 className="line-clamp-1 font-display text-sm font-semibold leading-snug text-white sm:text-base">
+              {car.name}
+            </h3>
+          </div>
+
+          <div
+            className={`flex shrink-0 items-center gap-1 rounded-full border ${status.badge} px-2 py-0.5 text-[9px] font-semibold shadow-lg backdrop-blur-md sm:text-[10px]`}
+          >
+            <span className={`h-1.5 w-1.5 shrink-0 rounded-full ${status.dot}`} />
+            {status.label}
+          </div>
+        </div>
+
+        <div className="mt-1.5 flex flex-wrap items-center gap-x-1.5 gap-y-0.5 text-[9px] text-white/70 sm:text-[10.5px]">
+          {car.year && <span>Reg: {car.year}</span>}
+          {formatRegistration(car.registration) && <span>· {formatRegistration(car.registration)}</span>}
+          {car.ownership && <span>· {car.ownership}</span>}
+          {car.fuel && <span>· {car.fuel}</span>}
+          {formatKm(car.kmDriven) && <span>· {formatKm(car.kmDriven)}</span>}
+        </div>
       </div>
 
-      {car.year && (
-        <div className="absolute right-3 top-3 rounded-full border border-white/20 bg-black/70 px-2 py-0.5 text-[10px] font-medium text-white/80 shadow-lg backdrop-blur-md">
-          Reg: {car.year}
-        </div>
-      )}
-
-      {/* Text only (no logo) — brand, name, and price all sized down
-          a step from the first pass so this block covers less of
-          the photo. */}
       <div className="absolute inset-x-0 bottom-0 p-3 sm:p-4">
-        <p className="text-[10px] uppercase tracking-[0.15em] text-white/50">
-          {car.brand}
-        </p>
-        <h3 className="line-clamp-2 font-display text-sm font-semibold leading-snug text-white sm:text-base">
-          {car.name}
-        </h3>
-        <p className="mt-0.5 text-xs font-medium text-white/80">
+        <p className="text-xs font-medium text-white/90 sm:text-sm">
           {formatPrice(car.price, car.currency)}
         </p>
       </div>
