@@ -6,7 +6,7 @@ import { useForm, type SubmitHandler } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { getYouTubeVideoId, isYouTubeUrl, toYouTubeThumbnailUrl } from "@/lib/youtube";
-import { isInstagramUrl, toCanonicalInstagramUrl } from "@/lib/instagram";
+import { isInstagramUrl } from "@/lib/instagram";
 import DeleteButton from "@/components/admin/DeleteButton";
 
 const deliverySchema = z.object({
@@ -31,8 +31,6 @@ export default function EditDeliveryForm({ delivery }: { delivery: EditableDeliv
 
   const [newFile, setNewFile] = useState<File | null>(null);
   const [newPreview, setNewPreview] = useState<string | null>(null);
-  const [youtubeUrl, setYoutubeUrl] = useState(currentIsYoutube ? delivery.mediaUrl : "");
-  const [instagramUrl, setInstagramUrl] = useState(currentIsInstagram ? delivery.mediaUrl : "");
   const [message, setMessage] = useState("");
   const [saving, setSaving] = useState(false);
 
@@ -62,34 +60,15 @@ export default function EditDeliveryForm({ delivery }: { delivery: EditableDeliv
 
     setNewFile(file);
     setNewPreview(URL.createObjectURL(file));
-    setYoutubeUrl(""); // a picked file replaces any pasted link
-    setInstagramUrl("");
   }
 
   const onSubmit: SubmitHandler<DeliveryFormValues> = async (values) => {
-    if (isVideo && youtubeUrl && !getYouTubeVideoId(youtubeUrl)) {
-      setMessage("That doesn't look like a valid YouTube link.");
-      return;
-    }
-
-    if (isVideo && instagramUrl && !toCanonicalInstagramUrl(instagramUrl)) {
-      setMessage("That doesn't look like a valid Instagram post/reel link.");
-      return;
-    }
-
     setSaving(true);
     setMessage("");
 
     try {
       const formData = new FormData();
-      formData.append(
-        "delivery",
-        JSON.stringify({
-          ...values,
-          youtubeUrl: isVideo && youtubeUrl ? youtubeUrl : undefined,
-          instagramUrl: isVideo && instagramUrl ? instagramUrl : undefined,
-        })
-      );
+      formData.append("delivery", JSON.stringify(values));
       if (newFile) formData.append("media", newFile);
 
       const response = await fetch(`/api/admin/deliveries/${delivery.id}`, {
@@ -181,60 +160,11 @@ export default function EditDeliveryForm({ delivery }: { delivery: EditableDeliv
           />
         </label>
 
-        {isVideo && (
-          <div className="mt-6 border-t border-white/10 pt-6">
-            <label className="mb-1.5 block text-sm font-medium text-white/70">
-              Or replace with a YouTube link
-            </label>
-            <input
-              type="url"
-              value={youtubeUrl}
-              onChange={(event) => {
-                setYoutubeUrl(event.target.value);
-                if (event.target.value) setInstagramUrl("");
-                if (newFile) {
-                  if (newPreview) URL.revokeObjectURL(newPreview);
-                  setNewFile(null);
-                  setNewPreview(null);
-                }
-              }}
-              placeholder="https://youtu.be/..."
-              className={inputClass}
-            />
-            <p className="mt-1.5 text-xs text-white/40">
-              {currentIsYoutube
-                ? "Currently a YouTube link. Change it here, or upload a file above to switch to an uploaded video."
-                : "Paste a link to switch this from an uploaded file to a YouTube video."}
-            </p>
-          </div>
-        )}
-
-        {isVideo && (
-          <div className="mt-6 border-t border-white/10 pt-6">
-            <label className="mb-1.5 block text-sm font-medium text-white/70">
-              Or replace with an Instagram link
-            </label>
-            <input
-              type="url"
-              value={instagramUrl}
-              onChange={(event) => {
-                setInstagramUrl(event.target.value);
-                if (event.target.value) setYoutubeUrl("");
-                if (newFile) {
-                  if (newPreview) URL.revokeObjectURL(newPreview);
-                  setNewFile(null);
-                  setNewPreview(null);
-                }
-              }}
-              placeholder="https://www.instagram.com/reel/..."
-              className={inputClass}
-            />
-            <p className="mt-1.5 text-xs text-white/40">
-              {currentIsInstagram
-                ? "Currently an Instagram link. Change it here, or upload a file/paste a YouTube link above to switch."
-                : "Paste a link to switch this to an Instagram-hosted video — shows as Instagram's own embedded post."}
-            </p>
-          </div>
+        {isVideo && (currentIsYoutube || currentIsInstagram) && (
+          <p className="mt-6 border-t border-white/10 pt-6 text-xs text-white/40">
+            Currently a {currentIsYoutube ? "YouTube" : "Instagram"} link — upload a file above to
+            switch this to a directly-hosted video.
+          </p>
         )}
       </section>
 
