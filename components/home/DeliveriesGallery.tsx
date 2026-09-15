@@ -21,6 +21,7 @@ function DeliveryCardFace({
   delivery,
   isFront,
   side,
+  sectionInView,
   onVideoPlayingChange,
 }: {
   delivery: Delivery;
@@ -31,6 +32,11 @@ function DeliveryCardFace({
       on the card's outer edge instead of getting tucked toward the
       center, whichever side it peeks from. */
   side: -1 | 0 | 1;
+  /** Whether the videos carousel itself is currently scrolled into
+      view — sound only plays while the visitor is actually looking
+      at this section, and cuts out the instant they scroll past it
+      either direction. */
+  sectionInView: boolean;
   onVideoPlayingChange: (playing: boolean) => void;
 }) {
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -42,16 +48,24 @@ function DeliveryCardFace({
   // transition for the same thread and making it stutter on weaker
   // mobile hardware. Driving play/pause imperatively off `isFront`
   // stops that decode work the instant a card leaves the front.
+  //
+  // Mute is set in this same effect, before play() runs, rather than
+  // as a static `muted` JSX attribute — toggling `.muted` on an
+  // element that's already playing is allowed without a user gesture
+  // (the common autoplay-muted-then-unmute pattern), but only if the
+  // mute state is correct at the moment `.play()` is actually called.
   useEffect(() => {
     const video = videoRef.current;
     if (!video) return;
+
+    video.muted = !(isFront && sectionInView);
 
     if (isFront) {
       video.play().catch(() => {});
     } else {
       video.pause();
     }
-  }, [isFront]);
+  }, [isFront, sectionInView]);
 
   const mirrored = side === -1;
 
@@ -123,7 +137,14 @@ function DeliveryCardFace({
               muted
               loop
               playsInline
-              preload="auto"
+              // Only the front card fully preloads — these videos are
+              // now served straight off the server's own disk with no
+              // CDN in front, so every mounted card preloading at once
+              // (there can be many in the deck) competed for the same
+              // bandwidth and made the actually-visible one slow to
+              // start. Back cards still fetch enough to know duration/
+              // dimensions, just not the full file.
+              preload={isFront ? "auto" : "metadata"}
               controls={isFront}
               onPlay={() => isFront && onVideoPlayingChange(true)}
               onPause={() => isFront && onVideoPlayingChange(false)}
@@ -186,6 +207,21 @@ export default function DeliveriesGallery({
   sectionClass: string;
 }) {
   const [videoPlaying, setVideoPlaying] = useState(false);
+  const [videosInView, setVideosInView] = useState(false);
+  const videosSectionRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const el = videosSectionRef.current;
+    if (!el) return;
+
+    const observer = new IntersectionObserver(
+      ([entry]) => setVideosInView(entry.isIntersecting),
+      { threshold: 0.5 }
+    );
+    observer.observe(el);
+
+    return () => observer.disconnect();
+  }, []);
 
   return (
     <section
@@ -202,7 +238,7 @@ export default function DeliveriesGallery({
 
         {/* Videos first, photos below — no "Videos"/"Photos"
             sub-headings, just the two carousels stacked in order. */}
-        <div className="mt-8">
+        <div ref={videosSectionRef} className="mt-8">
           <StackedDeckCarousel
             items={videos}
             getKey={(delivery) => delivery.id}
@@ -213,6 +249,7 @@ export default function DeliveriesGallery({
                 delivery={delivery}
                 isFront={isFront}
                 side={side}
+                sectionInView={videosInView}
                 onVideoPlayingChange={setVideoPlaying}
               />
             )}
@@ -230,6 +267,7 @@ export default function DeliveriesGallery({
                 delivery={delivery}
                 isFront={isFront}
                 side={side}
+                sectionInView={false}
                 onVideoPlayingChange={noop}
               />
             )}

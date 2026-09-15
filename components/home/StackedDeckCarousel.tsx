@@ -155,6 +155,18 @@ export default function StackedDeckCarousel<T>({
               key={getKey(item)}
               className="absolute inset-0"
               aria-hidden={hidden || undefined}
+              // Click-to-select lives directly on this wrapper instead
+              // of conditionally wrapping `card` in a <button> only
+              // when it's not front — that conditional wrapping used
+              // to change the DOM shape around `card` every time a
+              // card crossed the front/back boundary, which forced
+              // React to unmount and remount the whole subtree
+              // (video included) on every single transition, resetting
+              // playback and forcing a full reload from scratch each
+              // time a video cycled back to front.
+              role={isFront ? undefined : "button"}
+              aria-label={isFront ? undefined : "Show this item"}
+              onClick={isFront ? undefined : () => goTo(index)}
               style={{
                 // A single translate3d (rather than separate
                 // translateX/translateY) is what reliably pushes
@@ -166,25 +178,14 @@ export default function StackedDeckCarousel<T>({
                 opacity,
                 zIndex,
                 pointerEvents: hidden ? "none" : undefined,
+                cursor: isFront ? undefined : "pointer",
                 transition:
                   "transform 0.65s cubic-bezier(0.22, 1, 0.36, 1), opacity 0.65s cubic-bezier(0.22, 1, 0.36, 1)",
                 willChange: "transform, opacity",
                 backfaceVisibility: "hidden",
               }}
             >
-              {isFront ? (
-                card
-              ) : (
-                <button
-                  type="button"
-                  onClick={() => goTo(index)}
-                  aria-label="Show this item"
-                  className="block h-full w-full appearance-none border-0 bg-transparent p-0"
-                  tabIndex={-1}
-                >
-                  {card}
-                </button>
-              )}
+              {card}
             </div>
           );
         })}
