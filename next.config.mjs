@@ -15,6 +15,12 @@ const nextConfig = {
         hostname: "nfbcoawizzpvuzdzpszy.supabase.co",
         pathname: "/storage/v1/object/public/**",
       },
+      {
+        // Thumbnails for delivery videos hosted as YouTube links
+        // instead of Supabase Storage files (see lib/youtube.ts).
+        protocol: "https",
+        hostname: "i.ytimg.com",
+      },
     ],
     // Needed to run the brand logo SVGs (public/brand-logos) through
     // next/image — off by default since an SVG can carry a script,

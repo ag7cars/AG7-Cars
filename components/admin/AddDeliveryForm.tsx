@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { useForm, type SubmitHandler } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { getYouTubeVideoId, toYouTubeThumbnailUrl } from "@/lib/youtube";
 
 const deliverySchema = z.object({
   brand: z.string().trim().min(1, "Brand is required"),
@@ -31,9 +32,13 @@ export default function AddDeliveryForm({ mediaKind }: { mediaKind: DeliveryMedi
   const mediaLabelPlural = isVideoForm ? "videos" : "photos";
 
   const [items, setItems] = useState<PickedFile[]>([]);
+  const [youtubeLinks, setYoutubeLinks] = useState<string[]>([]);
+  const [youtubeInput, setYoutubeInput] = useState("");
   const [message, setMessage] = useState("");
   const [saving, setSaving] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const totalCount = items.length + youtubeLinks.length;
 
   const {
     register,
@@ -80,13 +85,13 @@ export default function AddDeliveryForm({ mediaKind }: { mediaKind: DeliveryMedi
     setMessage("");
     setItems((current) => {
       const combined = [...current, ...next];
+      const allowed = combined.slice(0, Math.max(0, 10 - youtubeLinks.length));
 
-      if (combined.length > 10) {
+      if (combined.length > allowed.length) {
         setMessage(`You can add a maximum of 10 ${mediaLabelPlural} at once.`);
-        return combined.slice(0, 10);
       }
 
-      return combined;
+      return allowed;
     });
   }
 
@@ -98,9 +103,36 @@ export default function AddDeliveryForm({ mediaKind }: { mediaKind: DeliveryMedi
     });
   }
 
+  function addYoutubeLink() {
+    const url = youtubeInput.trim();
+    if (!url) return;
+
+    if (!getYouTubeVideoId(url)) {
+      setMessage("That doesn't look like a YouTube link — paste the full video URL.");
+      return;
+    }
+
+    if (totalCount >= 10) {
+      setMessage("You can add a maximum of 10 videos at once.");
+      return;
+    }
+
+    setMessage("");
+    setYoutubeLinks((current) => [...current, url]);
+    setYoutubeInput("");
+  }
+
+  function removeYoutubeLink(index: number) {
+    setYoutubeLinks((current) => current.filter((_, i) => i !== index));
+  }
+
   const onSubmit: SubmitHandler<DeliveryFormValues> = async (values) => {
-    if (items.length === 0) {
-      setMessage(`Please add at least one ${mediaLabel}.`);
+    if (totalCount === 0) {
+      setMessage(
+        isVideoForm
+          ? "Please add at least one video file or YouTube link."
+          : `Please add at least one ${mediaLabel}.`
+      );
       return;
     }
 
@@ -109,7 +141,7 @@ export default function AddDeliveryForm({ mediaKind }: { mediaKind: DeliveryMedi
 
     try {
       const formData = new FormData();
-      formData.append("delivery", JSON.stringify({ ...values, mediaKind }));
+      formData.append("delivery", JSON.stringify({ ...values, mediaKind, youtubeLinks }));
       items.forEach((item) => {
         formData.append("media", item.file);
       });
@@ -131,14 +163,15 @@ export default function AddDeliveryForm({ mediaKind }: { mediaKind: DeliveryMedi
       }
 
       setMessage(
-        items.length > 1
-          ? `${items.length} ${mediaLabelPlural} successfully published.`
+        totalCount > 1
+          ? `${totalCount} ${mediaLabelPlural} successfully published.`
           : `${isVideoForm ? "Video" : "Photo"} successfully published.`
       );
 
       items.forEach((item) => URL.revokeObjectURL(item.preview));
       reset({ brand: "", model: "", caption: "" });
       setItems([]);
+      setYoutubeLinks([]);
     } catch (error) {
       setMessage(
         error instanceof Error ? error.message : "Something went wrong."
@@ -168,6 +201,13 @@ export default function AddDeliveryForm({ mediaKind }: { mediaKind: DeliveryMedi
           Add one or more {mediaLabelPlural} — each becomes its own
           entry in AG7 Deliveries {isVideoForm ? "Videos" : "Photos"},
           using the Brand and Model below. Up to 10 at a time.
+          {isVideoForm && (
+            <>
+              {" "}Uploaded files are capped by Supabase's free-plan
+              storage limit — for anything larger, use a YouTube link
+              below instead.
+            </>
+          )}
         </p>
 
         <input
@@ -182,12 +222,12 @@ export default function AddDeliveryForm({ mediaKind }: { mediaKind: DeliveryMedi
         <button
           type="button"
           onClick={() => fileInputRef.current?.click()}
-          disabled={items.length >= 10}
+          disabled={totalCount >= 10}
           className="mt-6 flex w-full items-center justify-center rounded-xl border border-dashed border-white/20 bg-white/[0.03] p-6 text-sm font-medium text-white/70 transition hover:border-white/40 hover:bg-white/[0.06] disabled:cursor-not-allowed disabled:opacity-40"
         >
           {items.length === 0
             ? `Add ${isVideoForm ? "Videos" : "Photos"}`
-            : `Add More (${items.length}/10)`}
+            : `Add More (${totalCount}/10)`}
         </button>
 
         {items.length > 0 && (
@@ -228,6 +268,80 @@ export default function AddDeliveryForm({ mediaKind }: { mediaKind: DeliveryMedi
                 </button>
               </div>
             ))}
+          </div>
+        )}
+
+        {isVideoForm && (
+          <div className="mt-6 border-t border-white/10 pt-6">
+            <h3 className="text-sm font-semibold text-white/80">
+              Or add by YouTube link
+            </h3>
+            <p className="mt-1 text-xs text-white/50">
+              Upload the video to YouTube (Unlisted works fine) first,
+              then paste the link here — no file size limit this way.
+            </p>
+
+            <div className="mt-4 flex gap-2">
+              <input
+                type="url"
+                value={youtubeInput}
+                onChange={(event) => setYoutubeInput(event.target.value)}
+                onKeyDown={(event) => {
+                  if (event.key === "Enter") {
+                    event.preventDefault();
+                    addYoutubeLink();
+                  }
+                }}
+                placeholder="https://youtu.be/..."
+                className={inputClass}
+              />
+              <button
+                type="button"
+                onClick={addYoutubeLink}
+                disabled={totalCount >= 10}
+                className="h-12 shrink-0 rounded-xl border border-white/20 px-5 text-sm font-semibold text-white transition hover:border-white hover:bg-white hover:text-black disabled:cursor-not-allowed disabled:opacity-40"
+              >
+                Add Link
+              </button>
+            </div>
+
+            {youtubeLinks.length > 0 && (
+              <div className="mt-4 grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-5">
+                {youtubeLinks.map((url, index) => {
+                  const videoId = getYouTubeVideoId(url);
+                  return (
+                    <div
+                      key={`${url}-${index}`}
+                      className="group relative overflow-hidden rounded-xl border border-white/10 bg-black"
+                    >
+                      <div className="relative aspect-square w-full">
+                        {videoId ? (
+                          // eslint-disable-next-line @next/next/no-img-element
+                          <img
+                            src={toYouTubeThumbnailUrl(videoId)}
+                            alt={`YouTube video ${index + 1}`}
+                            className="h-full w-full object-cover"
+                          />
+                        ) : null}
+
+                        <span className="absolute left-2 top-2 rounded-full bg-red-500/90 px-2 py-0.5 text-[9px] font-semibold uppercase tracking-wide text-white">
+                          YouTube
+                        </span>
+                      </div>
+
+                      <button
+                        type="button"
+                        onClick={() => removeYoutubeLink(index)}
+                        aria-label="Remove"
+                        className="absolute right-1.5 top-1.5 flex h-6 w-6 items-center justify-center rounded-full bg-black/70 text-xs text-white/80 transition hover:bg-red-500/70 hover:text-white"
+                      >
+                        ✕
+                      </button>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
           </div>
         )}
 

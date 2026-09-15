@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import StackedDeckCarousel from "./StackedDeckCarousel";
+import { getYouTubeVideoId, isYouTubeUrl, toYouTubeEmbedUrl } from "@/lib/youtube";
 
 export type Delivery = {
   id: string;
@@ -62,19 +63,34 @@ function DeliveryCardFace({
       {/* Media */}
       <div className="relative h-full flex-1 bg-black">
         {delivery.mediaType === "video" ? (
-          <video
-            ref={videoRef}
-            src={delivery.mediaUrl}
-            muted
-            loop
-            playsInline
-            preload="auto"
-            controls={isFront}
-            onPlay={() => isFront && onVideoPlayingChange(true)}
-            onPause={() => isFront && onVideoPlayingChange(false)}
-            onEnded={() => isFront && onVideoPlayingChange(false)}
-            className="h-full w-full object-cover"
-          />
+          isYouTubeUrl(delivery.mediaUrl) ? (
+            // YouTube embeds don't expose the same play/pause events
+            // as a native <video>, so this doesn't pause the deck's
+            // auto-advance the way the uploaded-file branch below
+            // does — an accepted trade-off for videos hosted this way
+            // (see lib/youtube.ts) instead of Supabase Storage.
+            <iframe
+              src={toYouTubeEmbedUrl(getYouTubeVideoId(delivery.mediaUrl)!)}
+              title={[delivery.brand, delivery.model].filter(Boolean).join(" ") || "AG7 Cars delivery"}
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+              allowFullScreen
+              className="h-full w-full"
+            />
+          ) : (
+            <video
+              ref={videoRef}
+              src={delivery.mediaUrl}
+              muted
+              loop
+              playsInline
+              preload="auto"
+              controls={isFront}
+              onPlay={() => isFront && onVideoPlayingChange(true)}
+              onPause={() => isFront && onVideoPlayingChange(false)}
+              onEnded={() => isFront && onVideoPlayingChange(false)}
+              className="h-full w-full object-cover"
+            />
+          )
         ) : (
           <Image
             src={delivery.mediaUrl}

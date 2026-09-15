@@ -4,6 +4,7 @@ import Image from "next/image";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 import { createClient } from "@/lib/supabase/server";
+import { getYouTubeVideoId, isYouTubeUrl, toYouTubeEmbedUrl } from "@/lib/youtube";
 
 export default async function DeliveryDetailPage({
   params,
@@ -47,15 +48,25 @@ export default async function DeliveryDetailPage({
 
             <div className="relative aspect-[3/4] w-full overflow-hidden bg-black">
               {delivery.media_type === "video" ? (
-                <video
-                  src={delivery.media_url}
-                  controls
-                  autoPlay
-                  muted
-                  loop
-                  playsInline
-                  className="h-full w-full object-cover"
-                />
+                isYouTubeUrl(delivery.media_url) ? (
+                  <iframe
+                    src={toYouTubeEmbedUrl(getYouTubeVideoId(delivery.media_url)!)}
+                    title={title}
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                    allowFullScreen
+                    className="h-full w-full"
+                  />
+                ) : (
+                  <video
+                    src={delivery.media_url}
+                    controls
+                    autoPlay
+                    muted
+                    loop
+                    playsInline
+                    className="h-full w-full object-cover"
+                  />
+                )
               ) : (
                 <Image
                   src={delivery.media_url}

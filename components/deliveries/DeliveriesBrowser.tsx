@@ -2,6 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
+import { getYouTubeVideoId, isYouTubeUrl, toYouTubeThumbnailUrl } from "@/lib/youtube";
 
 export type BrowseDelivery = {
   id: string;
@@ -30,12 +31,25 @@ function DeliveryCard({ delivery, index }: { delivery: BrowseDelivery; index: nu
       <div className="relative aspect-[4/5] w-full overflow-hidden bg-black">
         {delivery.mediaType === "video" ? (
           <>
-            <video
-              src={delivery.mediaUrl}
-              muted
-              playsInline
-              className="h-full w-full object-cover"
-            />
+            {isYouTubeUrl(delivery.mediaUrl) ? (
+              // Just a thumbnail here — clicking through to the
+              // detail page is where it actually plays, same as an
+              // uploaded video only shows its first frame on this card.
+              <Image
+                src={toYouTubeThumbnailUrl(getYouTubeVideoId(delivery.mediaUrl)!)}
+                alt={[delivery.brand, delivery.model].filter(Boolean).join(" ") || "AG7 Cars delivery"}
+                fill
+                sizes="(min-width: 1024px) 380px, (min-width: 640px) 45vw, 46vw"
+                className="object-cover"
+              />
+            ) : (
+              <video
+                src={delivery.mediaUrl}
+                muted
+                playsInline
+                className="h-full w-full object-cover"
+              />
+            )}
             <div className="pointer-events-none absolute inset-0 flex items-center justify-center bg-black/20">
               <span className="flex h-12 w-12 items-center justify-center rounded-full bg-black/60 text-white backdrop-blur-md">
                 ▶

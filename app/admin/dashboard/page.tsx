@@ -115,6 +115,23 @@ export default async function AdminDashboardPage() {
           </a>
 
           <a
+            href="/admin/dashboard/deliveries"
+            className="rounded-2xl border border-white/10 bg-white/[0.04] p-6 transition hover:-translate-y-1 hover:bg-white/[0.07]"
+          >
+            <p className="text-sm text-white/40">
+              Deliveries
+            </p>
+
+            <h2 className="mt-2 text-xl font-semibold">
+              Manage Deliveries
+            </h2>
+
+            <p className="mt-2 text-sm text-white/50">
+              View every delivery photo/video and edit or delete it.
+            </p>
+          </a>
+
+          <a
             href="/admin/dashboard/deliveries/videos/new"
             className="rounded-2xl border border-white/10 bg-white/[0.04] p-6 transition hover:-translate-y-1 hover:bg-white/[0.07]"
           >
