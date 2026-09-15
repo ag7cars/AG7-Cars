@@ -165,10 +165,23 @@ export async function PATCH(
       return NextResponse.json({ error: "Nothing to update." }, { status: 400 });
     }
 
-    const { error } = await supabase.from("deliveries").update(update).eq("id", id);
+    // .select() so a silent RLS block (update "succeeds" but touches
+    // zero rows, no error) surfaces as a real error instead of a
+    // false "saved" response — see the matching note in DELETE below.
+    const { data: updatedRows, error } = await supabase
+      .from("deliveries")
+      .update(update)
+      .eq("id", id)
+      .select("id");
 
     if (error) {
       throw new Error(`Delivery could not be updated: ${error.message}`);
+    }
+
+    if (!updatedRows || updatedRows.length === 0) {
+      throw new Error(
+        "Save didn't go through — likely a missing database permission (RLS policy) for updating deliveries."
+      );
     }
 
     return NextResponse.json({ ok: true });
@@ -212,10 +225,25 @@ export async function DELETE(
       return NextResponse.json({ error: "Delivery not found." }, { status: 404 });
     }
 
-    const { error } = await supabase.from("deliveries").delete().eq("id", id);
+    // .select() after .delete() so we get back the row(s) actually
+    // removed — without it, a delete silently blocked by a missing
+    // RLS policy returns success with zero rows affected and no
+    // error, which left the UI stuck on "Deleting…" forever instead
+    // of showing that anything was wrong.
+    const { data: deletedRows, error } = await supabase
+      .from("deliveries")
+      .delete()
+      .eq("id", id)
+      .select("id");
 
     if (error) {
       throw new Error(`Delivery could not be deleted: ${error.message}`);
+    }
+
+    if (!deletedRows || deletedRows.length === 0) {
+      throw new Error(
+        "Delete didn't go through — likely a missing database permission (RLS policy) for deleting deliveries."
+      );
     }
 
     // Best-effort media cleanup — the record is already gone, so a
