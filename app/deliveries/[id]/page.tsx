@@ -48,7 +48,13 @@ export default async function DeliveryDetailPage({
           <div className="relative mx-auto w-full max-w-md -rotate-1 rounded-sm bg-[#f4efe4] p-3 pb-8 shadow-2xl ring-1 ring-black/5 sm:p-4 sm:pb-12">
             <span className="absolute left-1/2 top-0 z-10 h-3.5 w-3.5 -translate-x-1/2 -translate-y-1/2 rounded-full bg-red-500 shadow-md ring-2 ring-red-300/50" />
 
-            <div className="relative aspect-[3/4] w-full overflow-hidden bg-black">
+            <div
+              className={`relative w-full bg-black ${
+                delivery.media_type === "video" && isInstagramUrl(delivery.media_url)
+                  ? ""
+                  : "aspect-[3/4] overflow-hidden"
+              }`}
+            >
               {delivery.media_type === "video" ? (
                 isYouTubeUrl(delivery.media_url) ? (
                   <iframe

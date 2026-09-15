@@ -6,7 +6,6 @@ import Link from "next/link";
 import StackedDeckCarousel from "./StackedDeckCarousel";
 import { getYouTubeVideoId, isYouTubeUrl, toYouTubeEmbedUrl, toYouTubeThumbnailUrl } from "@/lib/youtube";
 import { isInstagramUrl } from "@/lib/instagram";
-import InstagramEmbed from "@/components/InstagramEmbed";
 
 export type Delivery = {
   id: string;
@@ -92,11 +91,31 @@ function DeliveryCardFace({
               );
             })()
           ) : isInstagramUrl(delivery.mediaUrl) ? (
-            // Instagram's widget doesn't autoplay regardless of which
-            // card is front (unlike YouTube), so there's no front/back
-            // distinction needed here — it just always shows as
-            // Instagram's own paused post card.
-            <InstagramEmbed url={delivery.mediaUrl} />
+            // Instagram's embed widget has a ~326px hard-coded minimum
+            // width — wider than this card's media area once the
+            // sidebar strip is subtracted, so a live embed here always
+            // renders squashed/broken. Show a placeholder instead (same
+            // as the grid card) and send the front card through to the
+            // detail page, which has enough room for the real embed.
+            isFront ? (
+              <Link
+                href={`/deliveries/${delivery.id}`}
+                className="flex h-full w-full flex-col items-center justify-center gap-3 bg-gradient-to-br from-fuchsia-600/40 to-amber-500/40 transition hover:from-fuchsia-600/55 hover:to-amber-500/55"
+              >
+                <span className="flex h-12 w-12 items-center justify-center rounded-full bg-black/60 text-white backdrop-blur-md">
+                  ▶
+                </span>
+                <span className="text-xs font-semibold uppercase tracking-wide text-white/90">
+                  View on Instagram
+                </span>
+              </Link>
+            ) : (
+              <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-fuchsia-600/40 to-amber-500/40">
+                <span className="text-xs font-semibold uppercase tracking-wide text-white/90">
+                  Instagram
+                </span>
+              </div>
+            )
           ) : (
             <video
               ref={videoRef}
