@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import StackedDeckCarousel from "./StackedDeckCarousel";
-import { getYouTubeVideoId, isYouTubeUrl, toYouTubeEmbedUrl } from "@/lib/youtube";
+import { getYouTubeVideoId, isYouTubeUrl, toYouTubeEmbedUrl, toYouTubeThumbnailUrl } from "@/lib/youtube";
 
 export type Delivery = {
   id: string;
@@ -64,18 +64,31 @@ function DeliveryCardFace({
       <div className="relative h-full flex-1 bg-black">
         {delivery.mediaType === "video" ? (
           isYouTubeUrl(delivery.mediaUrl) ? (
-            // YouTube embeds don't expose the same play/pause events
-            // as a native <video>, so this doesn't pause the deck's
-            // auto-advance the way the uploaded-file branch below
-            // does — an accepted trade-off for videos hosted this way
-            // (see lib/youtube.ts) instead of Supabase Storage.
-            <iframe
-              src={toYouTubeEmbedUrl(getYouTubeVideoId(delivery.mediaUrl)!)}
-              title={[delivery.brand, delivery.model].filter(Boolean).join(" ") || "AG7 Cars delivery"}
-              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-              allowFullScreen
-              className="h-full w-full"
-            />
+            (() => {
+              const videoId = getYouTubeVideoId(delivery.mediaUrl)!;
+              // Only the front card gets a live (autoplaying) iframe —
+              // mounting a playing embed for every card in the deck at
+              // once (it stays in the DOM for the slide transition)
+              // would start them all simultaneously. Back cards show
+              // a static thumbnail instead, same idea as the uploaded-
+              // video branch below only decoding while it's front.
+              return isFront ? (
+                <iframe
+                  src={`${toYouTubeEmbedUrl(videoId)}?autoplay=1&mute=1&loop=1&playlist=${videoId}&playsinline=1`}
+                  title={[delivery.brand, delivery.model].filter(Boolean).join(" ") || "AG7 Cars delivery"}
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                  allowFullScreen
+                  className="h-full w-full"
+                />
+              ) : (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={toYouTubeThumbnailUrl(videoId)}
+                  alt={[delivery.brand, delivery.model].filter(Boolean).join(" ") || "AG7 Cars delivery"}
+                  className="h-full w-full object-cover"
+                />
+              );
+            })()
           ) : (
             <video
               ref={videoRef}

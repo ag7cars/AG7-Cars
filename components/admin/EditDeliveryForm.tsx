@@ -6,6 +6,7 @@ import { useForm, type SubmitHandler } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { getYouTubeVideoId, isYouTubeUrl, toYouTubeThumbnailUrl } from "@/lib/youtube";
+import DeleteButton from "@/components/admin/DeleteButton";
 
 const deliverySchema = z.object({
   brand: z.string().trim().min(1, "Brand is required"),
@@ -243,6 +244,16 @@ export default function EditDeliveryForm({ delivery }: { delivery: EditableDeliv
         >
           Cancel
         </a>
+
+        <DeleteButton
+          endpoint={`/api/admin/deliveries/${delivery.id}`}
+          confirmMessage={`Delete this ${isVideo ? "video" : "photo"}${
+            delivery.brand || delivery.model
+              ? ` (${[delivery.brand, delivery.model].filter(Boolean).join(" ")})`
+              : ""
+          }? This cannot be undone.`}
+          redirectTo="/admin/dashboard/deliveries"
+        />
       </div>
     </form>
   );

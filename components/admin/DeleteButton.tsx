@@ -6,9 +6,15 @@ import { useRouter } from "next/navigation";
 export default function DeleteButton({
   endpoint,
   confirmMessage,
+  redirectTo,
 }: {
   endpoint: string;
   confirmMessage: string;
+  /** Where to navigate after a successful delete — use this from a
+      page dedicated to the deleted item itself (e.g. its edit page),
+      since that page has nothing left to refresh into. Omit it from
+      a list page, where refreshing in place is what you want. */
+  redirectTo?: string;
 }) {
   const router = useRouter();
   const [pending, setPending] = useState(false);
@@ -25,7 +31,11 @@ export default function DeleteButton({
         throw new Error(body?.error ?? "Unable to delete.");
       }
 
-      router.refresh();
+      if (redirectTo) {
+        router.push(redirectTo);
+      } else {
+        router.refresh();
+      }
     } catch (error) {
       window.alert(error instanceof Error ? error.message : "Unable to delete.");
       setPending(false);
