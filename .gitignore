@@ -40,3 +40,7 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# local fallback for VIDEO_STORAGE_DIR (dev only — production uses a
+# folder outside the project, set via env)
+/.video-storage/

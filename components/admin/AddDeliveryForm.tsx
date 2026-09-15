@@ -234,8 +234,8 @@ export default function AddDeliveryForm({ mediaKind }: { mediaKind: DeliveryMedi
           using the Brand and Model below. Up to 10 at a time.
           {isVideoForm && (
             <>
-              {" "}Uploaded files are capped by Supabase's free-plan
-              storage limit — for anything larger, use a YouTube link
+              {" "}Uploaded files are stored directly on the server (up
+              to 150 MB each) — for anything larger, use a YouTube link
               below instead.
             </>
           )}

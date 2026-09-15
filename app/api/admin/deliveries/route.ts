@@ -4,6 +4,7 @@ import { createClient } from "@/lib/supabase/server";
 import { isAdmin } from "@/lib/supabase/admin";
 import { getYouTubeVideoId, toCanonicalYouTubeUrl } from "@/lib/youtube";
 import { toCanonicalInstagramUrl } from "@/lib/instagram";
+import { saveVideoFile, deleteVideoFile } from "@/lib/videoStorage";
 
 const deliverySchema = z.object({
   brand: z.string().trim().min(1),
@@ -27,6 +28,7 @@ const maxFiles = 10;
 
 export async function POST(request: Request) {
   const uploadedPaths: string[] = [];
+  const savedVideoFilenames: string[] = [];
   const insertedIds: string[] = [];
   let supabase: Awaited<ReturnType<typeof createClient>> | null = null;
 
@@ -151,20 +153,32 @@ export async function POST(request: Request) {
     for (const [index, file] of files.entries()) {
       const kind = fileKinds[index];
       const extension = file.name.split(".").pop()?.toLowerCase() || (kind === "image" ? "jpg" : "mp4");
-      const path = `deliveries/${crypto.randomUUID()}.${extension}`;
 
-      const upload = await supabase.storage.from(imageBucket).upload(path, file, {
-        contentType: file.type,
-        upsert: false,
-      });
+      let mediaUrl: string;
 
-      if (upload.error) {
-        throw new Error(`Upload failed for "${file.name}": ${upload.error.message}`);
+      if (kind === "video") {
+        // Videos go to this server's own disk instead of Supabase
+        // Storage — see lib/videoStorage.ts for why (free-tier size
+        // limits) and how (served back via app/api/media).
+        const filename = `${crypto.randomUUID()}.${extension}`;
+        const buffer = Buffer.from(await file.arrayBuffer());
+        mediaUrl = await saveVideoFile(filename, buffer);
+        savedVideoFilenames.push(filename);
+      } else {
+        const path = `deliveries/${crypto.randomUUID()}.${extension}`;
+
+        const upload = await supabase.storage.from(imageBucket).upload(path, file, {
+          contentType: file.type,
+          upsert: false,
+        });
+
+        if (upload.error) {
+          throw new Error(`Upload failed for "${file.name}": ${upload.error.message}`);
+        }
+
+        uploadedPaths.push(path);
+        mediaUrl = supabase.storage.from(imageBucket).getPublicUrl(path).data.publicUrl;
       }
-
-      uploadedPaths.push(path);
-
-      const mediaUrl = supabase.storage.from(imageBucket).getPublicUrl(path).data.publicUrl;
 
       const { data, error } = await supabase
         .from("deliveries")
@@ -234,6 +248,9 @@ export async function POST(request: Request) {
       if (insertedIds.length > 0) {
         await supabase.from("deliveries").delete().in("id", insertedIds);
       }
+    }
+    for (const filename of savedVideoFilenames) {
+      await deleteVideoFile(filename).catch(() => {});
     }
 
     console.error("[deliveries] POST failed:", error);

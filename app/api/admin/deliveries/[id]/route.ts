@@ -4,6 +4,7 @@ import { createClient } from "@/lib/supabase/server";
 import { isAdmin } from "@/lib/supabase/admin";
 import { getYouTubeVideoId, toCanonicalYouTubeUrl } from "@/lib/youtube";
 import { toCanonicalInstagramUrl } from "@/lib/instagram";
+import { saveVideoFile, deleteVideoFile, isLocalVideoUrl, filenameFromLocalVideoUrl } from "@/lib/videoStorage";
 
 const deliveryUpdateSchema = z
   .object({
@@ -34,6 +35,7 @@ export async function PATCH(
 ) {
   const { id } = await params;
   let uploadedPath: string | null = null;
+  let savedVideoFilename: string | null = null;
   let supabase: Awaited<ReturnType<typeof createClient>> | null = null;
 
   try {
@@ -126,23 +128,41 @@ export async function PATCH(
 
       const extension =
         file.name.split(".").pop()?.toLowerCase() || (current.media_type === "video" ? "mp4" : "jpg");
-      const path = `deliveries/${id}-edit-${Date.now()}.${extension}`;
 
-      const upload = await supabase.storage.from(imageBucket).upload(path, file, {
-        contentType: file.type,
-        upsert: false,
-      });
+      if (current.media_type === "video") {
+        // Videos go to this server's own disk instead of Supabase
+        // Storage — see lib/videoStorage.ts.
+        const filename = `${id}-edit-${Date.now()}.${extension}`;
+        const buffer = Buffer.from(await file.arrayBuffer());
+        update.media_url = await saveVideoFile(filename, buffer);
+        savedVideoFilename = filename;
 
-      if (upload.error) {
-        throw new Error(`Upload failed: ${upload.error.message}`);
-      }
+        if (isLocalVideoUrl(current.media_url)) {
+          const oldFilename = filenameFromLocalVideoUrl(current.media_url);
+          if (oldFilename) await deleteVideoFile(oldFilename);
+        } else {
+          const oldPath = storagePathFor(current.media_url);
+          if (oldPath) await supabase.storage.from(imageBucket).remove([oldPath]);
+        }
+      } else {
+        const path = `deliveries/${id}-edit-${Date.now()}.${extension}`;
 
-      uploadedPath = path;
-      update.media_url = supabase.storage.from(imageBucket).getPublicUrl(path).data.publicUrl;
+        const upload = await supabase.storage.from(imageBucket).upload(path, file, {
+          contentType: file.type,
+          upsert: false,
+        });
 
-      const oldPath = storagePathFor(current.media_url);
-      if (oldPath) {
-        await supabase.storage.from(imageBucket).remove([oldPath]);
+        if (upload.error) {
+          throw new Error(`Upload failed: ${upload.error.message}`);
+        }
+
+        uploadedPath = path;
+        update.media_url = supabase.storage.from(imageBucket).getPublicUrl(path).data.publicUrl;
+
+        const oldPath = storagePathFor(current.media_url);
+        if (oldPath) {
+          await supabase.storage.from(imageBucket).remove([oldPath]);
+        }
       }
     } else if (validation.data.youtubeUrl) {
       const videoId = getYouTubeVideoId(validation.data.youtubeUrl);
@@ -157,11 +177,16 @@ export async function PATCH(
       if (canonical !== current.media_url) {
         update.media_url = canonical;
 
-        // Only removes an actual Storage file — a YouTube link isn't
-        // one, so storagePathFor returns null and this is a no-op.
-        const oldPath = storagePathFor(current.media_url);
-        if (oldPath) {
-          await supabase.storage.from(imageBucket).remove([oldPath]);
+        if (isLocalVideoUrl(current.media_url)) {
+          const oldFilename = filenameFromLocalVideoUrl(current.media_url);
+          if (oldFilename) await deleteVideoFile(oldFilename);
+        } else {
+          // Only removes an actual Storage file — a YouTube link
+          // isn't one, so storagePathFor returns null and this is a no-op.
+          const oldPath = storagePathFor(current.media_url);
+          if (oldPath) {
+            await supabase.storage.from(imageBucket).remove([oldPath]);
+          }
         }
       }
     } else if (validation.data.instagramUrl) {
@@ -176,9 +201,14 @@ export async function PATCH(
       if (canonical !== current.media_url) {
         update.media_url = canonical;
 
-        const oldPath = storagePathFor(current.media_url);
-        if (oldPath) {
-          await supabase.storage.from(imageBucket).remove([oldPath]);
+        if (isLocalVideoUrl(current.media_url)) {
+          const oldFilename = filenameFromLocalVideoUrl(current.media_url);
+          if (oldFilename) await deleteVideoFile(oldFilename);
+        } else {
+          const oldPath = storagePathFor(current.media_url);
+          if (oldPath) {
+            await supabase.storage.from(imageBucket).remove([oldPath]);
+          }
         }
       }
     }
@@ -210,6 +240,9 @@ export async function PATCH(
   } catch (error) {
     if (supabase && uploadedPath) {
       await supabase.storage.from(imageBucket).remove([uploadedPath]);
+    }
+    if (savedVideoFilename) {
+      await deleteVideoFile(savedVideoFilename).catch(() => {});
     }
 
     console.error("[deliveries:id] PATCH failed:", error);
@@ -269,15 +302,18 @@ export async function DELETE(
     }
 
     // Best-effort media cleanup — the record is already gone, so a
-    // storage hiccup (or a YouTube-hosted entry with nothing to
-    // remove) shouldn't surface as a failure.
-    const path = storagePathFor(delivery.media_url);
-    if (path) {
-      try {
-        await supabase.storage.from(imageBucket).remove([path]);
-      } catch (cleanupError) {
-        console.error("[deliveries:id] media cleanup failed:", cleanupError);
+    // storage hiccup (or a YouTube/Instagram-hosted entry with
+    // nothing to remove) shouldn't surface as a failure.
+    try {
+      if (isLocalVideoUrl(delivery.media_url)) {
+        const filename = filenameFromLocalVideoUrl(delivery.media_url);
+        if (filename) await deleteVideoFile(filename);
+      } else {
+        const path = storagePathFor(delivery.media_url);
+        if (path) await supabase.storage.from(imageBucket).remove([path]);
       }
+    } catch (cleanupError) {
+      console.error("[deliveries:id] media cleanup failed:", cleanupError);
     }
 
     return NextResponse.json({ ok: true });
