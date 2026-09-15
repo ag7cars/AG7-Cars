@@ -3,15 +3,17 @@ import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
 import { isAdmin } from "@/lib/supabase/admin";
 import { getYouTubeVideoId, toCanonicalYouTubeUrl } from "@/lib/youtube";
+import { toCanonicalInstagramUrl } from "@/lib/instagram";
 
 const deliveryUpdateSchema = z
   .object({
     brand: z.string().trim().min(1),
     model: z.string().trim().min(1),
     caption: z.string().trim().max(500).nullable(),
-    // Videos only — switches media_url to a YouTube link instead of a
-    // Supabase Storage file (see lib/youtube.ts).
+    // Videos only — switches media_url to a YouTube or Instagram link
+    // instead of a Supabase Storage file (see lib/youtube.ts, lib/instagram.ts).
     youtubeUrl: z.string().trim().min(1),
+    instagramUrl: z.string().trim().min(1),
   })
   .partial();
 
@@ -67,10 +69,13 @@ export async function PATCH(
     }
 
     const file = rawFile instanceof File && rawFile.size > 0 ? rawFile : null;
+    const linkCount = [file, validation.data.youtubeUrl, validation.data.instagramUrl].filter(
+      Boolean
+    ).length;
 
-    if (file && validation.data.youtubeUrl) {
+    if (linkCount > 1) {
       return NextResponse.json(
-        { error: "Choose either a file upload or a YouTube link, not both." },
+        { error: "Choose only one: a file upload, a YouTube link, or an Instagram link." },
         { status: 400 }
       );
     }
@@ -154,6 +159,23 @@ export async function PATCH(
 
         // Only removes an actual Storage file — a YouTube link isn't
         // one, so storagePathFor returns null and this is a no-op.
+        const oldPath = storagePathFor(current.media_url);
+        if (oldPath) {
+          await supabase.storage.from(imageBucket).remove([oldPath]);
+        }
+      }
+    } else if (validation.data.instagramUrl) {
+      const canonical = toCanonicalInstagramUrl(validation.data.instagramUrl);
+      if (!canonical) {
+        return NextResponse.json(
+          { error: "That doesn't look like a valid Instagram post/reel link." },
+          { status: 400 }
+        );
+      }
+
+      if (canonical !== current.media_url) {
+        update.media_url = canonical;
+
         const oldPath = storagePathFor(current.media_url);
         if (oldPath) {
           await supabase.storage.from(imageBucket).remove([oldPath]);

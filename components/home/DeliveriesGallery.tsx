@@ -5,6 +5,8 @@ import Image from "next/image";
 import Link from "next/link";
 import StackedDeckCarousel from "./StackedDeckCarousel";
 import { getYouTubeVideoId, isYouTubeUrl, toYouTubeEmbedUrl, toYouTubeThumbnailUrl } from "@/lib/youtube";
+import { isInstagramUrl } from "@/lib/instagram";
+import InstagramEmbed from "@/components/InstagramEmbed";
 
 export type Delivery = {
   id: string;
@@ -89,6 +91,12 @@ function DeliveryCardFace({
                 />
               );
             })()
+          ) : isInstagramUrl(delivery.mediaUrl) ? (
+            // Instagram's widget doesn't autoplay regardless of which
+            // card is front (unlike YouTube), so there's no front/back
+            // distinction needed here — it just always shows as
+            // Instagram's own paused post card.
+            <InstagramEmbed url={delivery.mediaUrl} />
           ) : (
             <video
               ref={videoRef}

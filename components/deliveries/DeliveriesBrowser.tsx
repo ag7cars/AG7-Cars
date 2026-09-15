@@ -3,6 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { getYouTubeVideoId, isYouTubeUrl, toYouTubeThumbnailUrl } from "@/lib/youtube";
+import { isInstagramUrl } from "@/lib/instagram";
 
 export type BrowseDelivery = {
   id: string;
@@ -42,6 +43,15 @@ function DeliveryCard({ delivery, index }: { delivery: BrowseDelivery; index: nu
                 sizes="(min-width: 1024px) 380px, (min-width: 640px) 45vw, 46vw"
                 className="object-cover"
               />
+            ) : isInstagramUrl(delivery.mediaUrl) ? (
+              // No simple public thumbnail API for Instagram without
+              // registering an app — a plain placeholder here, same
+              // as the admin form's picker cards.
+              <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-fuchsia-600/40 to-amber-500/40">
+                <span className="text-xs font-semibold uppercase tracking-wide text-white/90">
+                  Instagram
+                </span>
+              </div>
             ) : (
               <video
                 src={delivery.mediaUrl}

@@ -3,6 +3,7 @@ import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
 import { isAdmin } from "@/lib/supabase/admin";
 import { getYouTubeVideoId, toCanonicalYouTubeUrl } from "@/lib/youtube";
+import { toCanonicalInstagramUrl } from "@/lib/instagram";
 
 const deliverySchema = z.object({
   brand: z.string().trim().min(1),
@@ -10,8 +11,9 @@ const deliverySchema = z.object({
   caption: z.string().trim().max(500).optional(),
   mediaKind: z.enum(["video", "photo"]),
   // Videos only — bypasses Supabase Storage (and its free-plan size
-  // cap) entirely by storing the YouTube link directly as media_url.
+  // cap) entirely by storing the link directly as media_url.
   youtubeLinks: z.array(z.string().trim().min(1)).max(10).optional(),
+  instagramLinks: z.array(z.string().trim().min(1)).max(10).optional(),
 });
 
 const imageBucket = "car-images";
@@ -62,16 +64,20 @@ export async function POST(request: Request) {
 
     const files = mediaEntries.filter((entry): entry is File => entry instanceof File && entry.size > 0);
     const youtubeLinks = validation.data.youtubeLinks ?? [];
+    const instagramLinks = validation.data.instagramLinks ?? [];
 
-    if (youtubeLinks.length > 0 && validation.data.mediaKind !== "video") {
-      return NextResponse.json({ error: "YouTube links are only supported for videos." }, { status: 400 });
+    if ((youtubeLinks.length > 0 || instagramLinks.length > 0) && validation.data.mediaKind !== "video") {
+      return NextResponse.json(
+        { error: "YouTube/Instagram links are only supported for videos." },
+        { status: 400 }
+      );
     }
 
-    if (files.length === 0 && youtubeLinks.length === 0) {
+    if (files.length === 0 && youtubeLinks.length === 0 && instagramLinks.length === 0) {
       return NextResponse.json({ error: "Please add at least one photo or video." }, { status: 400 });
     }
 
-    if (files.length + youtubeLinks.length > maxFiles) {
+    if (files.length + youtubeLinks.length + instagramLinks.length > maxFiles) {
       return NextResponse.json(
         { error: `You can add a maximum of ${maxFiles} photos/videos at once.` },
         { status: 400 }
@@ -85,6 +91,18 @@ export async function POST(request: Request) {
         return NextResponse.json({ error: `"${link}" doesn't look like a valid YouTube link.` }, { status: 400 });
       }
       youtubeVideoIds.push(videoId);
+    }
+
+    const instagramPermalinks: string[] = [];
+    for (const link of instagramLinks) {
+      const canonical = toCanonicalInstagramUrl(link);
+      if (!canonical) {
+        return NextResponse.json(
+          { error: `"${link}" doesn't look like a valid Instagram post/reel link.` },
+          { status: 400 }
+        );
+      }
+      instagramPermalinks.push(canonical);
     }
 
     // Validate every file up front before uploading anything — and,
@@ -182,6 +200,26 @@ export async function POST(request: Request) {
 
       if (error) {
         throw new Error(`Delivery could not be saved for YouTube video "${videoId}": ${error.message}`);
+      }
+
+      insertedIds.push(data.id);
+    }
+
+    for (const permalink of instagramPermalinks) {
+      const { data, error } = await supabase
+        .from("deliveries")
+        .insert({
+          brand: validation.data.brand,
+          model: validation.data.model,
+          caption: validation.data.caption || null,
+          media_url: permalink,
+          media_type: "video",
+        })
+        .select("id")
+        .single();
+
+      if (error) {
+        throw new Error(`Delivery could not be saved for Instagram link "${permalink}": ${error.message}`);
       }
 
       insertedIds.push(data.id);

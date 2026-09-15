@@ -5,6 +5,7 @@ import { useForm, type SubmitHandler } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { getYouTubeVideoId, toYouTubeThumbnailUrl } from "@/lib/youtube";
+import { isInstagramUrl, toCanonicalInstagramUrl } from "@/lib/instagram";
 
 const deliverySchema = z.object({
   brand: z.string().trim().min(1, "Brand is required"),
@@ -34,11 +35,13 @@ export default function AddDeliveryForm({ mediaKind }: { mediaKind: DeliveryMedi
   const [items, setItems] = useState<PickedFile[]>([]);
   const [youtubeLinks, setYoutubeLinks] = useState<string[]>([]);
   const [youtubeInput, setYoutubeInput] = useState("");
+  const [instagramLinks, setInstagramLinks] = useState<string[]>([]);
+  const [instagramInput, setInstagramInput] = useState("");
   const [message, setMessage] = useState("");
   const [saving, setSaving] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const totalCount = items.length + youtubeLinks.length;
+  const totalCount = items.length + youtubeLinks.length + instagramLinks.length;
 
   const {
     register,
@@ -85,7 +88,7 @@ export default function AddDeliveryForm({ mediaKind }: { mediaKind: DeliveryMedi
     setMessage("");
     setItems((current) => {
       const combined = [...current, ...next];
-      const allowed = combined.slice(0, Math.max(0, 10 - youtubeLinks.length));
+      const allowed = combined.slice(0, Math.max(0, 10 - youtubeLinks.length - instagramLinks.length));
 
       if (combined.length > allowed.length) {
         setMessage(`You can add a maximum of 10 ${mediaLabelPlural} at once.`);
@@ -126,11 +129,35 @@ export default function AddDeliveryForm({ mediaKind }: { mediaKind: DeliveryMedi
     setYoutubeLinks((current) => current.filter((_, i) => i !== index));
   }
 
+  function addInstagramLink() {
+    const url = instagramInput.trim();
+    if (!url) return;
+
+    const canonical = toCanonicalInstagramUrl(url);
+    if (!canonical) {
+      setMessage("That doesn't look like an Instagram post/reel link — paste the full URL.");
+      return;
+    }
+
+    if (totalCount >= 10) {
+      setMessage("You can add a maximum of 10 videos at once.");
+      return;
+    }
+
+    setMessage("");
+    setInstagramLinks((current) => [...current, canonical]);
+    setInstagramInput("");
+  }
+
+  function removeInstagramLink(index: number) {
+    setInstagramLinks((current) => current.filter((_, i) => i !== index));
+  }
+
   const onSubmit: SubmitHandler<DeliveryFormValues> = async (values) => {
     if (totalCount === 0) {
       setMessage(
         isVideoForm
-          ? "Please add at least one video file or YouTube link."
+          ? "Please add at least one video file, YouTube link, or Instagram link."
           : `Please add at least one ${mediaLabel}.`
       );
       return;
@@ -141,7 +168,10 @@ export default function AddDeliveryForm({ mediaKind }: { mediaKind: DeliveryMedi
 
     try {
       const formData = new FormData();
-      formData.append("delivery", JSON.stringify({ ...values, mediaKind, youtubeLinks }));
+      formData.append(
+        "delivery",
+        JSON.stringify({ ...values, mediaKind, youtubeLinks, instagramLinks })
+      );
       items.forEach((item) => {
         formData.append("media", item.file);
       });
@@ -172,6 +202,7 @@ export default function AddDeliveryForm({ mediaKind }: { mediaKind: DeliveryMedi
       reset({ brand: "", model: "", caption: "" });
       setItems([]);
       setYoutubeLinks([]);
+      setInstagramLinks([]);
     } catch (error) {
       setMessage(
         error instanceof Error ? error.message : "Something went wrong."
@@ -340,6 +371,69 @@ export default function AddDeliveryForm({ mediaKind }: { mediaKind: DeliveryMedi
                     </div>
                   );
                 })}
+              </div>
+            )}
+          </div>
+        )}
+
+        {isVideoForm && (
+          <div className="mt-6 border-t border-white/10 pt-6">
+            <h3 className="text-sm font-semibold text-white/80">
+              Or add by Instagram link
+            </h3>
+            <p className="mt-1 text-xs text-white/50">
+              Paste the link from a public post/reel on your Instagram
+              (Share → Copy Link). Shows as Instagram's own embedded
+              post — profile, video, likes and all — not a plain player.
+            </p>
+
+            <div className="mt-4 flex gap-2">
+              <input
+                type="url"
+                value={instagramInput}
+                onChange={(event) => setInstagramInput(event.target.value)}
+                onKeyDown={(event) => {
+                  if (event.key === "Enter") {
+                    event.preventDefault();
+                    addInstagramLink();
+                  }
+                }}
+                placeholder="https://www.instagram.com/reel/..."
+                className={inputClass}
+              />
+              <button
+                type="button"
+                onClick={addInstagramLink}
+                disabled={totalCount >= 10}
+                className="h-12 shrink-0 rounded-xl border border-white/20 px-5 text-sm font-semibold text-white transition hover:border-white hover:bg-white hover:text-black disabled:cursor-not-allowed disabled:opacity-40"
+              >
+                Add Link
+              </button>
+            </div>
+
+            {instagramLinks.length > 0 && (
+              <div className="mt-4 grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-5">
+                {instagramLinks.map((url, index) => (
+                  <div
+                    key={`${url}-${index}`}
+                    className="group relative flex aspect-square w-full items-center justify-center overflow-hidden rounded-xl border border-white/10 bg-gradient-to-br from-fuchsia-600/30 to-amber-500/30"
+                  >
+                    <span className="px-2 text-center text-[10px] font-semibold uppercase tracking-wide text-white/80">
+                      Instagram
+                      <br />
+                      link {index + 1}
+                    </span>
+
+                    <button
+                      type="button"
+                      onClick={() => removeInstagramLink(index)}
+                      aria-label="Remove"
+                      className="absolute right-1.5 top-1.5 flex h-6 w-6 items-center justify-center rounded-full bg-black/70 text-xs text-white/80 transition hover:bg-red-500/70 hover:text-white"
+                    >
+                      ✕
+                    </button>
+                  </div>
+                ))}
               </div>
             )}
           </div>

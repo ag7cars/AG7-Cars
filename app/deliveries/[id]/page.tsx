@@ -5,6 +5,8 @@ import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 import { createClient } from "@/lib/supabase/server";
 import { getYouTubeVideoId, isYouTubeUrl, toYouTubeEmbedUrl } from "@/lib/youtube";
+import { isInstagramUrl } from "@/lib/instagram";
+import InstagramEmbed from "@/components/InstagramEmbed";
 
 export default async function DeliveryDetailPage({
   params,
@@ -56,6 +58,8 @@ export default async function DeliveryDetailPage({
                     allowFullScreen
                     className="h-full w-full"
                   />
+                ) : isInstagramUrl(delivery.media_url) ? (
+                  <InstagramEmbed url={delivery.media_url} />
                 ) : (
                   <video
                     src={delivery.media_url}
