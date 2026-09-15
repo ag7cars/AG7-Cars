@@ -10,9 +10,10 @@ export type CoverflowCarouselProps<T> = {
    * the currently active (front, fully interactive) card — the
    * caller decides what that means (wrap in a Link, enable video
    * controls, etc). Non-front cards are automatically made
-   * click-to-select by the carousel itself.
+   * click-to-select by the carousel itself. `side` is which way the
+   * card sits (1 = right, -1 = left, 0 = front/center).
    */
-  renderCard: (item: T, isFront: boolean) => React.ReactNode;
+  renderCard: (item: T, isFront: boolean, side: -1 | 0 | 1) => React.ReactNode;
   /** Auto-advance interval in ms. Defaults to 4000. */
   autoAdvanceMs?: number;
   /** Externally-controlled pause, e.g. while a video is playing. */
@@ -35,7 +36,8 @@ export type CoverflowCarouselProps<T> = {
   `range` cards on each side tilt away in real CSS perspective
   (rotateY), shrinking and fading the further out they are —
   mirrored symmetrically left/right rather than a one-directional
-  fan. Swipe or use the arrows/dots to advance.
+  fan. Advances on its own, or swipe (or click a side
+  card) to change it manually — no visible arrow/dot controls.
 */
 export default function CoverflowCarousel<T>({
   items,
@@ -153,7 +155,7 @@ export default function CoverflowCarousel<T>({
                   visualMagnitude - 1
                 } * var(--cf-spread-step) * 1%))) rotateY(calc(${-side} * (28deg + ${visualMagnitude} * var(--cf-rotate-extra) * 1deg))) scale(calc(1 - ${visualMagnitude} * var(--cf-scale-step)))`;
 
-          const card = renderCard(item, isFront);
+          const card = renderCard(item, isFront, side);
 
           // Always the same element here regardless of isFront — if
           // this branched between rendering `card` directly and
@@ -185,42 +187,6 @@ export default function CoverflowCarousel<T>({
           );
         })}
       </div>
-
-      {count > 1 && (
-        <div className="relative z-10 mt-6 flex items-center justify-center gap-4">
-          <button
-            type="button"
-            onClick={() => goTo(active - 1)}
-            aria-label="Previous"
-            className="flex h-9 w-9 items-center justify-center rounded-full border border-white/20 text-white transition-colors duration-300 hover:border-white hover:bg-white hover:text-black"
-          >
-            ←
-          </button>
-
-          <div className="flex items-center gap-2">
-            {items.map((item, index) => (
-              <button
-                key={getKey(item)}
-                type="button"
-                onClick={() => goTo(index)}
-                aria-label={`Go to item ${index + 1}`}
-                className={`h-1.5 rounded-full transition-all duration-300 ${
-                  index === active ? "w-6 bg-white" : "w-1.5 bg-white/30"
-                }`}
-              />
-            ))}
-          </div>
-
-          <button
-            type="button"
-            onClick={() => goTo(active + 1)}
-            aria-label="Next"
-            className="flex h-9 w-9 items-center justify-center rounded-full border border-white/20 text-white transition-colors duration-300 hover:border-white hover:bg-white hover:text-black"
-          >
-            →
-          </button>
-        </div>
-      )}
     </div>
   );
 }

@@ -1,9 +1,9 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import StackedDeckCarousel from "./StackedDeckCarousel";
+import CoverflowCarousel from "./CoverflowCarousel";
 
 export type CollectionCar = {
   id: string;
@@ -87,6 +87,7 @@ function CarCardFace({ car, isFront }: { car: CollectionCar; isFront: boolean })
           sizes="(min-width: 1024px) 384px, (min-width: 640px) 320px, 280px"
           className="object-cover"
           priority={isFront}
+          draggable={false}
         />
       ) : (
         <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-white/10 to-white/[0.02]">
@@ -105,23 +106,25 @@ function CarCardFace({ car, isFront }: { car: CollectionCar; isFront: boolean })
       <div className="absolute inset-x-0 bottom-0 h-2/5 bg-gradient-to-t from-black/95 to-transparent" />
 
       <div className="absolute inset-x-0 top-0 p-3 sm:p-4">
-        <div className="flex items-start justify-between gap-2">
-          <div className="min-w-0">
-            <p className="text-[9px] uppercase tracking-[0.15em] text-white/60 sm:text-[10px]">
-              {car.brand}
-            </p>
-            <h3 className="font-display text-sm font-semibold leading-snug text-white sm:text-base">
-              {car.name}
-            </h3>
-          </div>
+        {/* Brand + status share the first row; the name gets a full-
+            width row of its own right below so it isn't squeezed
+            down to a sliver next to the badge and has to wrap. */}
+        <div className="flex items-center justify-between gap-2">
+          <p className="min-w-0 truncate text-[9px] uppercase tracking-[0.15em] text-white/60 sm:text-[10px]">
+            {car.brand}
+          </p>
 
           <div
-            className={`flex shrink-0 items-center gap-1 rounded-full border ${status.badge} px-2 py-0.5 text-[9px] font-semibold shadow-lg backdrop-blur-md sm:text-[10px]`}
+            className={`flex shrink-0 items-center gap-1 rounded-full border ${status.badge} px-1.5 py-0.5 text-[7.5px] font-semibold shadow-lg backdrop-blur-md sm:text-[9px]`}
           >
-            <span className={`h-1.5 w-1.5 shrink-0 rounded-full ${status.dot}`} />
+            <span className={`h-1 w-1 shrink-0 rounded-full ${status.dot}`} />
             {status.label}
           </div>
         </div>
+
+        <h3 className="truncate font-display text-sm font-semibold leading-snug text-white sm:text-base">
+          {car.name}
+        </h3>
 
         {/* Fixed 5-slot grid — same position for every field on every
             card, regardless of missing data (shown as "—"), so cards
@@ -158,19 +161,48 @@ function CarCardFace({ car, isFront }: { car: CollectionCar; isFront: boolean })
 }
 
 // Mobile-only: shows 4 cars at a time in a 2x2 grid, swapping to the
-// next 4 every 10s — the desktop stacked-deck carousel below sm
-// handles one card at a time instead, so this only ever mounts/runs
-// under that breakpoint's visibility class.
+// next 4 every 10s (or on demand via swipe left/right) — the desktop
+// coverflow carousel below sm handles one card at a time instead, so
+// this only ever mounts/runs under that breakpoint's visibility class.
 function CollectionGridMobile({ cars }: { cars: CollectionCar[] }) {
   const pageSize = 4;
   const pageCount = Math.max(1, Math.ceil(cars.length / pageSize));
   const [page, setPage] = useState(0);
+  const startX = useRef<number | null>(null);
+  // A swipe that ends over a card would otherwise still fire that
+  // card's Link click right after pointerup — this flag tells the
+  // capturing click handler below to swallow just that one click.
+  const suppressClick = useRef(false);
 
   useEffect(() => {
     if (pageCount <= 1) return;
     const id = setInterval(() => setPage((p) => (p + 1) % pageCount), 10000);
     return () => clearInterval(id);
   }, [pageCount]);
+
+  function goToPage(next: number) {
+    setPage(((next % pageCount) + pageCount) % pageCount);
+  }
+
+  function handlePointerDown(event: React.PointerEvent) {
+    startX.current = event.clientX;
+  }
+
+  function handlePointerUp(event: React.PointerEvent) {
+    if (startX.current === null) return;
+    const delta = event.clientX - startX.current;
+    startX.current = null;
+    if (Math.abs(delta) < 40) return;
+    suppressClick.current = true;
+    goToPage(delta < 0 ? page + 1 : page - 1);
+  }
+
+  function handleClickCapture(event: React.MouseEvent) {
+    if (!suppressClick.current) return;
+    suppressClick.current = false;
+    event.preventDefault();
+    event.stopPropagation();
+  }
 
   if (cars.length === 0) {
     return (
@@ -183,10 +215,17 @@ function CollectionGridMobile({ cars }: { cars: CollectionCar[] }) {
   const visible = cars.slice(page * pageSize, page * pageSize + pageSize);
 
   return (
-    <div className="mt-10 grid grid-cols-2 gap-3 sm:hidden">
-      {visible.map((car) => (
-        <CarCardFace key={car.id} car={car} isFront />
-      ))}
+    <div
+      className="mt-10 touch-pan-y select-none sm:hidden"
+      onPointerDown={handlePointerDown}
+      onPointerUp={handlePointerUp}
+      onClickCapture={handleClickCapture}
+    >
+      <div className="grid grid-cols-2 gap-3">
+        {visible.map((car) => (
+          <CarCardFace key={car.id} car={car} isFront />
+        ))}
+      </div>
     </div>
   );
 }
@@ -217,10 +256,11 @@ export default function CollectionCarousel({
         <CollectionGridMobile cars={cars} />
 
         <div className="hidden sm:block">
-          <StackedDeckCarousel
+          <CoverflowCarousel
             items={cars}
             getKey={(car) => car.id}
             autoAdvanceMs={4000}
+            range={cars.length}
             renderCard={(car, isFront) => <CarCardFace car={car} isFront={isFront} />}
             emptyMessage="No cars have been added to the collection yet. Check back soon."
           />

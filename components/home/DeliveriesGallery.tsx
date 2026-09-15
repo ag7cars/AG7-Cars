@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import StackedDeckCarousel from "./StackedDeckCarousel";
+import CoverflowCarousel from "./CoverflowCarousel";
 import { getYouTubeVideoId, isYouTubeUrl, toYouTubeEmbedUrl, toYouTubeThumbnailUrl } from "@/lib/youtube";
 import { isInstagramUrl } from "@/lib/instagram";
 
@@ -279,11 +279,12 @@ export default function DeliveriesGallery({
         {/* Videos first, photos below — no "Videos"/"Photos"
             sub-headings, just the two carousels stacked in order. */}
         <div ref={videosSectionRef} className="mt-8">
-          <StackedDeckCarousel
+          <CoverflowCarousel
             items={videos}
             getKey={(delivery) => delivery.id}
             autoAdvanceMs={5000}
             paused={videoPlaying}
+            range={videos.length}
             renderCard={(delivery, isFront, side) => (
               <DeliveryCardFace
                 delivery={delivery}
@@ -298,11 +299,12 @@ export default function DeliveriesGallery({
         </div>
 
         <div className="mt-16 sm:mt-20">
-          <StackedDeckCarousel
+          <CoverflowCarousel
             items={photos}
             getKey={(delivery) => delivery.id}
             autoAdvanceMs={5000}
             aspectClass="aspect-[4/5]"
+            range={photos.length}
             renderCard={(delivery, isFront) => <DeliveryPhotoCardFace delivery={delivery} isFront={isFront} />}
             emptyMessage="No delivery photos have been posted yet. Check back soon."
           />
