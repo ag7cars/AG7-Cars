@@ -38,7 +38,7 @@ export type StackedDeckCarouselProps<T> = {
 /*
   Stacked-deck carousel: the front item is fully visible; the next
   couple fan out from behind it (slightly smaller, rotated, faded).
-  Swipe or use the arrows/dots to advance. Built with only 2D
+  Swipe or use the dots to advance. Built with only 2D
   transforms (translate + rotate + scale) — no perspective or
   rotateY — since that's the one combination that has reliably
   rendered on every real device tested so far.
@@ -192,38 +192,18 @@ export default function StackedDeckCarousel<T>({
       </div>
 
       {count > 1 && (
-        <div className="mt-6 flex items-center justify-center gap-4">
-          <button
-            type="button"
-            onClick={() => goTo(active - 1)}
-            aria-label="Previous"
-            className="flex h-9 w-9 items-center justify-center rounded-full border border-white/20 text-white transition-colors duration-300 hover:border-white hover:bg-white hover:text-black"
-          >
-            ←
-          </button>
-
-          <div className="flex items-center gap-2">
-            {items.map((item, index) => (
-              <button
-                key={getKey(item)}
-                type="button"
-                onClick={() => goTo(index)}
-                aria-label={`Go to item ${index + 1}`}
-                className={`h-1.5 rounded-full transition-all duration-300 ${
-                  index === active ? "w-6 bg-white" : "w-1.5 bg-white/30"
-                }`}
-              />
-            ))}
-          </div>
-
-          <button
-            type="button"
-            onClick={() => goTo(active + 1)}
-            aria-label="Next"
-            className="flex h-9 w-9 items-center justify-center rounded-full border border-white/20 text-white transition-colors duration-300 hover:border-white hover:bg-white hover:text-black"
-          >
-            →
-          </button>
+        <div className="mt-6 flex items-center justify-center gap-2">
+          {items.map((item, index) => (
+            <button
+              key={getKey(item)}
+              type="button"
+              onClick={() => goTo(index)}
+              aria-label={`Go to item ${index + 1}`}
+              className={`h-1.5 rounded-full transition-all duration-300 ${
+                index === active ? "w-6 bg-white" : "w-1.5 bg-white/30"
+              }`}
+            />
+          ))}
         </div>
       )}
     </div>

@@ -96,12 +96,13 @@ function CarCardFace({ car, isFront }: { car: CollectionCar; isFront: boolean })
         </div>
       )}
 
-      {/* Two gradients — a taller one at the top carries the brand,
-          name, status and full spec line; a smaller one at the
-          bottom carries just the price — so both text blocks stay
-          legible over the photo instead of a plain overlay. */}
-      <div className="absolute inset-x-0 top-0 h-2/3 bg-gradient-to-b from-black/85 via-black/35 via-45% to-transparent" />
-      <div className="absolute inset-x-0 bottom-0 h-1/3 bg-gradient-to-t from-black/90 to-transparent" />
+      {/* Two gradients — a taller, darker one at the top carries the
+          brand, name, status and spec grid; a smaller one at the
+          bottom carries just the price — dark enough on their own
+          that the text reads clearly no matter what's in the photo
+          behind it. */}
+      <div className="absolute inset-x-0 top-0 h-3/4 bg-gradient-to-b from-black/95 via-black/70 via-55% to-transparent" />
+      <div className="absolute inset-x-0 bottom-0 h-2/5 bg-gradient-to-t from-black/95 to-transparent" />
 
       <div className="absolute inset-x-0 top-0 p-3 sm:p-4">
         <div className="flex items-start justify-between gap-2">
@@ -109,7 +110,7 @@ function CarCardFace({ car, isFront }: { car: CollectionCar; isFront: boolean })
             <p className="text-[9px] uppercase tracking-[0.15em] text-white/60 sm:text-[10px]">
               {car.brand}
             </p>
-            <h3 className="line-clamp-1 font-display text-sm font-semibold leading-snug text-white sm:text-base">
+            <h3 className="font-display text-sm font-semibold leading-snug text-white sm:text-base">
               {car.name}
             </h3>
           </div>
@@ -122,17 +123,21 @@ function CarCardFace({ car, isFront }: { car: CollectionCar; isFront: boolean })
           </div>
         </div>
 
-        <div className="mt-1.5 flex flex-wrap items-center gap-x-1.5 gap-y-0.5 text-[9px] text-white/70 sm:text-[10.5px]">
-          {car.year && <span>Reg: {car.year}</span>}
-          {formatRegistration(car.registration) && <span>· {formatRegistration(car.registration)}</span>}
-          {car.ownership && <span>· {car.ownership}</span>}
-          {car.fuel && <span>· {car.fuel}</span>}
-          {formatKm(car.kmDriven) && <span>· {formatKm(car.kmDriven)}</span>}
+        {/* Fixed 5-slot grid — same position for every field on every
+            card, regardless of missing data (shown as "—"), so cards
+            line up with each other instead of each wrapping to a
+            different width/line count. */}
+        <div className="mt-2 grid grid-cols-2 gap-x-2 gap-y-1 text-[9px] text-white/75 sm:text-[10.5px]">
+          <span>Reg: {car.year ?? "—"}</span>
+          <span className="text-right">{formatRegistration(car.registration) ?? "—"}</span>
+          <span>{car.ownership ?? "—"}</span>
+          <span className="text-right">{car.fuel ?? "—"}</span>
+          <span className="col-span-2">{formatKm(car.kmDriven) ?? "—"}</span>
         </div>
       </div>
 
       <div className="absolute inset-x-0 bottom-0 p-3 sm:p-4">
-        <p className="text-xs font-medium text-white/90 sm:text-sm">
+        <p className="text-xs font-semibold text-white sm:text-sm">
           {formatPrice(car.price, car.currency)}
         </p>
       </div>
