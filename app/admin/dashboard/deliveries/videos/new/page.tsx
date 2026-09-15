@@ -35,7 +35,7 @@ export default async function AddDeliveryVideoPage() {
           </p>
         </div>
 
-        <AddDeliveryForm mediaKind="video" />
+        <AddDeliveryForm />
 
       </div>
 

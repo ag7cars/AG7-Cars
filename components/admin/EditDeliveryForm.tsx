@@ -19,15 +19,13 @@ type DeliveryFormValues = z.infer<typeof deliverySchema>;
 
 export type EditableDelivery = DeliveryFormValues & {
   id: string;
-  mediaType: "image" | "video";
   mediaUrl: string;
 };
 
 export default function EditDeliveryForm({ delivery }: { delivery: EditableDelivery }) {
   const router = useRouter();
-  const isVideo = delivery.mediaType === "video";
-  const currentIsYoutube = isVideo && isYouTubeUrl(delivery.mediaUrl);
-  const currentIsInstagram = isVideo && isInstagramUrl(delivery.mediaUrl);
+  const currentIsYoutube = isYouTubeUrl(delivery.mediaUrl);
+  const currentIsInstagram = isInstagramUrl(delivery.mediaUrl);
 
   const [newFile, setNewFile] = useState<File | null>(null);
   const [newPreview, setNewPreview] = useState<string | null>(null);
@@ -105,30 +103,25 @@ export default function EditDeliveryForm({ delivery }: { delivery: EditableDeliv
           MEDIA
           ===================================================== */}
       <section className="rounded-2xl border border-white/10 bg-white/[0.04] p-6">
-        <h2 className="text-xl font-semibold">{isVideo ? "Delivery Video" : "Delivery Photo"}</h2>
+        <h2 className="text-xl font-semibold">Delivery Video</h2>
 
         <div className="mt-6 flex flex-wrap gap-6">
           <div>
             <p className="mb-2 text-xs uppercase tracking-wide text-white/40">Current</p>
             <div className="relative h-40 w-40 overflow-hidden rounded-xl border border-white/10 bg-black">
-              {isVideo ? (
-                currentIsYoutube ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img
-                    src={toYouTubeThumbnailUrl(getYouTubeVideoId(delivery.mediaUrl)!)}
-                    alt="Current video"
-                    className="h-full w-full object-cover"
-                  />
-                ) : currentIsInstagram ? (
-                  <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-fuchsia-600/30 to-amber-500/30 text-[10px] font-semibold uppercase tracking-wide text-white/80">
-                    Instagram
-                  </div>
-                ) : (
-                  <video src={delivery.mediaUrl} muted playsInline className="h-full w-full object-cover" />
-                )
-              ) : (
+              {currentIsYoutube ? (
                 // eslint-disable-next-line @next/next/no-img-element
-                <img src={delivery.mediaUrl} alt="Current photo" className="h-full w-full object-cover" />
+                <img
+                  src={toYouTubeThumbnailUrl(getYouTubeVideoId(delivery.mediaUrl)!)}
+                  alt="Current video"
+                  className="h-full w-full object-cover"
+                />
+              ) : currentIsInstagram ? (
+                <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-fuchsia-600/30 to-amber-500/30 text-[10px] font-semibold uppercase tracking-wide text-white/80">
+                  Instagram
+                </div>
+              ) : (
+                <video src={delivery.mediaUrl} muted playsInline className="h-full w-full object-cover" />
               )}
             </div>
           </div>
@@ -139,28 +132,23 @@ export default function EditDeliveryForm({ delivery }: { delivery: EditableDeliv
                 New (replaces current on save)
               </p>
               <div className="relative h-40 w-40 overflow-hidden rounded-xl border border-emerald-400/40 bg-black">
-                {isVideo ? (
-                  <video src={newPreview} muted playsInline className="h-full w-full object-cover" />
-                ) : (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img src={newPreview} alt="New photo" className="h-full w-full object-cover" />
-                )}
+                <video src={newPreview} muted playsInline className="h-full w-full object-cover" />
               </div>
             </div>
           )}
         </div>
 
         <label className="mt-6 flex w-full cursor-pointer items-center justify-center rounded-xl border border-dashed border-white/20 bg-white/[0.03] p-5 text-sm font-medium text-white/70 transition hover:border-white/40 hover:bg-white/[0.06]">
-          {isVideo ? "Upload a Replacement Video File" : "Upload a Replacement Photo"}
+          Upload a Replacement Video File
           <input
             type="file"
-            accept={isVideo ? "video/mp4,video/webm,video/quicktime" : "image/jpeg,image/png,image/webp"}
+            accept="video/mp4,video/webm,video/quicktime"
             onChange={pickFile}
             className="hidden"
           />
         </label>
 
-        {isVideo && (currentIsYoutube || currentIsInstagram) && (
+        {(currentIsYoutube || currentIsInstagram) && (
           <p className="mt-6 border-t border-white/10 pt-6 text-xs text-white/40">
             Currently a {currentIsYoutube ? "YouTube" : "Instagram"} link — upload a file above to
             switch this to a directly-hosted video.
@@ -220,7 +208,7 @@ export default function EditDeliveryForm({ delivery }: { delivery: EditableDeliv
 
         <DeleteButton
           endpoint={`/api/admin/deliveries/${delivery.id}`}
-          confirmMessage={`Delete this ${isVideo ? "video" : "photo"}${
+          confirmMessage={`Delete this video${
             delivery.brand || delivery.model
               ? ` (${[delivery.brand, delivery.model].filter(Boolean).join(" ")})`
               : ""

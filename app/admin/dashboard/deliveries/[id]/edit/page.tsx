@@ -2,6 +2,7 @@ import { notFound, redirect } from "next/navigation";
 import { isAdmin } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 import EditDeliveryForm from "@/components/admin/EditDeliveryForm";
+import EditDeliveryPhotoForm from "@/components/admin/EditDeliveryPhotoForm";
 
 export default async function EditDeliveryPage({
   params,
@@ -19,13 +20,15 @@ export default async function EditDeliveryPage({
 
   const { data: delivery } = await supabase
     .from("deliveries")
-    .select("id, brand, model, caption, media_type, media_url")
+    .select("id, brand, model, caption, media_type, media_url, image_urls")
     .eq("id", id)
     .maybeSingle();
 
   if (!delivery) {
     notFound();
   }
+
+  const isVideo = delivery.media_type === "video";
 
   return (
     <main className="min-h-screen bg-zinc-950 px-5 py-10 text-white">
@@ -43,7 +46,7 @@ export default async function EditDeliveryPage({
           </p>
 
           <h1 className="mt-2 text-4xl font-semibold">
-            Edit Delivery {delivery.media_type === "video" ? "Video" : "Photo"}
+            Edit Delivery {isVideo ? "Video" : "Photos"}
           </h1>
 
           <p className="mt-2 text-white/50">
@@ -51,16 +54,27 @@ export default async function EditDeliveryPage({
           </p>
         </div>
 
-        <EditDeliveryForm
-          delivery={{
-            id: delivery.id,
-            brand: delivery.brand ?? "",
-            model: delivery.model ?? "",
-            caption: delivery.caption ?? undefined,
-            mediaType: delivery.media_type,
-            mediaUrl: delivery.media_url,
-          }}
-        />
+        {isVideo ? (
+          <EditDeliveryForm
+            delivery={{
+              id: delivery.id,
+              brand: delivery.brand ?? "",
+              model: delivery.model ?? "",
+              caption: delivery.caption ?? undefined,
+              mediaUrl: delivery.media_url,
+            }}
+          />
+        ) : (
+          <EditDeliveryPhotoForm
+            delivery={{
+              id: delivery.id,
+              brand: delivery.brand ?? "",
+              model: delivery.model ?? "",
+              caption: delivery.caption ?? undefined,
+              imageUrls: delivery.image_urls?.length ? delivery.image_urls : [delivery.media_url],
+            }}
+          />
+        )}
       </div>
     </main>
   );

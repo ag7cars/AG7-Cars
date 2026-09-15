@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 import { isAdmin } from "@/lib/supabase/admin";
-import AddDeliveryForm from "@/components/admin/AddDeliveryForm";
+import AddDeliveryPhotoForm from "@/components/admin/AddDeliveryPhotoForm";
 
 export default async function AddDeliveryPhotoPage() {
   const admin = await isAdmin();
@@ -31,11 +31,11 @@ export default async function AddDeliveryPhotoPage() {
           </h1>
 
           <p className="mt-2 text-white/50">
-            Add a photo from a recent delivery.
+            Add up to 10 photos from a recent delivery, as one entry.
           </p>
         </div>
 
-        <AddDeliveryForm mediaKind="photo" />
+        <AddDeliveryPhotoForm />
 
       </div>
 

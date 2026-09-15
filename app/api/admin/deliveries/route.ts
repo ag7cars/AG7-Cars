@@ -33,7 +33,6 @@ export async function POST(request: Request) {
 
     const formData = await request.formData();
     const rawDelivery = formData.get("delivery");
-    const mediaEntries = formData.getAll("media");
 
     if (typeof rawDelivery !== "string") {
       return NextResponse.json({ error: "Delivery details are required." }, { status: 400 });
@@ -58,78 +57,41 @@ export async function POST(request: Request) {
       );
     }
 
-    const files = mediaEntries.filter((entry): entry is File => entry instanceof File && entry.size > 0);
-
-    if (files.length === 0) {
-      return NextResponse.json({ error: "Please add at least one photo or video." }, { status: 400 });
-    }
-
-    if (files.length > maxFiles) {
-      return NextResponse.json(
-        { error: `You can add a maximum of ${maxFiles} photos/videos at once.` },
-        { status: 400 }
-      );
-    }
-
-    // Validate every file up front before uploading anything — and,
-    // since the admin UI now has one dedicated page per media kind,
-    // reject anything that doesn't match the page it was submitted
-    // from (defense in depth on top of the client-side <input accept>).
-    const expectFile = validation.data.mediaKind === "video" ? allowedVideoTypes : allowedImageTypes;
-    const expectLabel = validation.data.mediaKind === "video" ? "an MP4/WebM/MOV video" : "a JPG/PNG/WebP photo";
-
-    const fileKinds: ("image" | "video")[] = [];
-    for (const file of files) {
-      const isImage = allowedImageTypes.has(file.type);
-      const isVideo = allowedVideoTypes.has(file.type);
-
-      if (!isImage && !isVideo) {
-        return NextResponse.json(
-          { error: `"${file.name}" must be a JPG/PNG/WebP photo or an MP4/WebM/MOV video.` },
-          { status: 400 }
-        );
-      }
-
-      if (!expectFile.has(file.type)) {
-        return NextResponse.json(
-          { error: `"${file.name}" must be ${expectLabel} — this page only accepts ${validation.data.mediaKind}s.` },
-          { status: 400 }
-        );
-      }
-
-      const sizeLimit = isImage ? maxImageSize : maxVideoSize;
-      if (file.size > sizeLimit) {
-        return NextResponse.json(
-          {
-            error: isImage
-              ? `"${file.name}" is over the 50 MB photo limit.`
-              : `"${file.name}" is over the 80 MB video limit.`,
-          },
-          { status: 400 }
-        );
-      }
-
-      fileKinds.push(isImage ? "image" : "video");
-    }
-
     supabase = await createClient();
 
-    for (const [index, file] of files.entries()) {
-      const kind = fileKinds[index];
-      const extension = file.name.split(".").pop()?.toLowerCase() || (kind === "image" ? "jpg" : "mp4");
+    if (validation.data.mediaKind === "photo") {
+      // Photos for ONE delivery entry — image_urls[0] becomes the
+      // cover shown on the landing page and grid; the rest show on
+      // the entry's own detail page (same pattern as cars/live_deals).
+      const files = formData
+        .getAll("images")
+        .filter((entry): entry is File => entry instanceof File && entry.size > 0);
 
-      let mediaUrl: string;
+      if (files.length === 0) {
+        return NextResponse.json({ error: "Please add at least one photo." }, { status: 400 });
+      }
+      if (files.length > maxFiles) {
+        return NextResponse.json(
+          { error: `You can add a maximum of ${maxFiles} photos at once.` },
+          { status: 400 }
+        );
+      }
 
-      if (kind === "video") {
-        // Videos go to this server's own disk instead of Supabase
-        // Storage — see lib/videoStorage.ts for why (free-tier size
-        // limits) and how (served back via app/api/media).
-        const filename = `${crypto.randomUUID()}.${extension}`;
-        const buffer = Buffer.from(await file.arrayBuffer());
-        mediaUrl = await saveVideoFile(filename, buffer);
-        savedVideoFilenames.push(filename);
-      } else {
-        const path = `deliveries/${crypto.randomUUID()}.${extension}`;
+      for (const file of files) {
+        if (!allowedImageTypes.has(file.type) || file.size > maxImageSize) {
+          return NextResponse.json(
+            { error: `"${file.name}" must be a JPG/PNG/WebP photo under 50 MB.` },
+            { status: 400 }
+          );
+        }
+      }
+
+      const imageUrls: string[] = [];
+      const folder = `deliveries/${crypto.randomUUID()}`;
+
+      for (const [index, file] of files.entries()) {
+        const extension = file.name.split(".").pop()?.toLowerCase() || "jpg";
+        const path = `${folder}/${String(index + 1).padStart(2, "0")}.${extension}`;
 
         const upload = await supabase.storage.from(imageBucket).upload(path, file, {
           contentType: file.type,
@@ -141,7 +103,7 @@ export async function POST(request: Request) {
         }
 
         uploadedPaths.push(path);
-        mediaUrl = supabase.storage.from(imageBucket).getPublicUrl(path).data.publicUrl;
+        imageUrls.push(supabase.storage.from(imageBucket).getPublicUrl(path).data.publicUrl);
       }
 
       const { data, error } = await supabase
@@ -150,17 +112,79 @@ export async function POST(request: Request) {
           brand: validation.data.brand,
           model: validation.data.model,
           caption: validation.data.caption || null,
-          media_url: mediaUrl,
-          media_type: kind,
+          media_url: imageUrls[0],
+          media_type: "image",
+          image_urls: imageUrls,
         })
         .select("id")
         .single();
 
       if (error) {
-        throw new Error(`Delivery could not be saved for "${file.name}": ${error.message}`);
+        throw new Error(`Delivery could not be saved: ${error.message}`);
       }
 
       insertedIds.push(data.id);
+    } else {
+      // Videos — each uploaded file becomes its own separate delivery
+      // entry (unlike photos, videos aren't grouped into one gallery).
+      const files = formData
+        .getAll("media")
+        .filter((entry): entry is File => entry instanceof File && entry.size > 0);
+
+      if (files.length === 0) {
+        return NextResponse.json({ error: "Please add at least one video." }, { status: 400 });
+      }
+      if (files.length > maxFiles) {
+        return NextResponse.json(
+          { error: `You can add a maximum of ${maxFiles} videos at once.` },
+          { status: 400 }
+        );
+      }
+
+      for (const file of files) {
+        if (!allowedVideoTypes.has(file.type)) {
+          return NextResponse.json(
+            { error: `"${file.name}" must be an MP4/WebM/MOV video.` },
+            { status: 400 }
+          );
+        }
+        if (file.size > maxVideoSize) {
+          return NextResponse.json(
+            { error: `"${file.name}" is over the 150 MB video limit.` },
+            { status: 400 }
+          );
+        }
+      }
+
+      for (const file of files) {
+        const extension = file.name.split(".").pop()?.toLowerCase() || "mp4";
+
+        // Videos go to this server's own disk instead of Supabase
+        // Storage — see lib/videoStorage.ts for why (free-tier size
+        // limits) and how (served back via app/api/media).
+        const filename = `${crypto.randomUUID()}.${extension}`;
+        const buffer = Buffer.from(await file.arrayBuffer());
+        const mediaUrl = await saveVideoFile(filename, buffer);
+        savedVideoFilenames.push(filename);
+
+        const { data, error } = await supabase
+          .from("deliveries")
+          .insert({
+            brand: validation.data.brand,
+            model: validation.data.model,
+            caption: validation.data.caption || null,
+            media_url: mediaUrl,
+            media_type: "video",
+          })
+          .select("id")
+          .single();
+
+        if (error) {
+          throw new Error(`Delivery could not be saved for "${file.name}": ${error.message}`);
+        }
+
+        insertedIds.push(data.id);
+      }
     }
 
     return NextResponse.json({ ids: insertedIds }, { status: 201 });

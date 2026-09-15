@@ -11,6 +11,10 @@ export type Delivery = {
   id: string;
   mediaUrl: string;
   mediaType: "image" | "video";
+  /** Photos only — the full gallery for this entry, cover first.
+      Null for videos and for legacy single-photo rows predating
+      multi-photo entries (those just fall back to [mediaUrl]). */
+  imageUrls: string[] | null;
   brand: string | null;
   model: string | null;
   color: string | null;
@@ -75,9 +79,9 @@ function DeliveryCardFace({
         mirrored ? "flex-row-reverse" : ""
       }`}
     >
-      {/* Media */}
+      {/* Media — video only; photos use DeliveryPhotoCardFace instead. */}
       <div className="relative h-full flex-1 bg-black">
-        {delivery.mediaType === "video" ? (
+        {(
           isYouTubeUrl(delivery.mediaUrl) ? (
             (() => {
               const videoId = getYouTubeVideoId(delivery.mediaUrl)!;
@@ -152,14 +156,6 @@ function DeliveryCardFace({
               className="h-full w-full object-cover"
             />
           )
-        ) : (
-          <Image
-            src={delivery.mediaUrl}
-            alt={[delivery.brand, delivery.model].filter(Boolean).join(" ") || "AG7 Cars delivery"}
-            fill
-            sizes="(min-width: 1024px) 384px, (min-width: 640px) 320px, 280px"
-            className="object-cover"
-          />
         )}
       </div>
 
@@ -195,7 +191,51 @@ function DeliveryCardFace({
   );
 }
 
-function noop() {}
+// Photo entries get their own, simpler card — same look and
+// click-through-to-detail behavior as Collection/Live Deals (cover
+// image, bottom gradient, brand/model text, only the front card
+// linked), at Instagram's 4:5 ratio, instead of the video card's
+// sidebar-strip layout above.
+function DeliveryPhotoCardFace({ delivery, isFront }: { delivery: Delivery; isFront: boolean }) {
+  const cover = delivery.imageUrls?.[0] ?? delivery.mediaUrl;
+  const label = [delivery.brand, delivery.model].filter(Boolean).join(" ") || "AG7 Cars delivery";
+
+  const cardInner = (
+    <div className="relative aspect-[4/5] w-full overflow-hidden rounded-3xl border border-white/5 bg-white/[0.06] shadow-2xl">
+      <Image
+        src={cover}
+        alt={label}
+        fill
+        sizes="(min-width: 1024px) 384px, (min-width: 640px) 320px, 280px"
+        className="object-cover"
+        priority={isFront}
+      />
+
+      <div className="absolute inset-x-0 bottom-0 h-1/2 bg-gradient-to-t from-black/95 via-black/40 via-40% to-transparent" />
+
+      {(delivery.brand || delivery.model) && (
+        <div className="absolute inset-x-0 bottom-0 p-3 sm:p-4">
+          {delivery.brand && (
+            <p className="text-[10px] uppercase tracking-[0.15em] text-white/50">{delivery.brand}</p>
+          )}
+          {delivery.model && (
+            <h3 className="line-clamp-2 font-display text-sm font-semibold leading-snug text-white sm:text-base">
+              {delivery.model}
+            </h3>
+          )}
+        </div>
+      )}
+    </div>
+  );
+
+  if (!isFront) return cardInner;
+
+  return (
+    <Link href={`/deliveries/${delivery.id}`} aria-label={`View details for ${label}`} className="block h-full w-full">
+      {cardInner}
+    </Link>
+  );
+}
 
 export default function DeliveriesGallery({
   videos,
@@ -262,15 +302,8 @@ export default function DeliveriesGallery({
             items={photos}
             getKey={(delivery) => delivery.id}
             autoAdvanceMs={5000}
-            renderCard={(delivery, isFront, side) => (
-              <DeliveryCardFace
-                delivery={delivery}
-                isFront={isFront}
-                side={side}
-                sectionInView={false}
-                onVideoPlayingChange={noop}
-              />
-            )}
+            aspectClass="aspect-[4/5]"
+            renderCard={(delivery, isFront) => <DeliveryPhotoCardFace delivery={delivery} isFront={isFront} />}
             emptyMessage="No delivery photos have been posted yet. Check back soon."
           />
         </div>

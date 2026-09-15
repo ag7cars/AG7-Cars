@@ -1,12 +1,12 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import Image from "next/image";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 import { createClient } from "@/lib/supabase/server";
 import { getYouTubeVideoId, isYouTubeUrl, toYouTubeEmbedUrl } from "@/lib/youtube";
 import { isInstagramUrl } from "@/lib/instagram";
 import InstagramEmbed from "@/components/InstagramEmbed";
+import DeliveryPhotoGallery from "@/components/deliveries/DeliveryPhotoGallery";
 
 export default async function DeliveryDetailPage({
   params,
@@ -18,7 +18,7 @@ export default async function DeliveryDetailPage({
 
   const { data: delivery } = await supabase
     .from("deliveries")
-    .select("id, media_url, media_type, brand, model, color, caption")
+    .select("id, media_url, media_type, image_urls, brand, model, color, caption")
     .eq("id", id)
     .eq("is_published", true)
     .maybeSingle();
@@ -78,13 +78,9 @@ export default async function DeliveryDetailPage({
                   />
                 )
               ) : (
-                <Image
-                  src={delivery.media_url}
+                <DeliveryPhotoGallery
+                  images={delivery.image_urls?.length ? delivery.image_urls : [delivery.media_url]}
                   alt={title}
-                  fill
-                  sizes="(min-width: 1024px) 448px, 100vw"
-                  className="object-cover"
-                  priority
                 />
               )}
             </div>

@@ -76,7 +76,7 @@ export default async function Home() {
     colorHex: deal.color_hex,
   }));
 
-  const deliveriesSelect = "id, media_url, media_type, brand, model, color, color_hex";
+  const deliveriesSelect = "id, media_url, media_type, image_urls, brand, model, color, color_hex";
 
   const { data: deliveryVideosData } = await supabase
     .from("deliveries")
@@ -100,6 +100,7 @@ export default async function Home() {
     id: string;
     media_url: string;
     media_type: "image" | "video";
+    image_urls: string[] | null;
     brand: string | null;
     model: string | null;
     color: string | null;
@@ -108,6 +109,7 @@ export default async function Home() {
     id: delivery.id,
     mediaUrl: delivery.media_url,
     mediaType: delivery.media_type,
+    imageUrls: delivery.image_urls,
     brand: delivery.brand,
     model: delivery.model,
     color: delivery.color,
