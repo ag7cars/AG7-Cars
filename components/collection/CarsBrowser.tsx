@@ -359,7 +359,7 @@ function CardGauge({ car, km }: CardProps) {
           </div>
         </div>
 
-        <h3 className="truncate font-display text-sm font-semibold leading-snug text-white sm:text-base">
+        <h3 className="mt-1.5 font-display text-sm font-semibold leading-snug text-white sm:mt-2 sm:text-base">
           {car.name}
         </h3>
 
