@@ -17,6 +17,7 @@ export type CollectionCar = {
   color: string | null;
   colorHex: string | null;
   year: number | null;
+  manufacturingYear: number | null;
   registration: string | null;
   ownership: string | null;
   fuel: string | null;
@@ -127,16 +128,17 @@ function CarCardFace({ car, isFront }: { car: CollectionCar; isFront: boolean })
           {car.name}
         </h3>
 
-        {/* Fixed 5-slot grid — same position for every field on every
+        {/* Fixed 6-slot grid — same position for every field on every
             card, regardless of missing data (shown as "—"), so cards
             line up with each other instead of each wrapping to a
             different width/line count. */}
         <div className="mt-2 grid grid-cols-2 gap-x-2 gap-y-1 text-[9px] text-white/75 sm:text-[10.5px]">
-          <span>Reg: {car.year ?? "—"}</span>
-          <span className="text-right">{formatRegistration(car.registration) ?? "—"}</span>
+          <span>Mfg: {car.manufacturingYear ?? "—"}</span>
+          <span className="text-right">Reg: {car.year ?? "—"}</span>
           <span>{car.ownership ?? "—"}</span>
+          <span className="text-right">{formatRegistration(car.registration) ?? "—"}</span>
+          <span>{formatKm(car.kmDriven) ?? "—"}</span>
           <span className="text-right">{car.fuel ?? "—"}</span>
-          <span className="col-span-2">{formatKm(car.kmDriven) ?? "—"}</span>
         </div>
       </div>
 
@@ -227,6 +229,22 @@ function CollectionGridMobile({ cars }: { cars: CollectionCar[] }) {
           <CarCardFace key={car.id} car={car} isFront />
         ))}
       </div>
+
+      {pageCount > 1 && (
+        <div className="mt-5 flex items-end justify-center gap-2">
+          {Array.from({ length: pageCount }, (_, index) => (
+            <button
+              key={index}
+              type="button"
+              onClick={() => goToPage(index)}
+              aria-label={`Go to page ${index + 1}`}
+              className={`h-1.5 rounded-full transition-all duration-300 ${
+                index === page ? "w-6 -translate-y-1 bg-white" : "w-1.5 bg-white/30"
+              }`}
+            />
+          ))}
+        </div>
+      )}
     </div>
   );
 }

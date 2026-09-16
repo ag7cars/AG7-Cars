@@ -190,17 +190,22 @@ export default function CoverflowCarousel<T>({
       </div>
 
       {count > 1 && (
-        <div className="relative z-10 mt-6 hidden items-center justify-center gap-4 sm:flex">
+        <div className="relative z-10 mt-6 flex items-center justify-center gap-4">
           <button
             type="button"
             onClick={() => goTo(active - 1)}
             aria-label="Previous"
-            className="flex h-9 w-9 items-center justify-center rounded-full border border-white/20 text-white transition-colors duration-300 hover:border-white hover:bg-white hover:text-black"
+            className="hidden h-9 w-9 items-center justify-center rounded-full border border-white/20 text-white transition-colors duration-300 hover:border-white hover:bg-white hover:text-black sm:flex"
           >
             ←
           </button>
 
-          <div className="flex items-center gap-2">
+          {/* Dots stay visible at every width — touch screens don't
+              get the arrows (swipe covers that), but still need some
+              way to see which card is active. The active dot lifts
+              up slightly instead of just widening, so it reads at a
+              glance even at this small size. */}
+          <div className="flex items-end gap-2">
             {items.map((item, index) => (
               <button
                 key={getKey(item)}
@@ -208,7 +213,7 @@ export default function CoverflowCarousel<T>({
                 onClick={() => goTo(index)}
                 aria-label={`Go to item ${index + 1}`}
                 className={`h-1.5 rounded-full transition-all duration-300 ${
-                  index === active ? "w-6 bg-white" : "w-1.5 bg-white/30"
+                  index === active ? "w-6 -translate-y-1 bg-white" : "w-1.5 bg-white/30"
                 }`}
               />
             ))}
@@ -218,7 +223,7 @@ export default function CoverflowCarousel<T>({
             type="button"
             onClick={() => goTo(active + 1)}
             aria-label="Next"
-            className="flex h-9 w-9 items-center justify-center rounded-full border border-white/20 text-white transition-colors duration-300 hover:border-white hover:bg-white hover:text-black"
+            className="hidden h-9 w-9 items-center justify-center rounded-full border border-white/20 text-white transition-colors duration-300 hover:border-white hover:bg-white hover:text-black sm:flex"
           >
             →
           </button>
