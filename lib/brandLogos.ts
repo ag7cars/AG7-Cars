@@ -2,6 +2,7 @@
 const LOGO_FILES: Record<string, string> = {
   "aston-martin": "aston-martin.svg",
   audi: "audi.svg",
+  bentley: "bentley.png",
   bmw: "bmw.svg",
   citroen: "citroen.svg",
   ferrari: "ferrari.svg",
