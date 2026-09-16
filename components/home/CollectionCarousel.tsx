@@ -62,7 +62,7 @@ function formatPrice(price: number | null, currency: string) {
 function formatKm(km: number | null) {
   if (km === null) return null;
   if (km === 0) return "Brand New";
-  return `${km.toLocaleString("en-IN")} km`;
+  return `${km.toLocaleString("en-IN")} Kms`;
 }
 
 // Only the state + RTO code is shown publicly (e.g. "MP 09"), same as
