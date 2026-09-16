@@ -21,7 +21,7 @@ export default function FounderSection({ founder }: { founder: Founder | null })
         </div>
 
         <div>
-          <p className="text-xs uppercase tracking-[0.2em] text-[#e8c874]">Meet the Founder</p>
+          <p className="text-xs uppercase tracking-[0.2em] text-[#e8c874]">The Name Behind AG7</p>
           <h3 className="mt-2 font-display text-2xl font-semibold text-white sm:text-3xl">{founder.name}</h3>
           {founder.title && <p className="mt-1 text-sm text-white/50">{founder.title}</p>}
           {founder.message && (
