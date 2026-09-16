@@ -20,11 +20,11 @@ const montserrat = Montserrat({
 export const metadata: Metadata = {
   metadataBase: new URL("https://www.ag7cars.com"),
   title: {
-    default: "AG7 Cars | Luxury, Supercars & Exceptional Automobiles",
+    default: "AG7 Cars | Built on Passion, Driven by Trust.",
     template: "%s | AG7 Cars",
   },
   description:
-    "Discover exceptional pre-owned supercars, luxury cars and new automobiles at AG7 Cars.",
+    "Discover an exclusive collection of remarkable new and exceptional pre-owned supercars and luxury automobiles, curated for those who expect nothing but the extraordinary.",
   applicationName: "AG7 Cars",
   generator: "Next.js",
   keywords: [
@@ -42,9 +42,9 @@ export const metadata: Metadata = {
   openGraph: {
     type: "website",
     siteName: "AG7 Cars",
-    title: "AG7 Cars | Luxury, Supercars & Exceptional Automobiles",
+    title: "AG7 Cars | Built on Passion, Driven by Trust.",
     description:
-      "Discover exceptional pre-owned supercars, luxury cars and new automobiles at AG7 Cars.",
+      "Discover an exclusive collection of remarkable new and exceptional pre-owned supercars and luxury automobiles, curated for those who expect nothing but the extraordinary.",
     locale: "en_IN",
   },
 };
