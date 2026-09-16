@@ -304,7 +304,6 @@ export default function DeliveriesGallery({
             getKey={(delivery) => delivery.id}
             autoAdvanceMs={5000}
             aspectClass="aspect-[4/5]"
-            range={photos.length}
             renderCard={(delivery, isFront) => <DeliveryPhotoCardFace delivery={delivery} isFront={isFront} />}
             emptyMessage="No delivery photos have been posted yet. Check back soon."
           />

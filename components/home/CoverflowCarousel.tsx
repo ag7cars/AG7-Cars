@@ -36,8 +36,9 @@ export type CoverflowCarouselProps<T> = {
   `range` cards on each side tilt away in real CSS perspective
   (rotateY), shrinking and fading the further out they are —
   mirrored symmetrically left/right rather than a one-directional
-  fan. Advances on its own, or swipe (or click a side
-  card) to change it manually — no visible arrow/dot controls.
+  fan. Advances on its own; touch devices swipe to change it
+  manually, while sm+ screens (mouse/trackpad, no swipe gesture) get
+  visible prev/next arrows and dot indicators instead.
 */
 export default function CoverflowCarousel<T>({
   items,
@@ -187,6 +188,42 @@ export default function CoverflowCarousel<T>({
           );
         })}
       </div>
+
+      {count > 1 && (
+        <div className="relative z-10 mt-6 hidden items-center justify-center gap-4 sm:flex">
+          <button
+            type="button"
+            onClick={() => goTo(active - 1)}
+            aria-label="Previous"
+            className="flex h-9 w-9 items-center justify-center rounded-full border border-white/20 text-white transition-colors duration-300 hover:border-white hover:bg-white hover:text-black"
+          >
+            ←
+          </button>
+
+          <div className="flex items-center gap-2">
+            {items.map((item, index) => (
+              <button
+                key={getKey(item)}
+                type="button"
+                onClick={() => goTo(index)}
+                aria-label={`Go to item ${index + 1}`}
+                className={`h-1.5 rounded-full transition-all duration-300 ${
+                  index === active ? "w-6 bg-white" : "w-1.5 bg-white/30"
+                }`}
+              />
+            ))}
+          </div>
+
+          <button
+            type="button"
+            onClick={() => goTo(active + 1)}
+            aria-label="Next"
+            className="flex h-9 w-9 items-center justify-center rounded-full border border-white/20 text-white transition-colors duration-300 hover:border-white hover:bg-white hover:text-black"
+          >
+            →
+          </button>
+        </div>
+      )}
     </div>
   );
 }
