@@ -25,6 +25,7 @@ function DeliveryCardFace({
   delivery,
   isFront,
   side,
+  distance,
   sectionInView,
   onVideoPlayingChange,
 }: {
@@ -36,6 +37,11 @@ function DeliveryCardFace({
       on the card's outer edge instead of getting tucked toward the
       center, whichever side it peeks from. */
   side: -1 | 0 | 1;
+  /** How many cards away from front (0 = front itself). Front and its
+      immediate neighbor fully preload their video — those are the
+      ones about to become front next, so buffering starts before the
+      card actually slides into place instead of only once it does. */
+  distance: number;
   /** Whether the videos carousel itself is currently scrolled into
       view — sound only plays while the visitor is actually looking
       at this section, and cuts out the instant they scroll past it
@@ -141,14 +147,16 @@ function DeliveryCardFace({
               muted
               loop
               playsInline
-              // Only the front card fully preloads — these videos are
-              // now served straight off the server's own disk with no
-              // CDN in front, so every mounted card preloading at once
-              // (there can be many in the deck) competed for the same
-              // bandwidth and made the actually-visible one slow to
-              // start. Back cards still fetch enough to know duration/
-              // dimensions, just not the full file.
-              preload={isFront ? "auto" : "metadata"}
+              // Front card and its immediate neighbor fully preload —
+              // those are the ones about to become front next, so the
+              // buffering delay that used to show up right as a card
+              // became active is gone by the time it slides into
+              // place. Everything farther out still only fetches
+              // metadata; these videos are served straight off the
+              // server's own disk with no CDN in front, so preloading
+              // the whole deck at once would go back to competing for
+              // bandwidth and slowing down the one that's visible.
+              preload={distance <= 1 ? "auto" : "metadata"}
               controls={isFront}
               onPlay={() => isFront && onVideoPlayingChange(true)}
               onPause={() => isFront && onVideoPlayingChange(false)}
@@ -285,11 +293,12 @@ export default function DeliveriesGallery({
             autoAdvanceMs={5000}
             paused={videoPlaying}
             range={videos.length}
-            renderCard={(delivery, isFront, side) => (
+            renderCard={(delivery, isFront, side, distance) => (
               <DeliveryCardFace
                 delivery={delivery}
                 isFront={isFront}
                 side={side}
+                distance={distance}
                 sectionInView={videosInView}
                 onVideoPlayingChange={setVideoPlaying}
               />

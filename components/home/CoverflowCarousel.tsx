@@ -11,9 +11,12 @@ export type CoverflowCarouselProps<T> = {
    * caller decides what that means (wrap in a Link, enable video
    * controls, etc). Non-front cards are automatically made
    * click-to-select by the carousel itself. `side` is which way the
-   * card sits (1 = right, -1 = left, 0 = front/center).
+   * card sits (1 = right, -1 = left, 0 = front/center). `distance` is
+   * how many cards away from front this is (0 for the front card
+   * itself) — useful for deciding how eagerly to load heavy media
+   * (e.g. only fully preload a video within a couple cards of front).
    */
-  renderCard: (item: T, isFront: boolean, side: -1 | 0 | 1) => React.ReactNode;
+  renderCard: (item: T, isFront: boolean, side: -1 | 0 | 1, distance: number) => React.ReactNode;
   /** Auto-advance interval in ms. Defaults to 4000. */
   autoAdvanceMs?: number;
   /** Externally-controlled pause, e.g. while a video is playing. */
@@ -156,7 +159,7 @@ export default function CoverflowCarousel<T>({
                   visualMagnitude - 1
                 } * var(--cf-spread-step) * 1%))) rotateY(calc(${-side} * (28deg + ${visualMagnitude} * var(--cf-rotate-extra) * 1deg))) scale(calc(1 - ${visualMagnitude} * var(--cf-scale-step)))`;
 
-          const card = renderCard(item, isFront, side);
+          const card = renderCard(item, isFront, side, magnitude);
 
           // Always the same element here regardless of isFront — if
           // this branched between rendering `card` directly and
