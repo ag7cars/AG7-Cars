@@ -29,26 +29,29 @@ export type CoverflowCarouselProps<T> = {
   /** Called whenever the front (active) card changes, including on mount. */
   onActiveIndexChange?: (index: number) => void;
   /** How many cards peek on each side of the front one. Defaults to
-      3 — a deliberately small number: every rendered card gets its
-      own distinct spot with no cap on the underlying math, so a
-      large range (e.g. items.length) fans a long list out so far
-      the outer cards both shrink a lot and drift a long way from
-      center. Keep this to a handful regardless of how many items
+      3 — each one sits a fixed card-width-plus-gap further out, so a
+      larger range just pushes the outermost cards proportionally
+      further from center (most will sit off past the section's own
+      width). Keep this to a handful regardless of how many items
       there are; the rest are still reachable via the dots/arrows and
-      auto-advance, just not simultaneously fanned out on screen. */
+      auto-advance, just not simultaneously laid out on screen. */
   range?: number;
   /** Soft-focus blur on the background cards for extra depth. Defaults to false. */
   blurSideCards?: boolean;
 };
 
 /*
-  3D coverflow: the front card faces the viewer straight on; up to
-  `range` cards on each side tilt away in real CSS perspective
-  (rotateY), shrinking and fading the further out they are —
-  mirrored symmetrically left/right rather than a one-directional
-  fan. Advances on its own; touch devices swipe to change it
-  manually, while sm+ screens (mouse/trackpad, no swipe gesture) get
-  visible prev/next arrows and dot indicators instead.
+  Peek carousel: the front card sits centered at full, normal size;
+  up to `range` cards on each side sit beside it at that exact same
+  size, spaced a fixed card-width-plus-gap apart so they never
+  overlap or shrink — only dimming with distance for focus. (An
+  earlier version tilted/scaled cards away in 3D, coverflow-style,
+  but shrinking cards toward a shared vanishing point meant distant
+  ones crowded together and visually overlapped — exactly what this
+  avoids by construction: same size, fixed spacing, never touching.)
+  Advances on its own; touch devices swipe to change it manually,
+  while sm+ screens (mouse/trackpad, no swipe gesture) get visible
+  prev/next arrows and dot indicators instead.
 */
 export default function CoverflowCarousel<T>({
   items,
@@ -119,9 +122,9 @@ export default function CoverflowCarousel<T>({
   }
 
   return (
-    <div className="relative mt-10" style={{ perspective: "1400px" }}>
+    <div className="relative mt-10">
       <div
-        className={`coverflow-3d relative mx-auto ${aspectClass} ${widthClass}`}
+        className={`relative mx-auto ${aspectClass} ${widthClass}`}
         onTouchStart={handleTouchStart}
         onTouchEnd={handleTouchEnd}
       >
@@ -138,35 +141,26 @@ export default function CoverflowCarousel<T>({
           const magnitude = Math.abs(signedOffset);
           const side = signedOffset === 0 ? 0 : signedOffset > 0 ? 1 : -1;
 
-          // `magnitude` is used directly (no artificial re-cap) — the
-          // `range` guard above already guarantees it never exceeds
-          // `range`, so as long as the caller passes a sane range
-          // (a handful, not the whole list) every rendered card gets
-          // its own distinct position instead of several of them
-          // landing on the exact same spot. Scale and opacity still
-          // floor out gracefully via Math.max so a much larger range
-          // can't invert a card past zero scale or go negative on
-          // opacity — that floor just won't normally get reached.
-          const opacity = magnitude === 0 ? 1 : Math.max(0.75 - (magnitude - 1) * 0.2, 0.3);
-          const blurPx = blurSideCards && magnitude > 0 ? magnitude * 2.5 : 0;
+          // Only opacity carries the "this isn't the front card" cue
+          // now — every card renders at the same normal size, so
+          // there's nothing left to shrink into overlap with its
+          // neighbor.
+          const opacity = magnitude === 0 ? 1 : Math.max(0.85 - (magnitude - 1) * 0.15, 0.45);
+          const blurPx = blurSideCards && magnitude > 0 ? magnitude * 1.5 : 0;
           const zIndex = 100 - magnitude;
 
-          // The spread/rotation for background cards are built from
-          // CSS custom properties (--cf-spread-base etc., set on the
-          // .coverflow-3d container below and overridden under a
-          // max-width media query in globals.css) rather than a JS
-          // viewport check — a plain CSS media query resolves at
-          // paint time with no client-only re-render, so there's no
-          // flash of the desktop spacing before it corrects itself.
-          // Scale is wrapped in a CSS max() (not just Math.max in JS)
-          // since it depends on --cf-scale-step, which itself changes
-          // under the mobile media query in globals.css.
+          // Each step over is exactly one card-width-plus-gap (in %
+          // of the card's own width, so it already accounts for
+          // however wide `widthClass` makes it at this breakpoint) —
+          // cards line up edge-to-edge with a fixed gap between them
+          // and never overlap, unlike a coverflow's shrink-toward-a-
+          // vanishing-point spacing where farther cards close in on
+          // each other.
+          const gapPercent = 6;
           const transform =
             magnitude === 0
-              ? "translateX(0%) rotateY(0deg) scale(1)"
-              : `translateX(calc(${side} * (var(--cf-spread-base) * 1% + ${
-                  magnitude - 1
-                } * var(--cf-spread-step) * 1%))) rotateY(calc(${-side} * (28deg + ${magnitude} * var(--cf-rotate-extra) * 1deg))) scale(max(calc(1 - ${magnitude} * var(--cf-scale-step)), 0.3))`;
+              ? "translateX(0%)"
+              : `translateX(${side * magnitude * (100 + gapPercent)}%)`;
 
           const card = renderCard(item, isFront, side, magnitude);
 
