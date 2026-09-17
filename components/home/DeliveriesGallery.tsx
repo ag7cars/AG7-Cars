@@ -141,14 +141,16 @@ function DeliveryCardFace({
               muted
               loop
               playsInline
-              // Only the front card fully preloads — these videos are
-              // now served straight off the server's own disk with no
-              // CDN in front, so every mounted card preloading at once
-              // (there can be many in the deck) competed for the same
-              // bandwidth and made the actually-visible one slow to
-              // start. Back cards still fetch enough to know duration/
-              // dimensions, just not the full file.
-              preload={isFront ? "auto" : "metadata"}
+              // Every mounted card fully preloads now, not just the
+              // front one — the carousel only ever mounts the front
+              // card plus its immediate left/right neighbor (range=1),
+              // so this is at most 3 videos instead of the whole deck.
+              // Metadata-only for the neighbors was cheaper on
+              // bandwidth but meant a visible buffering delay right as
+              // a card became front; preloading the two cards it's
+              // actually about to become means that delay is gone by
+              // the time it slides into place.
+              preload="auto"
               controls={isFront}
               onPlay={() => isFront && onVideoPlayingChange(true)}
               onPause={() => isFront && onVideoPlayingChange(false)}
@@ -284,7 +286,6 @@ export default function DeliveriesGallery({
             getKey={(delivery) => delivery.id}
             autoAdvanceMs={5000}
             paused={videoPlaying}
-            range={videos.length}
             renderCard={(delivery, isFront, side) => (
               <DeliveryCardFace
                 delivery={delivery}

@@ -25,7 +25,9 @@ export type CoverflowCarouselProps<T> = {
   emptyMessage?: string;
   /** Called whenever the front (active) card changes, including on mount. */
   onActiveIndexChange?: (index: number) => void;
-  /** How many cards peek on each side of the front one. Defaults to 2. */
+  /** How many cards peek on each side of the front one. Defaults to
+      1 — past that, the outer cards' overlap and low opacity started
+      reading as a squeezed, ghosted mess rather than a clean fan. */
   range?: number;
   /** Soft-focus blur on the background cards for extra depth. Defaults to false. */
   blurSideCards?: boolean;
@@ -50,7 +52,7 @@ export default function CoverflowCarousel<T>({
   aspectClass = "aspect-[3/4]",
   emptyMessage,
   onActiveIndexChange,
-  range = 2,
+  range = 1,
   blurSideCards = false,
 }: CoverflowCarouselProps<T>) {
   const [active, setActive] = useState(0);
