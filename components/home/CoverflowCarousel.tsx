@@ -11,9 +11,12 @@ export type CoverflowCarouselProps<T> = {
    * caller decides what that means (wrap in a Link, enable video
    * controls, etc). Non-front cards are automatically made
    * click-to-select by the carousel itself. `side` is which way the
-   * card sits (1 = right, -1 = left, 0 = front/center).
+   * card sits (1 = right, -1 = left, 0 = front/center). `distance` is
+   * how many cards away from front this is (0 for the front card
+   * itself) — useful for deciding how eagerly to load heavy media
+   * (e.g. only fully preload a video within a couple cards of front).
    */
-  renderCard: (item: T, isFront: boolean, side: -1 | 0 | 1) => React.ReactNode;
+  renderCard: (item: T, isFront: boolean, side: -1 | 0 | 1, distance: number) => React.ReactNode;
   /** Auto-advance interval in ms. Defaults to 4000. */
   autoAdvanceMs?: number;
   /** Externally-controlled pause, e.g. while a video is playing. */
@@ -26,8 +29,7 @@ export type CoverflowCarouselProps<T> = {
   /** Called whenever the front (active) card changes, including on mount. */
   onActiveIndexChange?: (index: number) => void;
   /** How many cards peek on each side of the front one. Defaults to
-      1 — past that, the outer cards' overlap and low opacity started
-      reading as a squeezed, ghosted mess rather than a clean fan. */
+      2; raise it (e.g. to items.length) to fan the whole list out. */
   range?: number;
   /** Soft-focus blur on the background cards for extra depth. Defaults to false. */
   blurSideCards?: boolean;
@@ -52,7 +54,7 @@ export default function CoverflowCarousel<T>({
   aspectClass = "aspect-[3/4]",
   emptyMessage,
   onActiveIndexChange,
-  range = 1,
+  range = 2,
   blurSideCards = false,
 }: CoverflowCarouselProps<T>) {
   const [active, setActive] = useState(0);
@@ -130,16 +132,23 @@ export default function CoverflowCarousel<T>({
           const magnitude = Math.abs(signedOffset);
           const side = signedOffset === 0 ? 0 : signedOffset > 0 ? 1 : -1;
 
-          // Spread/rotation/scale/opacity all read from a magnitude
-          // capped at 4 rather than the real (possibly much larger,
-          // with `range` raised to show a whole 20-item list) one —
-          // past that they'd keep growing forever and run off-screen,
-          // invert past zero scale, or go negative on opacity. Cards
-          // beyond the cap end up visually stacked at the same
-          // outermost spot instead, like the rest of a fanned deck
-          // peeking from behind the closest few; zIndex still uses
-          // the real magnitude so nearer cards stay on top.
+          // Scale/opacity read from a magnitude capped at 4 — past
+          // that they'd invert past zero scale or go negative on
+          // opacity, so every card beyond depth 4 just stays at that
+          // same small/faded floor instead.
+          //
+          // Position (translateX/rotateY) reads from a *separate*,
+          // much higher cap instead of reusing visualMagnitude — with
+          // both driven by the same capped value, every card past
+          // depth 4 landed at the exact same spot (same offset, same
+          // rotation), which is what made a longer list look like a
+          // squeezed pile-up with a big gap between the last distinct
+          // card and that pile. Letting position keep growing past
+          // the visual cap means each card still gets its own spot,
+          // fading into the same small/faint look but spreading
+          // further out (and off-screen) rather than stacking.
           const visualMagnitude = Math.min(magnitude, 4);
+          const positionMagnitude = Math.min(magnitude, 20);
           const opacity = magnitude === 0 ? 1 : Math.max(0.75 - (visualMagnitude - 1) * 0.2, 0.3);
           const blurPx = blurSideCards && magnitude > 0 ? visualMagnitude * 2.5 : 0;
           const zIndex = 100 - magnitude;
@@ -155,10 +164,10 @@ export default function CoverflowCarousel<T>({
             magnitude === 0
               ? "translateX(0%) rotateY(0deg) scale(1)"
               : `translateX(calc(${side} * (var(--cf-spread-base) * 1% + ${
-                  visualMagnitude - 1
-                } * var(--cf-spread-step) * 1%))) rotateY(calc(${-side} * (28deg + ${visualMagnitude} * var(--cf-rotate-extra) * 1deg))) scale(calc(1 - ${visualMagnitude} * var(--cf-scale-step)))`;
+                  positionMagnitude - 1
+                } * var(--cf-spread-step) * 1%))) rotateY(calc(${-side} * (28deg + ${positionMagnitude} * var(--cf-rotate-extra) * 1deg))) scale(calc(1 - ${visualMagnitude} * var(--cf-scale-step)))`;
 
-          const card = renderCard(item, isFront, side);
+          const card = renderCard(item, isFront, side, magnitude);
 
           // Always the same element here regardless of isFront — if
           // this branched between rendering `card` directly and

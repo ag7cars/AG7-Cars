@@ -25,6 +25,7 @@ function DeliveryCardFace({
   delivery,
   isFront,
   side,
+  distance,
   sectionInView,
   onVideoPlayingChange,
 }: {
@@ -36,6 +37,11 @@ function DeliveryCardFace({
       on the card's outer edge instead of getting tucked toward the
       center, whichever side it peeks from. */
   side: -1 | 0 | 1;
+  /** How many cards away from front (0 = front itself). Only front
+      and its immediate neighbor fully preload their video — with the
+      full deck fanned out (not just 3 cards), preloading everything
+      mounted would go back to competing for bandwidth. */
+  distance: number;
   /** Whether the videos carousel itself is currently scrolled into
       view — sound only plays while the visitor is actually looking
       at this section, and cuts out the instant they scroll past it
@@ -141,16 +147,16 @@ function DeliveryCardFace({
               muted
               loop
               playsInline
-              // Every mounted card fully preloads now, not just the
-              // front one — the carousel only ever mounts the front
-              // card plus its immediate left/right neighbor (range=1),
-              // so this is at most 3 videos instead of the whole deck.
-              // Metadata-only for the neighbors was cheaper on
-              // bandwidth but meant a visible buffering delay right as
-              // a card became front; preloading the two cards it's
-              // actually about to become means that delay is gone by
-              // the time it slides into place.
-              preload="auto"
+              // Front card and its immediate neighbor (whichever side
+              // it's on) fully preload — those are the ones about to
+              // become front next, so this removes the buffering
+              // delay that used to show up right as a card became
+              // active. Everything farther out still only fetches
+              // metadata; with the whole deck fanned out (not capped
+              // to 3 cards), preloading all of it would go back to
+              // competing for bandwidth and slowing down the one
+              // that's actually visible.
+              preload={distance <= 1 ? "auto" : "metadata"}
               controls={isFront}
               onPlay={() => isFront && onVideoPlayingChange(true)}
               onPause={() => isFront && onVideoPlayingChange(false)}
@@ -286,11 +292,13 @@ export default function DeliveriesGallery({
             getKey={(delivery) => delivery.id}
             autoAdvanceMs={5000}
             paused={videoPlaying}
-            renderCard={(delivery, isFront, side) => (
+            range={videos.length}
+            renderCard={(delivery, isFront, side, distance) => (
               <DeliveryCardFace
                 delivery={delivery}
                 isFront={isFront}
                 side={side}
+                distance={distance}
                 sectionInView={videosInView}
                 onVideoPlayingChange={setVideoPlaying}
               />
@@ -305,6 +313,7 @@ export default function DeliveriesGallery({
             getKey={(delivery) => delivery.id}
             autoAdvanceMs={5000}
             aspectClass="aspect-[4/5]"
+            range={photos.length}
             renderCard={(delivery, isFront) => <DeliveryPhotoCardFace delivery={delivery} isFront={isFront} />}
             emptyMessage="No delivery photos have been posted yet. Check back soon."
           />
