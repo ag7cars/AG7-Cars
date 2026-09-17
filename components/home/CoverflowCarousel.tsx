@@ -29,7 +29,13 @@ export type CoverflowCarouselProps<T> = {
   /** Called whenever the front (active) card changes, including on mount. */
   onActiveIndexChange?: (index: number) => void;
   /** How many cards peek on each side of the front one. Defaults to
-      2; raise it (e.g. to items.length) to fan the whole list out. */
+      3 — a deliberately small number: every rendered card gets its
+      own distinct spot with no cap on the underlying math, so a
+      large range (e.g. items.length) fans a long list out so far
+      the outer cards both shrink a lot and drift a long way from
+      center. Keep this to a handful regardless of how many items
+      there are; the rest are still reachable via the dots/arrows and
+      auto-advance, just not simultaneously fanned out on screen. */
   range?: number;
   /** Soft-focus blur on the background cards for extra depth. Defaults to false. */
   blurSideCards?: boolean;
@@ -54,7 +60,7 @@ export default function CoverflowCarousel<T>({
   aspectClass = "aspect-[3/4]",
   emptyMessage,
   onActiveIndexChange,
-  range = 2,
+  range = 3,
   blurSideCards = false,
 }: CoverflowCarouselProps<T>) {
   const [active, setActive] = useState(0);
@@ -132,40 +138,35 @@ export default function CoverflowCarousel<T>({
           const magnitude = Math.abs(signedOffset);
           const side = signedOffset === 0 ? 0 : signedOffset > 0 ? 1 : -1;
 
-          // Scale/opacity read from a magnitude capped at 4 — past
-          // that they'd invert past zero scale or go negative on
-          // opacity, so every card beyond depth 4 just stays at that
-          // same small/faded floor instead.
-          //
-          // Position (translateX/rotateY) reads from a *separate*,
-          // much higher cap instead of reusing visualMagnitude — with
-          // both driven by the same capped value, every card past
-          // depth 4 landed at the exact same spot (same offset, same
-          // rotation), which is what made a longer list look like a
-          // squeezed pile-up with a big gap between the last distinct
-          // card and that pile. Letting position keep growing past
-          // the visual cap means each card still gets its own spot,
-          // fading into the same small/faint look but spreading
-          // further out (and off-screen) rather than stacking.
-          const visualMagnitude = Math.min(magnitude, 4);
-          const positionMagnitude = Math.min(magnitude, 20);
-          const opacity = magnitude === 0 ? 1 : Math.max(0.75 - (visualMagnitude - 1) * 0.2, 0.3);
-          const blurPx = blurSideCards && magnitude > 0 ? visualMagnitude * 2.5 : 0;
+          // `magnitude` is used directly (no artificial re-cap) — the
+          // `range` guard above already guarantees it never exceeds
+          // `range`, so as long as the caller passes a sane range
+          // (a handful, not the whole list) every rendered card gets
+          // its own distinct position instead of several of them
+          // landing on the exact same spot. Scale and opacity still
+          // floor out gracefully via Math.max so a much larger range
+          // can't invert a card past zero scale or go negative on
+          // opacity — that floor just won't normally get reached.
+          const opacity = magnitude === 0 ? 1 : Math.max(0.75 - (magnitude - 1) * 0.2, 0.3);
+          const blurPx = blurSideCards && magnitude > 0 ? magnitude * 2.5 : 0;
           const zIndex = 100 - magnitude;
 
-          // The spread/rotation/scale for background cards are built
-          // from CSS custom properties (--cf-spread-base etc., set on
-          // the .coverflow-3d container below and overridden under a
+          // The spread/rotation for background cards are built from
+          // CSS custom properties (--cf-spread-base etc., set on the
+          // .coverflow-3d container below and overridden under a
           // max-width media query in globals.css) rather than a JS
           // viewport check — a plain CSS media query resolves at
           // paint time with no client-only re-render, so there's no
           // flash of the desktop spacing before it corrects itself.
+          // Scale is wrapped in a CSS max() (not just Math.max in JS)
+          // since it depends on --cf-scale-step, which itself changes
+          // under the mobile media query in globals.css.
           const transform =
             magnitude === 0
               ? "translateX(0%) rotateY(0deg) scale(1)"
               : `translateX(calc(${side} * (var(--cf-spread-base) * 1% + ${
-                  positionMagnitude - 1
-                } * var(--cf-spread-step) * 1%))) rotateY(calc(${-side} * (28deg + ${positionMagnitude} * var(--cf-rotate-extra) * 1deg))) scale(calc(1 - ${visualMagnitude} * var(--cf-scale-step)))`;
+                  magnitude - 1
+                } * var(--cf-spread-step) * 1%))) rotateY(calc(${-side} * (28deg + ${magnitude} * var(--cf-rotate-extra) * 1deg))) scale(max(calc(1 - ${magnitude} * var(--cf-scale-step)), 0.3))`;
 
           const card = renderCard(item, isFront, side, magnitude);
 
