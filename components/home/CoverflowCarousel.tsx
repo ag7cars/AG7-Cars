@@ -11,12 +11,9 @@ export type CoverflowCarouselProps<T> = {
    * caller decides what that means (wrap in a Link, enable video
    * controls, etc). Non-front cards are automatically made
    * click-to-select by the carousel itself. `side` is which way the
-   * card sits (1 = right, -1 = left, 0 = front/center). `distance` is
-   * how many cards away from front this is (0 for the front card
-   * itself) — useful for deciding how eagerly to load heavy media
-   * (e.g. only fully preload a video within a couple cards of front).
+   * card sits (1 = right, -1 = left, 0 = front/center).
    */
-  renderCard: (item: T, isFront: boolean, side: -1 | 0 | 1, distance: number) => React.ReactNode;
+  renderCard: (item: T, isFront: boolean, side: -1 | 0 | 1) => React.ReactNode;
   /** Auto-advance interval in ms. Defaults to 4000. */
   autoAdvanceMs?: number;
   /** Externally-controlled pause, e.g. while a video is playing. */
@@ -28,30 +25,20 @@ export type CoverflowCarouselProps<T> = {
   emptyMessage?: string;
   /** Called whenever the front (active) card changes, including on mount. */
   onActiveIndexChange?: (index: number) => void;
-  /** How many cards peek on each side of the front one. Defaults to
-      3 — each one sits a fixed card-width-plus-gap further out, so a
-      larger range just pushes the outermost cards proportionally
-      further from center (most will sit off past the section's own
-      width). Keep this to a handful regardless of how many items
-      there are; the rest are still reachable via the dots/arrows and
-      auto-advance, just not simultaneously laid out on screen. */
+  /** How many cards peek on each side of the front one. Defaults to 2. */
   range?: number;
   /** Soft-focus blur on the background cards for extra depth. Defaults to false. */
   blurSideCards?: boolean;
 };
 
 /*
-  Peek carousel: the front card sits centered at full, normal size;
-  up to `range` cards on each side sit beside it at that exact same
-  size, spaced a fixed card-width-plus-gap apart so they never
-  overlap or shrink — only dimming with distance for focus. (An
-  earlier version tilted/scaled cards away in 3D, coverflow-style,
-  but shrinking cards toward a shared vanishing point meant distant
-  ones crowded together and visually overlapped — exactly what this
-  avoids by construction: same size, fixed spacing, never touching.)
-  Advances on its own; touch devices swipe to change it manually,
-  while sm+ screens (mouse/trackpad, no swipe gesture) get visible
-  prev/next arrows and dot indicators instead.
+  3D coverflow: the front card faces the viewer straight on; up to
+  `range` cards on each side tilt away in real CSS perspective
+  (rotateY), shrinking and fading the further out they are —
+  mirrored symmetrically left/right rather than a one-directional
+  fan. Advances on its own; touch devices swipe to change it
+  manually, while sm+ screens (mouse/trackpad, no swipe gesture) get
+  visible prev/next arrows and dot indicators instead.
 */
 export default function CoverflowCarousel<T>({
   items,
@@ -63,7 +50,7 @@ export default function CoverflowCarousel<T>({
   aspectClass = "aspect-[3/4]",
   emptyMessage,
   onActiveIndexChange,
-  range = 3,
+  range = 2,
   blurSideCards = false,
 }: CoverflowCarouselProps<T>) {
   const [active, setActive] = useState(0);
@@ -122,9 +109,9 @@ export default function CoverflowCarousel<T>({
   }
 
   return (
-    <div className="relative mt-10">
+    <div className="relative mt-10" style={{ perspective: "1400px" }}>
       <div
-        className={`relative mx-auto ${aspectClass} ${widthClass}`}
+        className={`coverflow-3d relative mx-auto ${aspectClass} ${widthClass}`}
         onTouchStart={handleTouchStart}
         onTouchEnd={handleTouchEnd}
       >
@@ -141,28 +128,35 @@ export default function CoverflowCarousel<T>({
           const magnitude = Math.abs(signedOffset);
           const side = signedOffset === 0 ? 0 : signedOffset > 0 ? 1 : -1;
 
-          // Only opacity carries the "this isn't the front card" cue
-          // now — every card renders at the same normal size, so
-          // there's nothing left to shrink into overlap with its
-          // neighbor.
-          const opacity = magnitude === 0 ? 1 : Math.max(0.85 - (magnitude - 1) * 0.15, 0.45);
-          const blurPx = blurSideCards && magnitude > 0 ? magnitude * 1.5 : 0;
+          // Spread/rotation/scale/opacity all read from a magnitude
+          // capped at 4 rather than the real (possibly much larger,
+          // with `range` raised to show a whole 20-item list) one —
+          // past that they'd keep growing forever and run off-screen,
+          // invert past zero scale, or go negative on opacity. Cards
+          // beyond the cap end up visually stacked at the same
+          // outermost spot instead, like the rest of a fanned deck
+          // peeking from behind the closest few; zIndex still uses
+          // the real magnitude so nearer cards stay on top.
+          const visualMagnitude = Math.min(magnitude, 4);
+          const opacity = magnitude === 0 ? 1 : Math.max(0.75 - (visualMagnitude - 1) * 0.2, 0.3);
+          const blurPx = blurSideCards && magnitude > 0 ? visualMagnitude * 2.5 : 0;
           const zIndex = 100 - magnitude;
 
-          // Each step over is exactly one card-width-plus-gap (in %
-          // of the card's own width, so it already accounts for
-          // however wide `widthClass` makes it at this breakpoint) —
-          // cards line up edge-to-edge with a fixed gap between them
-          // and never overlap, unlike a coverflow's shrink-toward-a-
-          // vanishing-point spacing where farther cards close in on
-          // each other.
-          const gapPercent = 6;
+          // The spread/rotation/scale for background cards are built
+          // from CSS custom properties (--cf-spread-base etc., set on
+          // the .coverflow-3d container below and overridden under a
+          // max-width media query in globals.css) rather than a JS
+          // viewport check — a plain CSS media query resolves at
+          // paint time with no client-only re-render, so there's no
+          // flash of the desktop spacing before it corrects itself.
           const transform =
             magnitude === 0
-              ? "translateX(0%)"
-              : `translateX(${side * magnitude * (100 + gapPercent)}%)`;
+              ? "translateX(0%) rotateY(0deg) scale(1)"
+              : `translateX(calc(${side} * (var(--cf-spread-base) * 1% + ${
+                  visualMagnitude - 1
+                } * var(--cf-spread-step) * 1%))) rotateY(calc(${-side} * (28deg + ${visualMagnitude} * var(--cf-rotate-extra) * 1deg))) scale(calc(1 - ${visualMagnitude} * var(--cf-scale-step)))`;
 
-          const card = renderCard(item, isFront, side, magnitude);
+          const card = renderCard(item, isFront, side);
 
           // Always the same element here regardless of isFront — if
           // this branched between rendering `card` directly and
