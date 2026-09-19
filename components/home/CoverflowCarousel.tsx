@@ -28,16 +28,35 @@ export type CoverflowCarouselProps<T> = {
   emptyMessage?: string;
   /** Called whenever the front (active) card changes, including on mount. */
   onActiveIndexChange?: (index: number) => void;
-  /** How many cards peek on each side of the front one. Defaults to 2. */
+  /** How many cards peek on each side of the front one — mobile/
+      tablet only (desktop always uses a fixed, sane number of its
+      own; see DESKTOP_RANGE). Defaults to 2, same as before the
+      desktop fix. */
   range?: number;
   /** Soft-focus blur on the background cards for extra depth. Defaults to false. */
   blurSideCards?: boolean;
 };
 
+// The mobile/tablet fan (below DESKTOP_QUERY) deliberately keeps its
+// original look untouched — same capped-magnitude tilt/scale math as
+// before the desktop fix, on request. Only sm+ screens get the
+// corrected uniform-spacing, no-tilt version below.
+const DESKTOP_QUERY = "(min-width: 640px)";
+const MOBILE_SPREAD_BASE = 42;
+const MOBILE_SPREAD_STEP = 24;
+const MOBILE_ROTATE_EXTRA = 6;
+const MOBILE_SCALE_STEP = 0.16;
+
 // Gentle per-step size taper — front card at 100%, each card further
 // out a bit smaller, floored so it can never invert past zero.
 const SCALE_STEP = 0.12;
 const MIN_SCALE = 0.4;
+
+// Desktop always fans out this many cards on each side, regardless of
+// what the `range` prop says — that prop's real job now is sizing the
+// *mobile* fan (see DESKTOP_QUERY above), where callers still pass
+// e.g. items.length to keep every item peeking, exactly as before.
+const DESKTOP_RANGE = 3;
 
 function scaleForMagnitude(magnitude: number) {
   return Math.max(1 - magnitude * SCALE_STEP, MIN_SCALE);
@@ -85,7 +104,7 @@ export default function CoverflowCarousel<T>({
   aspectClass = "aspect-[3/4]",
   emptyMessage,
   onActiveIndexChange,
-  range = 3,
+  range = 2,
   blurSideCards = false,
 }: CoverflowCarouselProps<T>) {
   const [active, setActive] = useState(0);
@@ -93,6 +112,21 @@ export default function CoverflowCarousel<T>({
   const touchStartX = useRef<number | null>(null);
   const count = items.length;
   const paused = externalPaused || touchPaused;
+
+  // Defaults to the mobile/tablet layout (matches server-rendered
+  // markup) and upgrades to the desktop one once measured client-side
+  // — the carousel sits below the fold on every page that uses it, so
+  // by the time it's actually scrolled into view this has long since
+  // resolved; there's no risk of a visible layout flash.
+  const [isDesktop, setIsDesktop] = useState(false);
+
+  useEffect(() => {
+    const mq = window.matchMedia(DESKTOP_QUERY);
+    setIsDesktop(mq.matches);
+    const handleChange = (event: MediaQueryListEvent) => setIsDesktop(event.matches);
+    mq.addEventListener("change", handleChange);
+    return () => mq.removeEventListener("change", handleChange);
+  }, []);
 
   useEffect(() => {
     onActiveIndexChange?.(active);
@@ -144,7 +178,7 @@ export default function CoverflowCarousel<T>({
   }
 
   return (
-    <div className="relative mt-10">
+    <div className="relative mt-10" style={{ perspective: isDesktop ? undefined : "1400px" }}>
       <div
         className={`relative mx-auto ${aspectClass} ${widthClass}`}
         onTouchStart={handleTouchStart}
@@ -157,18 +191,37 @@ export default function CoverflowCarousel<T>({
           // only fanning one direction.
           const rawOffset = (index - active + count) % count;
           const signedOffset = rawOffset > count / 2 ? rawOffset - count : rawOffset;
-          if (Math.abs(signedOffset) > range) return null;
+          const effectiveRange = isDesktop ? DESKTOP_RANGE : range;
+          if (Math.abs(signedOffset) > effectiveRange) return null;
 
           const isFront = signedOffset === 0;
           const magnitude = Math.abs(signedOffset);
           const side = signedOffset === 0 ? 0 : signedOffset > 0 ? 1 : -1;
-
-          const scale = scaleForMagnitude(magnitude);
-          const opacity = Math.max(0.85 - (magnitude - 1) * 0.15, 0.5);
-          const blurPx = blurSideCards ? magnitude * 1.5 : 0;
           const zIndex = 100 - magnitude;
 
-          const transform = `translateX(${side * offsetPercentForMagnitude(magnitude)}%) scale(${scale})`;
+          let opacity: number;
+          let blurPx: number;
+          let transform: string;
+
+          if (isDesktop) {
+            const scale = scaleForMagnitude(magnitude);
+            opacity = Math.max(0.85 - (magnitude - 1) * 0.15, 0.5);
+            blurPx = blurSideCards ? magnitude * 1.5 : 0;
+            transform = `translateX(${side * offsetPercentForMagnitude(magnitude)}%) scale(${scale})`;
+          } else {
+            // Original mobile/tablet math, unchanged: one shared
+            // magnitude (capped at 4) drives spread, tilt and scale
+            // together.
+            const visualMagnitude = Math.min(magnitude, 4);
+            opacity = magnitude === 0 ? 1 : Math.max(0.75 - (visualMagnitude - 1) * 0.2, 0.3);
+            blurPx = blurSideCards && magnitude > 0 ? visualMagnitude * 2.5 : 0;
+            transform =
+              magnitude === 0
+                ? "translateX(0%) rotateY(0deg) scale(1)"
+                : `translateX(${side * (MOBILE_SPREAD_BASE + (visualMagnitude - 1) * MOBILE_SPREAD_STEP)}%) rotateY(${
+                    -side * (28 + visualMagnitude * MOBILE_ROTATE_EXTRA)
+                  }deg) scale(${Math.max(1 - visualMagnitude * MOBILE_SCALE_STEP, 0)})`;
+          }
 
           const card = renderCard(item, isFront, side, magnitude);
 
