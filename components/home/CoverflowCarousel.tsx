@@ -34,12 +34,44 @@ export type CoverflowCarouselProps<T> = {
   blurSideCards?: boolean;
 };
 
+// Gentle per-step size taper — front card at 100%, each card further
+// out a bit smaller, floored so it can never invert past zero.
+const SCALE_STEP = 0.12;
+const MIN_SCALE = 0.4;
+
+function scaleForMagnitude(magnitude: number) {
+  return Math.max(1 - magnitude * SCALE_STEP, MIN_SCALE);
+}
+
+// Visible edge-to-edge gap between adjacent cards, as a percentage of
+// the front card's own (unscaled) width — held constant regardless of
+// how much smaller the cards on either side of that gap are.
+const EDGE_GAP_PERCENT = 6;
+
+// Cumulative center offset (in % of the front card's own width) for a
+// card `magnitude` steps out — each step adds exactly that step's two
+// half-widths plus the fixed edge gap, so however much the cards
+// shrink, the *visible* gap between any two neighboring cards is
+// always the same EDGE_GAP_PERCENT, and no two cards can ever land on
+// top of each other (unlike reusing one capped "visual magnitude" for
+// every card past a certain depth, which put them all at the same
+// spot). Only ever called with `magnitude` up to `range`, which the
+// caller is expected to keep small (a handful, not the whole list).
+function offsetPercentForMagnitude(magnitude: number) {
+  let offset = 0;
+  for (let step = 1; step <= magnitude; step++) {
+    offset += 50 * scaleForMagnitude(step - 1) + EDGE_GAP_PERCENT + 50 * scaleForMagnitude(step);
+  }
+  return offset;
+}
+
 /*
-  3D coverflow: the front card faces the viewer straight on; up to
-  `range` cards on each side tilt away in real CSS perspective
-  (rotateY), shrinking and fading the further out they are —
-  mirrored symmetrically left/right rather than a one-directional
-  fan. Advances on its own; touch devices swipe to change it
+  Center-focused fan: the front card faces the viewer at full size;
+  up to `range` cards on each side sit progressively smaller and
+  dimmer, spaced so the visible gap between any two neighbors is
+  always the same regardless of how small they've gotten. No 3D tilt
+  — cards only translate and scale, so the vehicle photo inside never
+  skews. Advances on its own; touch devices swipe to change it
   manually, while sm+ screens (mouse/trackpad, no swipe gesture) get
   visible prev/next arrows and dot indicators instead.
 */
@@ -53,7 +85,7 @@ export default function CoverflowCarousel<T>({
   aspectClass = "aspect-[3/4]",
   emptyMessage,
   onActiveIndexChange,
-  range = 2,
+  range = 3,
   blurSideCards = false,
 }: CoverflowCarouselProps<T>) {
   const [active, setActive] = useState(0);
@@ -112,9 +144,9 @@ export default function CoverflowCarousel<T>({
   }
 
   return (
-    <div className="relative mt-10" style={{ perspective: "1400px" }}>
+    <div className="relative mt-10">
       <div
-        className={`coverflow-3d relative mx-auto ${aspectClass} ${widthClass}`}
+        className={`relative mx-auto ${aspectClass} ${widthClass}`}
         onTouchStart={handleTouchStart}
         onTouchEnd={handleTouchEnd}
       >
@@ -131,33 +163,12 @@ export default function CoverflowCarousel<T>({
           const magnitude = Math.abs(signedOffset);
           const side = signedOffset === 0 ? 0 : signedOffset > 0 ? 1 : -1;
 
-          // Spread/rotation/scale/opacity all read from a magnitude
-          // capped at 4 rather than the real (possibly much larger,
-          // with `range` raised to show a whole 20-item list) one —
-          // past that they'd keep growing forever and run off-screen,
-          // invert past zero scale, or go negative on opacity. Cards
-          // beyond the cap end up visually stacked at the same
-          // outermost spot instead, like the rest of a fanned deck
-          // peeking from behind the closest few; zIndex still uses
-          // the real magnitude so nearer cards stay on top.
-          const visualMagnitude = Math.min(magnitude, 4);
-          const opacity = magnitude === 0 ? 1 : Math.max(0.75 - (visualMagnitude - 1) * 0.2, 0.3);
-          const blurPx = blurSideCards && magnitude > 0 ? visualMagnitude * 2.5 : 0;
+          const scale = scaleForMagnitude(magnitude);
+          const opacity = Math.max(0.85 - (magnitude - 1) * 0.15, 0.5);
+          const blurPx = blurSideCards ? magnitude * 1.5 : 0;
           const zIndex = 100 - magnitude;
 
-          // The spread/rotation/scale for background cards are built
-          // from CSS custom properties (--cf-spread-base etc., set on
-          // the .coverflow-3d container below and overridden under a
-          // max-width media query in globals.css) rather than a JS
-          // viewport check — a plain CSS media query resolves at
-          // paint time with no client-only re-render, so there's no
-          // flash of the desktop spacing before it corrects itself.
-          const transform =
-            magnitude === 0
-              ? "translateX(0%) rotateY(0deg) scale(1)"
-              : `translateX(calc(${side} * (var(--cf-spread-base) * 1% + ${
-                  visualMagnitude - 1
-                } * var(--cf-spread-step) * 1%))) rotateY(calc(${-side} * (28deg + ${visualMagnitude} * var(--cf-rotate-extra) * 1deg))) scale(calc(1 - ${visualMagnitude} * var(--cf-scale-step)))`;
+          const transform = `translateX(${side * offsetPercentForMagnitude(magnitude)}%) scale(${scale})`;
 
           const card = renderCard(item, isFront, side, magnitude);
 

@@ -279,7 +279,6 @@ export default function CollectionCarousel({
             items={cars}
             getKey={(car) => car.id}
             autoAdvanceMs={4000}
-            range={cars.length}
             renderCard={(car, isFront) => <CarCardFace car={car} isFront={isFront} />}
             emptyMessage="No cars have been added to the collection yet. Check back soon."
           />

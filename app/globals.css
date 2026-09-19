@@ -62,26 +62,6 @@
   }
 }
 
-/* CoverflowCarousel's background-card spread/rotation/scale — a
-   plain media query rather than a JS viewport check, so the mobile
-   values are correct on the very first paint (no flash of the
-   desktop spacing before a client-only effect corrects it). */
-.coverflow-3d {
-  --cf-spread-base: 58;
-  --cf-spread-step: 42;
-  --cf-rotate-extra: 6;
-  --cf-scale-step: 0.16;
-}
-
-@media (max-width: 639px) {
-  .coverflow-3d {
-    --cf-spread-base: 42;
-    --cf-spread-step: 24;
-    --cf-rotate-extra: 6;
-    --cf-scale-step: 0.16;
-  }
-}
-
 @keyframes ag7-marquee {
   from {
     transform: translateX(0);

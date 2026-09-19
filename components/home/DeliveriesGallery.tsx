@@ -292,7 +292,6 @@ export default function DeliveriesGallery({
             getKey={(delivery) => delivery.id}
             autoAdvanceMs={5000}
             paused={videoPlaying}
-            range={videos.length}
             renderCard={(delivery, isFront, side, distance) => (
               <DeliveryCardFace
                 delivery={delivery}
