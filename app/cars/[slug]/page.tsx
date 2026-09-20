@@ -5,9 +5,11 @@ import { notFound } from "next/navigation";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 import CarImageGallery from "@/components/collection/CarImageGallery";
+import { WhatsAppIcon } from "@/components/layout/icons";
 import { createClient } from "@/lib/supabase/server";
 import JsonLd from "@/components/seo/JsonLd";
 import { breadcrumbJsonLd, vehicleJsonLd } from "@/lib/seo/jsonld";
+import { whatsappEnquiryLink } from "@/lib/whatsapp";
 import { SITE_URL } from "@/lib/seo/site";
 
 const CAR_DETAIL_SELECT =
@@ -186,15 +188,29 @@ export default async function CarDetailPage({
 
   const status = statusStyles[car.status] ?? statusStyles.available;
   const km = formatKm(car.km_driven);
+  const carUrl = `${SITE_URL}/cars/${car.slug}`;
 
-  // Carries this car along to the homepage contact form as query
-  // params (read there via useSearchParams) so the enquiry email says
-  // exactly which car someone's asking about, not just "an enquiry."
+  // "Enquire Now" — unchanged from current production: carries this
+  // car along to the homepage contact form as query params (read
+  // there via useSearchParams) so the enquiry email says exactly
+  // which car someone's asking about, not just "an enquiry."
   const enquiryParams = new URLSearchParams({
     car: car.slug,
     carLabel: `${car.brand} ${car.name} — ${formatPrice(car.price, car.currency)}`,
   });
   const enquiryHref = `/?${enquiryParams.toString()}#contact`;
+
+  // "Connect on WhatsApp" — a second, separate option next to Enquire
+  // Now. Pre-fills the car's name, price, and link plus a blank for
+  // the visitor's name only (no question field: this button is for a
+  // quick "I'm interested, here's who I am" rather than a full
+  // enquiry) so AG7 knows who to follow up with.
+  const whatsappHref = whatsappEnquiryLink(
+    `Hi AG7 Cars! I'm interested in the ${car.brand} ${car.name} (${formatPrice(
+      car.price,
+      car.currency
+    )}).\n${carUrl}\n\nMy name:`
+  );
 
   // Fixed order per the dealership's own spec-sheet convention —
   // everything else (body type, engine, options list, etc.) goes in
@@ -211,7 +227,6 @@ export default async function CarDetailPage({
     car.color ? { key: "color", label: "Color", value: car.color } : null,
   ].filter((s): s is { key: SpecKey; label: string; value: string } => s !== null);
 
-  const carUrl = `${SITE_URL}/cars/${car.slug}`;
   const galleryAlt = `${car.manufacturing_year ?? car.year ?? ""} ${car.brand} ${car.name}${
     car.color ? ` in ${car.color}` : ""
   } at AG7 Cars showroom, Indore`.replace(/\s+/g, " ").trim();
@@ -321,16 +336,25 @@ export default async function CarDetailPage({
                 </div>
               )}
 
-              <div className="mt-10 flex flex-wrap gap-3">
+              <div className="mt-10 grid grid-cols-2 gap-3 lg:flex lg:flex-nowrap lg:gap-2">
                 <Link
                   href={enquiryHref}
-                  className="inline-flex h-12 items-center justify-center rounded-full bg-white px-7 text-sm font-semibold text-black transition hover:bg-white/90"
+                  className="inline-flex h-12 w-full items-center justify-center whitespace-nowrap rounded-full bg-white px-7 text-sm font-semibold text-black transition hover:bg-white/90 lg:h-10 lg:w-auto lg:shrink-0 lg:px-4 lg:text-xs"
                 >
                   Enquire Now
                 </Link>
+                <a
+                  href={whatsappHref}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex h-12 w-full items-center justify-center gap-2 whitespace-nowrap rounded-full bg-[#25D366] px-7 text-sm font-semibold text-black transition hover:bg-[#25D366]/90 lg:h-10 lg:w-auto lg:shrink-0 lg:gap-1.5 lg:px-4 lg:text-xs"
+                >
+                  Connect On
+                  <WhatsAppIcon className="h-4 w-4 lg:h-3.5 lg:w-3.5" />
+                </a>
                 <Link
                   href="/cars"
-                  className="inline-flex h-12 items-center justify-center rounded-full border border-white/20 px-7 text-sm font-semibold text-white transition hover:border-white"
+                  className="col-span-2 inline-flex h-12 w-auto items-center justify-center justify-self-center whitespace-nowrap rounded-full border border-white/20 px-7 text-sm font-semibold text-white transition hover:border-white lg:h-10 lg:shrink-0 lg:px-4 lg:text-xs"
                 >
                   Back to Collection
                 </Link>

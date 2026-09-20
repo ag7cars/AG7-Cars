@@ -5,10 +5,12 @@ import { notFound } from "next/navigation";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 import CarImageGallery from "@/components/collection/CarImageGallery";
+import { WhatsAppIcon } from "@/components/layout/icons";
 import { createClient } from "@/lib/supabase/server";
 import JsonLd from "@/components/seo/JsonLd";
 import { breadcrumbJsonLd, vehicleJsonLd } from "@/lib/seo/jsonld";
 import { SITE_URL } from "@/lib/seo/site";
+import { whatsappEnquiryLink } from "@/lib/whatsapp";
 
 function formatPrice(price: number, currency: string) {
   try {
@@ -92,15 +94,29 @@ export default async function LiveDealDetailPage({
   );
   const savings = deal.original_price - deal.deal_price;
 
-  // Carries this deal along to the homepage contact form as query
-  // params (read there via useSearchParams) so the enquiry email says
+  const dealUrl = `${SITE_URL}/live-deals/${deal.id}`;
+
+  // "Claim This Deal" — unchanged from current production: carries
+  // this deal along to the homepage contact form as query params
+  // (read there via useSearchParams) so the enquiry email says
   // exactly which deal someone's claiming, not just "an enquiry."
   const enquiryParams = new URLSearchParams({
     deal: deal.id,
     dealLabel: `${deal.brand} ${deal.name} — ${formatPrice(deal.deal_price, deal.currency)}`,
   });
   const enquiryHref = `/?${enquiryParams.toString()}#contact`;
-  const dealUrl = `${SITE_URL}/live-deals/${deal.id}`;
+
+  // "Connect on WhatsApp" — a second, separate option next to Claim
+  // This Deal. Pre-fills the deal's name, price, and link plus a
+  // blank for the visitor's name only (no question field: this
+  // button is for a quick "I'm interested, here's who I am" rather
+  // than a full enquiry) so AG7 knows who to follow up with.
+  const whatsappHref = whatsappEnquiryLink(
+    `Hi AG7 Cars! I'd like to claim this deal: ${deal.brand} ${deal.name} (${formatPrice(
+      deal.deal_price,
+      deal.currency
+    )}).\n${dealUrl}\n\nMy name:`
+  );
   const galleryAlt = `${deal.brand} ${deal.name}${
     deal.color ? ` in ${deal.color}` : ""
   } — live deal at AG7 Cars, Indore`;
@@ -216,16 +232,25 @@ export default async function LiveDealDetailPage({
                 </div>
               )}
 
-              <div className="mt-10 flex flex-wrap gap-3">
+              <div className="mt-10 grid grid-cols-2 gap-3 lg:flex lg:flex-nowrap lg:gap-2">
                 <Link
                   href={enquiryHref}
-                  className="inline-flex h-12 items-center justify-center rounded-full bg-red-500 px-7 text-sm font-semibold text-white transition hover:bg-red-400"
+                  className="inline-flex h-12 w-full items-center justify-center whitespace-nowrap rounded-full bg-red-500 px-7 text-sm font-semibold text-white transition hover:bg-red-400 lg:h-10 lg:w-auto lg:shrink-0 lg:px-4 lg:text-xs"
                 >
                   Claim This Deal
                 </Link>
+                <a
+                  href={whatsappHref}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex h-12 w-full items-center justify-center gap-2 whitespace-nowrap rounded-full bg-[#25D366] px-7 text-sm font-semibold text-black transition hover:bg-[#25D366]/90 lg:h-10 lg:w-auto lg:shrink-0 lg:gap-1.5 lg:px-4 lg:text-xs"
+                >
+                  Connect On
+                  <WhatsAppIcon className="h-4 w-4 lg:h-3.5 lg:w-3.5" />
+                </a>
                 <Link
                   href="/live-deals"
-                  className="inline-flex h-12 items-center justify-center rounded-full border border-white/20 px-7 text-sm font-semibold text-white transition hover:border-white"
+                  className="col-span-2 inline-flex h-12 w-auto items-center justify-center justify-self-center whitespace-nowrap rounded-full border border-white/20 px-7 text-sm font-semibold text-white transition hover:border-white lg:h-10 lg:shrink-0 lg:px-4 lg:text-xs"
                 >
                   Back to Live Deals
                 </Link>
