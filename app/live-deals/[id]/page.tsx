@@ -115,7 +115,7 @@ export default async function LiveDealDetailPage({
     `Hi AG7 Cars! I'd like to claim this deal: ${deal.brand} ${deal.name} (${formatPrice(
       deal.deal_price,
       deal.currency
-    )}).\n${dealUrl}\n\nMy name:`
+    )}).\n${dealUrl}\n\nName :`
   );
   const galleryAlt = `${deal.brand} ${deal.name}${
     deal.color ? ` in ${deal.color}` : ""

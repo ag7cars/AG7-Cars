@@ -209,7 +209,7 @@ export default async function CarDetailPage({
     `Hi AG7 Cars! I'm interested in the ${car.brand} ${car.name} (${formatPrice(
       car.price,
       car.currency
-    )}).\n${carUrl}\n\nMy name:`
+    )}).\n${carUrl}\n\nName :`
   );
 
   // Fixed order per the dealership's own spec-sheet convention —
