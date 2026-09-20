@@ -158,6 +158,20 @@ function DeliveryCardFace({
               // bandwidth and slowing down the one that's visible.
               preload={distance <= 1 ? "auto" : "metadata"}
               controls={isFront}
+              // preload="metadata" alone doesn't reliably paint a
+              // visible frame for every video encoding — some just
+              // sit there black until played. Seeking a hair in once
+              // metadata is known forces a decode/paint even for a
+              // card that never becomes front for a while.
+              onLoadedMetadata={(event) => {
+                const video = event.currentTarget;
+                try {
+                  video.currentTime = Math.min(1, (video.duration || 4) / 4);
+                } catch {
+                  // Not seekable yet — keeps whatever frame it has,
+                  // no worse than before.
+                }
+              }}
               onPlay={() => isFront && onVideoPlayingChange(true)}
               onPause={() => isFront && onVideoPlayingChange(false)}
               onEnded={() => isFront && onVideoPlayingChange(false)}

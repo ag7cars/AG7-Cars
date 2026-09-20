@@ -60,10 +60,26 @@ function DeliveryCard({ delivery, index }: { delivery: BrowseDelivery; index: nu
                 </span>
               </div>
             ) : (
+              // preload="metadata" alone doesn't reliably paint a
+              // visible frame for every video encoding — some just
+              // sit there black indefinitely. Explicitly seeking a
+              // hair in once metadata is known forces the browser to
+              // actually decode and show that frame.
               <video
                 src={delivery.mediaUrl}
                 muted
                 playsInline
+                preload="metadata"
+                onLoadedMetadata={(event) => {
+                  const video = event.currentTarget;
+                  try {
+                    video.currentTime = Math.min(1, (video.duration || 4) / 4);
+                  } catch {
+                    // Some browsers throw if the media isn't seekable
+                    // yet — the card just keeps its current (black)
+                    // frame in that rare case, no worse than before.
+                  }
+                }}
                 className="h-full w-full object-cover"
               />
             )}

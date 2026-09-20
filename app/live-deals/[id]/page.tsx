@@ -245,7 +245,7 @@ export default async function LiveDealDetailPage({
                   rel="noopener noreferrer"
                   className="inline-flex h-12 w-full items-center justify-center gap-2 whitespace-nowrap rounded-full bg-[#25D366] px-7 text-sm font-semibold text-black transition hover:bg-[#25D366]/90 lg:h-10 lg:w-auto lg:shrink-0 lg:gap-1.5 lg:px-4 lg:text-xs"
                 >
-                  Connect On
+                  Chat With Us
                   <WhatsAppIcon className="h-4 w-4 lg:h-3.5 lg:w-3.5" />
                 </a>
                 <Link
