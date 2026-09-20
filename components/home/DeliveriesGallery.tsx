@@ -109,7 +109,7 @@ function DeliveryCardFace({
                 // eslint-disable-next-line @next/next/no-img-element
                 <img
                   src={toYouTubeThumbnailUrl(videoId)}
-                  alt={[delivery.brand, delivery.model].filter(Boolean).join(" ") || "AG7 Cars delivery"}
+                  alt={`${[delivery.brand, delivery.model].filter(Boolean).join(" ") || "AG7 Cars delivery"}${delivery.color ? ` in ${delivery.color}` : ""} delivered by AG7 Cars`}
                   className="h-full w-full object-cover"
                 />
               );
@@ -207,12 +207,13 @@ function DeliveryCardFace({
 function DeliveryPhotoCardFace({ delivery, isFront }: { delivery: Delivery; isFront: boolean }) {
   const cover = delivery.imageUrls?.[0] ?? delivery.mediaUrl;
   const label = [delivery.brand, delivery.model].filter(Boolean).join(" ") || "AG7 Cars delivery";
+  const photoAlt = `${label}${delivery.color ? ` in ${delivery.color}` : ""} delivered by AG7 Cars`;
 
   const cardInner = (
     <div className="relative aspect-[4/5] w-full overflow-hidden rounded-3xl border border-white/5 bg-white/[0.06] shadow-2xl">
       <Image
         src={cover}
-        alt={label}
+        alt={photoAlt}
         fill
         sizes="(min-width: 1024px) 384px, (min-width: 640px) 320px, 280px"
         className="object-cover"

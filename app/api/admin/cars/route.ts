@@ -104,10 +104,18 @@ export async function POST(request: Request) {
       imageUrls.push(supabase.storage.from(imageBucket).getPublicUrl(path).data.publicUrl);
     }
 
-    const slug = await generateUniqueSlug(
-      supabase,
-      slugify(`${validation.data.brand}-${validation.data.name}`)
-    );
+    // Includes the manufacturing year (when known) and the
+    // dealership's city, e.g. "lamborghini-huracan-evo-2022-indore" —
+    // more descriptive for search than brand+name alone. Existing
+    // cars keep whatever slug they already have; this only shapes
+    // slugs for cars published from here on.
+    const slugParts = [
+      validation.data.brand,
+      validation.data.name,
+      validation.data.manufacturing_year ? String(validation.data.manufacturing_year) : null,
+      "indore",
+    ].filter(Boolean);
+    const slug = await generateUniqueSlug(supabase, slugify(slugParts.join("-")));
 
     const { data, error } = await supabase
       .from("cars")

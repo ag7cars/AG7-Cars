@@ -75,6 +75,14 @@ function formatRegistration(value: string | null) {
   return `${state.toUpperCase()} ${code.padStart(2, "0")}`;
 }
 
+// e.g. "2022 Lamborghini Huracán EVO in Nero Noctis at AG7 Cars
+// showroom, Indore" — falls back gracefully as fields go missing.
+function carAltText(car: Pick<CollectionCar, "brand" | "name" | "manufacturingYear" | "color">) {
+  const year = car.manufacturingYear ? `${car.manufacturingYear} ` : "";
+  const colorSuffix = car.color ? ` in ${car.color}` : "";
+  return `${year}${car.brand} ${car.name}${colorSuffix} at AG7 Cars showroom, Indore`;
+}
+
 function CarCardFace({ car, isFront }: { car: CollectionCar; isFront: boolean }) {
   const status = statusStyles[car.status];
 
@@ -83,7 +91,7 @@ function CarCardFace({ car, isFront }: { car: CollectionCar; isFront: boolean })
       {car.image ? (
         <Image
           src={car.image}
-          alt={`${car.brand} ${car.name}`}
+          alt={carAltText(car)}
           fill
           sizes="(min-width: 1024px) 384px, (min-width: 640px) 320px, 280px"
           className="object-cover"

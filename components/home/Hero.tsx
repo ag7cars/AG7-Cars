@@ -95,7 +95,7 @@ export default function Hero({
       <div className="absolute inset-x-0 bottom-0 top-24 hidden lg:block">
         <RotatingBackground
           images={resolvedDesktopImages}
-          alt="AG7 Cars collection"
+          alt="Supercars and luxury cars at AG7 Cars showroom, Indore"
           objectPosition="center 55%"
         />
         <div className="absolute inset-0 bg-gradient-to-r from-black/95 via-black/65 to-black/10" />
@@ -162,7 +162,7 @@ export default function Hero({
         <div className="absolute inset-x-0 bottom-0 top-16 overflow-hidden sm:top-20">
           <RotatingBackground
             images={resolvedMobileImages}
-            alt="AG7 Cars collection"
+            alt="Supercars and luxury cars at AG7 Cars showroom, Indore"
             objectPosition="center 62%"
           />
 
@@ -204,7 +204,13 @@ export default function Hero({
                 Exclusive Deals on Brand New &amp; Pre-Owned Supercars and Premium Luxury Cars
               </p>
 
-              <h1
+              {/* Not an <h1> — the desktop block above already is one,
+                  and both render into the DOM at once (only CSS
+                  display toggles per breakpoint), so a second <h1>
+                  here would give the page two top-level headings.
+                  Same tag-independent styling either way, so this is
+                  visually identical to the h1 it replaces. */}
+              <p
                 className="font-display font-semibold text-white"
                 style={{
                   fontSize: "clamp(1.375rem, 5vh, 2.25rem)",
@@ -216,7 +222,7 @@ export default function Hero({
                 Built on Passion,
                 <br />
                 <span className="text-white/85">Driven by Trust.</span>
-              </h1>
+              </p>
             </div>
           </div>
 

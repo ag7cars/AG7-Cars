@@ -11,7 +11,14 @@ export type BrowseDelivery = {
   mediaType: "image" | "video";
   brand: string | null;
   model: string | null;
+  color: string | null;
 };
+
+function deliveryAlt(delivery: Pick<BrowseDelivery, "brand" | "model" | "color">) {
+  const label = [delivery.brand, delivery.model].filter(Boolean).join(" ") || "A car";
+  const colorSuffix = delivery.color ? ` in ${delivery.color}` : "";
+  return `${label}${colorSuffix} delivered by AG7 Cars`;
+}
 
 // A pinned Polaroid snapshot instead of a listing card — cream
 // paper, a thick caption strip, a slight scattered tilt. The tilt is
@@ -38,7 +45,7 @@ function DeliveryCard({ delivery, index }: { delivery: BrowseDelivery; index: nu
               // uploaded video only shows its first frame on this card.
               <Image
                 src={toYouTubeThumbnailUrl(getYouTubeVideoId(delivery.mediaUrl)!)}
-                alt={[delivery.brand, delivery.model].filter(Boolean).join(" ") || "AG7 Cars delivery"}
+                alt={deliveryAlt(delivery)}
                 fill
                 sizes="(min-width: 1024px) 380px, (min-width: 640px) 45vw, 46vw"
                 className="object-cover"
@@ -69,7 +76,7 @@ function DeliveryCard({ delivery, index }: { delivery: BrowseDelivery; index: nu
         ) : (
           <Image
             src={delivery.mediaUrl}
-            alt={[delivery.brand, delivery.model].filter(Boolean).join(" ") || "AG7 Cars delivery"}
+            alt={deliveryAlt(delivery)}
             fill
             sizes="(min-width: 1024px) 380px, (min-width: 640px) 45vw, 46vw"
             className="object-cover"

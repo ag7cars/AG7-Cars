@@ -1,16 +1,34 @@
+import type { Metadata } from "next";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 import DeliveriesBrowser, {
   type BrowseDelivery,
 } from "@/components/deliveries/DeliveriesBrowser";
 import { createClient } from "@/lib/supabase/server";
+import JsonLd from "@/components/seo/JsonLd";
+import { breadcrumbJsonLd } from "@/lib/seo/jsonld";
+import { SITE_URL } from "@/lib/seo/site";
+
+export const metadata: Metadata = {
+  title: "AG7 Deliveries — Recent Car Handovers in India",
+  description:
+    "See the latest supercar and luxury car deliveries from AG7 Cars, Indore — real handover photos and videos from happy customers across India.",
+  alternates: {
+    canonical: "/deliveries",
+  },
+  openGraph: {
+    title: "AG7 Deliveries | AG7 Cars",
+    description: "Real delivery moments from AG7 Cars customers across India.",
+    url: "/deliveries",
+  },
+};
 
 export default async function DeliveriesPage() {
   const supabase = await createClient();
 
   const { data: deliveriesData } = await supabase
     .from("deliveries")
-    .select("id, media_url, media_type, brand, model")
+    .select("id, media_url, media_type, brand, model, color")
     .eq("is_published", true)
     .order("display_order", { ascending: true })
     .order("created_at", { ascending: false });
@@ -21,10 +39,18 @@ export default async function DeliveriesPage() {
     mediaType: delivery.media_type,
     brand: delivery.brand,
     model: delivery.model,
+    color: delivery.color,
   }));
 
   return (
     <main className="min-h-screen bg-black">
+      <JsonLd
+        data={breadcrumbJsonLd([
+          { name: "Home", url: SITE_URL },
+          { name: "AG7 Deliveries", url: `${SITE_URL}/deliveries` },
+        ])}
+      />
+
       <Navbar />
 
       <div className="pt-24 sm:pt-28 lg:pt-32">

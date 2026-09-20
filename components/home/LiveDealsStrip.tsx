@@ -41,7 +41,7 @@ function DealCardContent({ deal, isFront }: { deal: LiveDeal; isFront: boolean }
       {deal.image ? (
         <Image
           src={deal.image}
-          alt={`${deal.brand} ${deal.name}`}
+          alt={`${deal.brand} ${deal.name}${deal.color ? ` in ${deal.color}` : ""} — live deal at AG7 Cars`}
           fill
           sizes="(min-width: 1024px) 320px, (min-width: 640px) 260px, 180px"
           className="object-cover"

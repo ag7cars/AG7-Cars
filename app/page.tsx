@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import Hero from "@/components/home/Hero";
 import Navbar from "@/components/layout/Navbar";
 import CollectionCarousel, {
@@ -16,6 +17,30 @@ import ContactSection from "@/components/home/ContactSection";
 import Footer from "@/components/layout/Footer";
 import { WhatsAppIcon } from "@/components/layout/icons";
 import { createClient } from "@/lib/supabase/server";
+import JsonLd from "@/components/seo/JsonLd";
+import { autoDealerJsonLd } from "@/lib/seo/jsonld";
+
+export const metadata: Metadata = {
+  // A plain string here would NOT pick up the root layout's
+  // title.template — Next only applies a layout's template to
+  // child segments, and this page is the same route segment ("/")
+  // as the layout that defines it. `absolute` spells out the exact
+  // title this page should render instead of relying on that.
+  title: {
+    absolute: "AG7 Cars | Buy Supercars & Luxury Cars in India",
+  },
+  description:
+    "Buy brand new and pre-owned supercars and luxury cars in India at AG7 Cars, Indore. Browse live deals, delivery moments, and the full collection.",
+  alternates: {
+    canonical: "/",
+  },
+  openGraph: {
+    title: "AG7 Cars | Buy Supercars & Luxury Cars in India",
+    description:
+      "Premium dealership in Indore, India for brand new and pre-owned supercars and luxury automobiles.",
+    url: "/",
+  },
+};
 
 export default async function Home() {
   const supabase = await createClient();
@@ -179,6 +204,8 @@ export default async function Home() {
 
   return (
     <main className="min-h-screen bg-black">
+      <JsonLd data={autoDealerJsonLd()} />
+
       <Navbar />
 
       <Hero desktopImages={desktopImages} mobileImages={mobileImages} />

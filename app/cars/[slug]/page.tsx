@@ -1,9 +1,69 @@
+import { cache } from "react";
+import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 import CarImageGallery from "@/components/collection/CarImageGallery";
 import { createClient } from "@/lib/supabase/server";
+import JsonLd from "@/components/seo/JsonLd";
+import { breadcrumbJsonLd, vehicleJsonLd } from "@/lib/seo/jsonld";
+import { SITE_URL } from "@/lib/seo/site";
+
+const CAR_DETAIL_SELECT =
+  "id, slug, brand, name, price, currency, status, image_urls, year, manufacturing_year, ownership, fuel, km_driven, category, color, description, body_type, meta_title, meta_description";
+
+// Shared by generateMetadata and the page component below — cache()
+// dedupes the two calls into a single Supabase round trip per
+// request instead of fetching the same row twice.
+const getCarBySlug = cache(async (slug: string) => {
+  const supabase = await createClient();
+  const { data: car } = await supabase
+    .from("cars")
+    .select(CAR_DETAIL_SELECT)
+    .eq("slug", slug)
+    .eq("is_published", true)
+    .maybeSingle();
+  return car;
+});
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ slug: string }>;
+}): Promise<Metadata> {
+  const { slug } = await params;
+  const car = await getCarBySlug(slug);
+
+  if (!car) {
+    return { title: "Car Not Found" };
+  }
+
+  const year = car.manufacturing_year ?? car.year;
+  const title = car.meta_title || `${year ? `${year} ` : ""}${car.brand} ${car.name} — Indore, India`;
+  const description =
+    car.meta_description ||
+    `${year ? `${year} ` : ""}${car.brand} ${car.name}${car.color ? ` in ${car.color}` : ""} — ${
+      car.category
+    } available at AG7 Cars, Indore. ${
+      car.km_driven === 0 ? "Brand new, " : car.km_driven ? `${car.km_driven.toLocaleString("en-IN")} km driven, ` : ""
+    }${car.fuel ? `${car.fuel} engine. ` : ""}Enquire now for pricing and a viewing.`.slice(0, 160);
+
+  const url = `/cars/${car.slug}`;
+  const image = car.image_urls?.[0];
+
+  return {
+    title,
+    description,
+    alternates: { canonical: url },
+    openGraph: {
+      title,
+      description,
+      url,
+      images: image ? [{ url: image }] : undefined,
+    },
+  };
+}
 
 const statusStyles: Record<string, { label: string; className: string }> = {
   available: {
@@ -118,16 +178,7 @@ export default async function CarDetailPage({
   params: Promise<{ slug: string }>;
 }) {
   const { slug } = await params;
-  const supabase = await createClient();
-
-  const { data: car } = await supabase
-    .from("cars")
-    .select(
-      "id, slug, brand, name, price, currency, status, image_urls, year, manufacturing_year, ownership, fuel, km_driven, category, color, description"
-    )
-    .eq("slug", slug)
-    .eq("is_published", true)
-    .maybeSingle();
+  const car = await getCarBySlug(slug);
 
   if (!car) {
     notFound();
@@ -160,8 +211,42 @@ export default async function CarDetailPage({
     car.color ? { key: "color", label: "Color", value: car.color } : null,
   ].filter((s): s is { key: SpecKey; label: string; value: string } => s !== null);
 
+  const carUrl = `${SITE_URL}/cars/${car.slug}`;
+  const galleryAlt = `${car.manufacturing_year ?? car.year ?? ""} ${car.brand} ${car.name}${
+    car.color ? ` in ${car.color}` : ""
+  } at AG7 Cars showroom, Indore`.replace(/\s+/g, " ").trim();
+  const availability: "InStock" | "SoldOut" | "Reserved" =
+    car.status === "sold" ? "SoldOut" : car.status === "booked" ? "Reserved" : "InStock";
+
   return (
     <main className="min-h-screen bg-black">
+      <JsonLd
+        data={[
+          vehicleJsonLd({
+            url: carUrl,
+            name: `${car.brand} ${car.name}`,
+            brand: car.brand,
+            model: car.name,
+            modelDate: car.manufacturing_year ?? car.year,
+            mileageFromOdometerKm: car.km_driven,
+            fuelType: car.fuel,
+            bodyType: car.body_type,
+            color: car.color,
+            images: car.image_urls ?? [],
+            description: car.description,
+            price: car.price,
+            priceCurrency: car.currency,
+            isNew: car.category === "New",
+            availability,
+          }),
+          breadcrumbJsonLd([
+            { name: "Home", url: SITE_URL },
+            { name: "AG7 Collection", url: `${SITE_URL}/cars` },
+            { name: `${car.brand} ${car.name}`, url: carUrl },
+          ]),
+        ]}
+      />
+
       <Navbar />
 
       <div className="pt-24 sm:pt-28 lg:pt-32">
@@ -178,7 +263,7 @@ export default async function CarDetailPage({
             <div className="min-w-0">
               <CarImageGallery
                 images={car.image_urls ?? []}
-                alt={`${car.brand} ${car.name}`}
+                alt={galleryAlt}
                 thumbnails
               />
             </div>

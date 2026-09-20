@@ -1,9 +1,14 @@
+import { cache } from "react";
+import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 import CarImageGallery from "@/components/collection/CarImageGallery";
 import { createClient } from "@/lib/supabase/server";
+import JsonLd from "@/components/seo/JsonLd";
+import { breadcrumbJsonLd, vehicleJsonLd } from "@/lib/seo/jsonld";
+import { SITE_URL } from "@/lib/seo/site";
 
 function formatPrice(price: number, currency: string) {
   try {
@@ -17,14 +22,8 @@ function formatPrice(price: number, currency: string) {
   }
 }
 
-export default async function LiveDealDetailPage({
-  params,
-}: {
-  params: Promise<{ id: string }>;
-}) {
-  const { id } = await params;
+const getDealById = cache(async (id: string) => {
   const supabase = await createClient();
-
   const { data: deal } = await supabase
     .from("live_deals")
     .select(
@@ -33,6 +32,56 @@ export default async function LiveDealDetailPage({
     .eq("id", id)
     .eq("is_published", true)
     .maybeSingle();
+  return deal;
+});
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}): Promise<Metadata> {
+  const { id } = await params;
+  const deal = await getDealById(id);
+
+  if (!deal) {
+    return { title: "Deal Not Found" };
+  }
+
+  const discount = Math.round(
+    ((deal.original_price - deal.deal_price) / deal.original_price) * 100
+  );
+  const title = `${deal.brand} ${deal.name} — ${discount}% Off | Live Deal`;
+  const description =
+    `Limited-period deal: ${deal.brand} ${deal.name}${deal.color ? ` in ${deal.color}` : ""} now at ${formatPrice(
+      deal.deal_price,
+      deal.currency
+    )} (was ${formatPrice(deal.original_price, deal.currency)}) at AG7 Cars, Indore. Enquire before it's gone.`.slice(
+      0,
+      160
+    );
+  const url = `/live-deals/${deal.id}`;
+  const image = deal.image_urls?.[0];
+
+  return {
+    title,
+    description,
+    alternates: { canonical: url },
+    openGraph: {
+      title,
+      description,
+      url,
+      images: image ? [{ url: image }] : undefined,
+    },
+  };
+}
+
+export default async function LiveDealDetailPage({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}) {
+  const { id } = await params;
+  const deal = await getDealById(id);
 
   if (!deal) {
     notFound();
@@ -51,9 +100,36 @@ export default async function LiveDealDetailPage({
     dealLabel: `${deal.brand} ${deal.name} — ${formatPrice(deal.deal_price, deal.currency)}`,
   });
   const enquiryHref = `/?${enquiryParams.toString()}#contact`;
+  const dealUrl = `${SITE_URL}/live-deals/${deal.id}`;
+  const galleryAlt = `${deal.brand} ${deal.name}${
+    deal.color ? ` in ${deal.color}` : ""
+  } — live deal at AG7 Cars, Indore`;
 
   return (
     <main className="min-h-screen bg-black">
+      <JsonLd
+        data={[
+          vehicleJsonLd({
+            url: dealUrl,
+            name: `${deal.brand} ${deal.name}`,
+            brand: deal.brand,
+            model: deal.name,
+            color: deal.color,
+            images: deal.image_urls ?? [],
+            description: deal.description,
+            price: deal.deal_price,
+            priceCurrency: deal.currency,
+            isNew: false,
+            availability: "InStock",
+          }),
+          breadcrumbJsonLd([
+            { name: "Home", url: SITE_URL },
+            { name: "Live Deals", url: `${SITE_URL}/live-deals` },
+            { name: `${deal.brand} ${deal.name}`, url: dealUrl },
+          ]),
+        ]}
+      />
+
       <Navbar />
 
       <div className="pt-24 sm:pt-28 lg:pt-32">
@@ -69,7 +145,7 @@ export default async function LiveDealDetailPage({
             <div className="min-w-0">
               <CarImageGallery
                 images={deal.image_urls ?? []}
-                alt={`${deal.brand} ${deal.name}`}
+                alt={galleryAlt}
                 thumbnails
               />
             </div>

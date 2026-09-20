@@ -1,7 +1,25 @@
+import type { Metadata } from "next";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 import CarsBrowser, { type BrowseCar } from "@/components/collection/CarsBrowser";
 import { createClient } from "@/lib/supabase/server";
+import JsonLd from "@/components/seo/JsonLd";
+import { breadcrumbJsonLd } from "@/lib/seo/jsonld";
+import { SITE_URL } from "@/lib/seo/site";
+
+export const metadata: Metadata = {
+  title: "AG7 Collection — New & Pre-Owned Cars in India",
+  description:
+    "Browse the full AG7 Cars collection: brand new and pre-owned supercars and luxury cars for sale in India. Filter by brand, body type, and budget.",
+  alternates: {
+    canonical: "/cars",
+  },
+  openGraph: {
+    title: "AG7 Collection | AG7 Cars",
+    description: "Browse every supercar and luxury car currently available at AG7 Cars.",
+    url: "/cars",
+  },
+};
 
 export default async function CarsPage() {
   const supabase = await createClient();
@@ -9,7 +27,7 @@ export default async function CarsPage() {
   const { data: carsData } = await supabase
     .from("cars")
     .select(
-      "id, slug, brand, name, price, currency, status, image_urls, year, manufacturing_year, registration, ownership, fuel, km_driven, body_type, category"
+      "id, slug, brand, name, price, currency, status, image_urls, year, manufacturing_year, registration, ownership, fuel, km_driven, body_type, category, color"
     )
     .eq("is_published", true)
     .order("created_at", { ascending: false });
@@ -31,6 +49,7 @@ export default async function CarsPage() {
     kmDriven: car.km_driven,
     bodyType: car.body_type,
     category: car.category,
+    color: car.color,
   }));
 
   // Available first, then booked, then sold — regardless of when each
@@ -45,6 +64,13 @@ export default async function CarsPage() {
 
   return (
     <main className="min-h-screen bg-black">
+      <JsonLd
+        data={breadcrumbJsonLd([
+          { name: "Home", url: SITE_URL },
+          { name: "AG7 Collection", url: `${SITE_URL}/cars` },
+        ])}
+      />
+
       <Navbar />
 
       <div className="pt-24 sm:pt-28 lg:pt-32">

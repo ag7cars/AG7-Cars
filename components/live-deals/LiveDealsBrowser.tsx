@@ -13,6 +13,7 @@ export type BrowseDeal = {
   currency: string;
   category: string;
   image: string | null;
+  color: string | null;
 };
 
 function formatPrice(price: number, currency: string) {
@@ -50,7 +51,7 @@ function DealCard({ deal }: { deal: BrowseDeal }) {
         {deal.image ? (
           <Image
             src={deal.image}
-            alt={`${deal.brand} ${deal.name}`}
+            alt={`${deal.brand} ${deal.name}${deal.color ? ` in ${deal.color}` : ""} — live deal at AG7 Cars`}
             fill
             sizes="(min-width: 1024px) 380px, (min-width: 640px) 45vw, 46vw"
             className={`object-cover transition-transform duration-700 ease-out group-hover:scale-105 ${revealed ? "scale-105" : ""}`}

@@ -21,7 +21,16 @@ export type BrowseCar = {
   kmDriven: number | null;
   bodyType: string | null;
   category: "Pre-Owned" | "New" | "Demo";
+  color: string | null;
 };
+
+// e.g. "2022 Lamborghini Huracán EVO in Nero Noctis at AG7 Cars
+// showroom, Indore" — falls back gracefully as fields go missing.
+function carAltText(car: Pick<BrowseCar, "brand" | "name" | "manufacturingYear" | "color">) {
+  const year = car.manufacturingYear ? `${car.manufacturingYear} ` : "";
+  const colorSuffix = car.color ? ` in ${car.color}` : "";
+  return `${year}${car.brand} ${car.name}${colorSuffix} at AG7 Cars showroom, Indore`;
+}
 
 const statusStyles: Record<
   BrowseCar["status"],
@@ -328,7 +337,7 @@ function CardGauge({ car, km }: CardProps) {
       {car.image ? (
         <Image
           src={car.image}
-          alt={`${car.brand} ${car.name}`}
+          alt={carAltText(car)}
           fill
           sizes="(min-width: 1024px) 380px, (min-width: 640px) 45vw, 46vw"
           className="object-cover"

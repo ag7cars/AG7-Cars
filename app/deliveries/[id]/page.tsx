@@ -1,3 +1,5 @@
+import { cache } from "react";
+import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import Navbar from "@/components/layout/Navbar";
@@ -7,6 +9,54 @@ import { getYouTubeVideoId, isYouTubeUrl, toYouTubeEmbedUrl } from "@/lib/youtub
 import { isInstagramUrl } from "@/lib/instagram";
 import InstagramEmbed from "@/components/InstagramEmbed";
 import DeliveryPhotoGallery from "@/components/deliveries/DeliveryPhotoGallery";
+import JsonLd from "@/components/seo/JsonLd";
+import { breadcrumbJsonLd } from "@/lib/seo/jsonld";
+import { SITE_URL } from "@/lib/seo/site";
+
+const getDeliveryById = cache(async (id: string) => {
+  const supabase = await createClient();
+  const { data: delivery } = await supabase
+    .from("deliveries")
+    .select("id, media_url, media_type, image_urls, brand, model, color, caption")
+    .eq("id", id)
+    .eq("is_published", true)
+    .maybeSingle();
+  return delivery;
+});
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}): Promise<Metadata> {
+  const { id } = await params;
+  const delivery = await getDeliveryById(id);
+
+  if (!delivery) {
+    return { title: "Delivery Not Found" };
+  }
+
+  const label = [delivery.brand, delivery.model].filter(Boolean).join(" ") || "AG7 Cars Delivery";
+  const title = `${label} — Delivered by AG7 Cars`;
+  const description =
+    `${label}${delivery.color ? ` in ${delivery.color}` : ""} — a delivery moment from AG7 Cars, Indore. ${
+      delivery.caption ?? "See the full handover gallery."
+    }`.slice(0, 160);
+  const url = `/deliveries/${delivery.id}`;
+  const image = delivery.image_urls?.[0] ?? delivery.media_url;
+
+  return {
+    title,
+    description,
+    alternates: { canonical: url },
+    openGraph: {
+      title,
+      description,
+      url,
+      images: delivery.media_type === "image" && image ? [{ url: image }] : undefined,
+    },
+  };
+}
 
 export default async function DeliveryDetailPage({
   params,
@@ -14,14 +64,7 @@ export default async function DeliveryDetailPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const supabase = await createClient();
-
-  const { data: delivery } = await supabase
-    .from("deliveries")
-    .select("id, media_url, media_type, image_urls, brand, model, color, caption")
-    .eq("id", id)
-    .eq("is_published", true)
-    .maybeSingle();
+  const delivery = await getDeliveryById(id);
 
   if (!delivery) {
     notFound();
@@ -31,6 +74,14 @@ export default async function DeliveryDetailPage({
 
   return (
     <main className="min-h-screen bg-black">
+      <JsonLd
+        data={breadcrumbJsonLd([
+          { name: "Home", url: SITE_URL },
+          { name: "AG7 Deliveries", url: `${SITE_URL}/deliveries` },
+          { name: title, url: `${SITE_URL}/deliveries/${delivery.id}` },
+        ])}
+      />
+
       <Navbar />
 
       <div className="pt-24 sm:pt-28 lg:pt-32">
