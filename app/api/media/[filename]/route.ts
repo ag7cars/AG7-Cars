@@ -2,12 +2,17 @@ import { createReadStream } from "fs";
 import { stat } from "fs/promises";
 import { Readable } from "stream";
 import { NextResponse } from "next/server";
-import { videoStoragePath } from "@/lib/videoStorage";
+import { localMediaPath } from "@/lib/localStorage";
 
 const contentTypes: Record<string, string> = {
   mp4: "video/mp4",
   webm: "video/webm",
   mov: "video/quicktime",
+  jpg: "image/jpeg",
+  jpeg: "image/jpeg",
+  png: "image/png",
+  webp: "image/webp",
+  gif: "image/gif",
 };
 
 export async function GET(
@@ -18,7 +23,7 @@ export async function GET(
 
   let filePath: string;
   try {
-    filePath = videoStoragePath(filename);
+    filePath = localMediaPath(filename);
   } catch {
     return NextResponse.json({ error: "Invalid filename." }, { status: 400 });
   }

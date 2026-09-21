@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
 import { isAdmin } from "@/lib/supabase/admin";
+import { saveLocalMediaFile, deleteLocalMediaFile } from "@/lib/localStorage";
 
 const liveDealSchema = z.object({
   brand: z.string().trim().min(1),
@@ -13,13 +14,12 @@ const liveDealSchema = z.object({
   description: z.string().optional(),
 });
 
-const imageBucket = "car-images";
 const allowedImageTypes = new Set(["image/jpeg", "image/png", "image/webp"]);
 const maxImageSize = 50 * 1024 * 1024; // 50 MB
 const maxFiles = 10;
 
 export async function POST(request: Request) {
-  const uploadedPaths: string[] = [];
+  const savedFilenames: string[] = [];
   let supabase: Awaited<ReturnType<typeof createClient>> | null = null;
 
   try {
@@ -71,23 +71,17 @@ export async function POST(request: Request) {
 
     supabase = await createClient();
     const imageUrls: string[] = [];
-    const folder = `live-deals/${crypto.randomUUID()}-${slugify(`${validation.data.brand}-${validation.data.name}`)}`;
 
-    for (const [index, file] of files.entries()) {
+    // Images are saved straight to this server's own disk instead of
+    // Supabase Storage — see lib/localStorage.ts — served back out
+    // through app/api/media, same as delivery videos already were.
+    for (const file of files) {
       const extension = file.name.split(".").pop()?.toLowerCase() || "jpg";
-      const path = `${folder}/${String(index + 1).padStart(2, "0")}.${extension}`;
-
-      const upload = await supabase.storage.from(imageBucket).upload(path, file, {
-        contentType: file.type,
-        upsert: false,
-      });
-
-      if (upload.error) {
-        throw new Error(`Image upload failed: ${upload.error.message}`);
-      }
-
-      uploadedPaths.push(path);
-      imageUrls.push(supabase.storage.from(imageBucket).getPublicUrl(path).data.publicUrl);
+      const filename = `${crypto.randomUUID()}.${extension}`;
+      const buffer = Buffer.from(await file.arrayBuffer());
+      const url = await saveLocalMediaFile(filename, buffer);
+      savedFilenames.push(filename);
+      imageUrls.push(url);
     }
 
     const { data, error } = await supabase
@@ -105,8 +99,8 @@ export async function POST(request: Request) {
 
     return NextResponse.json({ id: data.id }, { status: 201 });
   } catch (error) {
-    if (supabase && uploadedPaths.length > 0) {
-      await supabase.storage.from(imageBucket).remove(uploadedPaths);
+    for (const filename of savedFilenames) {
+      await deleteLocalMediaFile(filename).catch(() => {});
     }
 
     console.error("[live-deals] POST failed:", error);
@@ -116,12 +110,4 @@ export async function POST(request: Request) {
       { status: 500 }
     );
   }
-}
-
-function slugify(value: string) {
-  return value
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-|-$/g, "")
-    .slice(0, 80);
 }

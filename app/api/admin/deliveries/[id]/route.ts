@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
 import { isAdmin } from "@/lib/supabase/admin";
-import { saveVideoFile, deleteVideoFile, isLocalVideoUrl, filenameFromLocalVideoUrl } from "@/lib/videoStorage";
+import { saveLocalMediaFile, deleteLocalMediaFile, deleteMediaByUrl } from "@/lib/localStorage";
 
 const deliveryUpdateSchema = z
   .object({
@@ -12,24 +12,22 @@ const deliveryUpdateSchema = z
   })
   .partial();
 
-const imageBucket = "car-images";
+// Only still relevant for media a delivery had from before the move
+// to local disk storage (see lib/localStorage.ts) — new uploads never
+// touch this bucket, but old URLs pointing at it still need to be
+// cleaned up correctly when replaced or removed.
+const legacyImageBucket = "car-images";
 const allowedImageTypes = new Set(["image/jpeg", "image/png", "image/webp"]);
 const allowedVideoTypes = new Set(["video/mp4", "video/webm", "video/quicktime"]);
 const maxImageSize = 50 * 1024 * 1024; // 50 MB
 const maxVideoSize = 150 * 1024 * 1024; // 150 MB
-
-function storagePathFor(url: string): string | null {
-  const path = url.split(`/${imageBucket}/`)[1];
-  return path || null;
-}
 
 export async function PATCH(
   request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
   const { id } = await params;
-  const uploadedPaths: string[] = [];
-  let savedVideoFilename: string | null = null;
+  const savedFilenames: string[] = [];
   let supabase: Awaited<ReturnType<typeof createClient>> | null = null;
 
   try {
@@ -105,19 +103,13 @@ export async function PATCH(
       const extension = file.name.split(".").pop()?.toLowerCase() || "mp4";
 
       // Videos go to this server's own disk instead of Supabase
-      // Storage — see lib/videoStorage.ts.
+      // Storage — see lib/localStorage.ts.
       const filename = `${id}-edit-${Date.now()}.${extension}`;
       const buffer = Buffer.from(await file.arrayBuffer());
-      update.media_url = await saveVideoFile(filename, buffer);
-      savedVideoFilename = filename;
+      update.media_url = await saveLocalMediaFile(filename, buffer);
+      savedFilenames.push(filename);
 
-      if (isLocalVideoUrl(current.media_url)) {
-        const oldFilename = filenameFromLocalVideoUrl(current.media_url);
-        if (oldFilename) await deleteVideoFile(oldFilename);
-      } else {
-        const oldPath = storagePathFor(current.media_url);
-        if (oldPath) await supabase.storage.from(imageBucket).remove([oldPath]);
-      }
+      await deleteMediaByUrl(supabase, current.media_url, legacyImageBucket);
     } else if (current.media_type === "image" && typeof rawExistingImages === "string") {
       // Gallery edit — reordered/kept URLs plus any newly uploaded
       // photos, same pattern as cars/live_deals (see lib pattern).
@@ -146,39 +138,29 @@ export async function PATCH(
       }
 
       const newImageUrls: string[] = [];
-      const folder = `deliveries/${id}-edit-${Date.now()}`;
 
-      for (const [index, file] of newImageFiles.entries()) {
+      for (const file of newImageFiles) {
         const extension = file.name.split(".").pop()?.toLowerCase() || "jpg";
-        const path = `${folder}/${String(index + 1).padStart(2, "0")}.${extension}`;
-
-        const upload = await supabase.storage.from(imageBucket).upload(path, file, {
-          contentType: file.type,
-          upsert: false,
-        });
-
-        if (upload.error) {
-          throw new Error(`Upload failed: ${upload.error.message}`);
-        }
-
-        uploadedPaths.push(path);
-        newImageUrls.push(supabase.storage.from(imageBucket).getPublicUrl(path).data.publicUrl);
+        const filename = `${crypto.randomUUID()}.${extension}`;
+        const buffer = Buffer.from(await file.arrayBuffer());
+        const url = await saveLocalMediaFile(filename, buffer);
+        savedFilenames.push(filename);
+        newImageUrls.push(url);
       }
 
       const finalImageUrls = [...(existingImages as string[]), ...newImageUrls];
       update.image_urls = finalImageUrls;
       update.media_url = finalImageUrls[0];
 
-      // Clean up storage for any photo the admin removed.
+      // Clean up whichever photo the admin removed, wherever it
+      // actually lives (local disk or, for a delivery not yet
+      // migrated, the legacy Supabase bucket).
       const previousUrls: string[] = current.image_urls ?? [current.media_url];
       const keptSet = new Set(existingImages as string[]);
-      const removedPaths = previousUrls
-        .filter((url) => !keptSet.has(url))
-        .map((url) => storagePathFor(url))
-        .filter((path): path is string => Boolean(path));
+      const removedUrls = previousUrls.filter((url) => !keptSet.has(url));
 
-      if (removedPaths.length > 0) {
-        await supabase.storage.from(imageBucket).remove(removedPaths);
+      for (const url of removedUrls) {
+        await deleteMediaByUrl(supabase, url, legacyImageBucket);
       }
     }
 
@@ -207,11 +189,8 @@ export async function PATCH(
 
     return NextResponse.json({ ok: true });
   } catch (error) {
-    if (supabase && uploadedPaths.length > 0) {
-      await supabase.storage.from(imageBucket).remove(uploadedPaths);
-    }
-    if (savedVideoFilename) {
-      await deleteVideoFile(savedVideoFilename).catch(() => {});
+    for (const filename of savedFilenames) {
+      await deleteLocalMediaFile(filename).catch(() => {});
     }
 
     console.error("[deliveries:id] PATCH failed:", error);
@@ -271,20 +250,16 @@ export async function DELETE(
     }
 
     // Best-effort media cleanup — the record is already gone, so a
-    // storage hiccup (or a YouTube/Instagram-hosted entry with
-    // nothing to remove) shouldn't surface as a failure.
+    // storage hiccup (or a YouTube/Instagram-hosted entry, which
+    // isn't a file to remove at all — deleteMediaByUrl no-ops for
+    // those) shouldn't surface as a failure.
     try {
-      if (isLocalVideoUrl(delivery.media_url)) {
-        const filename = filenameFromLocalVideoUrl(delivery.media_url);
-        if (filename) await deleteVideoFile(filename);
-      } else if (delivery.image_urls?.length) {
-        const paths = delivery.image_urls
-          .map((url: string) => storagePathFor(url))
-          .filter((path: string | null): path is string => Boolean(path));
-        if (paths.length > 0) await supabase.storage.from(imageBucket).remove(paths);
+      if (delivery.image_urls?.length) {
+        for (const url of delivery.image_urls) {
+          await deleteMediaByUrl(supabase, url, legacyImageBucket);
+        }
       } else {
-        const path = storagePathFor(delivery.media_url);
-        if (path) await supabase.storage.from(imageBucket).remove([path]);
+        await deleteMediaByUrl(supabase, delivery.media_url, legacyImageBucket);
       }
     } catch (cleanupError) {
       console.error("[deliveries:id] media cleanup failed:", cleanupError);

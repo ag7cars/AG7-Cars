@@ -199,6 +199,23 @@ export default async function AdminDashboardPage() {
             </p>
           </a>
 
+          <a
+            href="/admin/dashboard/migrate-media"
+            className="rounded-2xl border border-white/10 bg-white/[0.04] p-6 transition hover:-translate-y-1 hover:bg-white/[0.07]"
+          >
+            <p className="text-sm text-white/40">
+              Storage
+            </p>
+
+            <h2 className="mt-2 text-xl font-semibold">
+              Move Media to This Server
+            </h2>
+
+            <p className="mt-2 text-sm text-white/50">
+              One-time move of anything still hosted on Supabase Storage over to this server.
+            </p>
+          </a>
+
         </div>
 
       </div>

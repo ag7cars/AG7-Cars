@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
 import { isAdmin } from "@/lib/supabase/admin";
+import { saveLocalMediaFile, deleteLocalMediaFile, deleteMediaByUrl } from "@/lib/localStorage";
 
 // Same fields as the create schema, but every field is optional —
 // this endpoint also serves quick single-field edits (e.g. just
@@ -35,7 +36,11 @@ const carUpdateSchema = z
   })
   .partial();
 
-const imageBucket = "car-images";
+// Only still relevant for images a car had from before the move to
+// local disk storage (see lib/localStorage.ts) — new uploads never
+// touch this bucket, but old URLs pointing at it still need to be
+// cleaned up correctly when replaced or removed.
+const legacyImageBucket = "car-images";
 const allowedImageTypes = new Set(["image/jpeg", "image/png", "image/webp"]);
 const maxImageSize = 50 * 1024 * 1024;
 
@@ -44,7 +49,7 @@ export async function PATCH(
   { params }: { params: Promise<{ id: string }> }
 ) {
   const { id } = await params;
-  const uploadedPaths: string[] = [];
+  const savedFilenames: string[] = [];
   let supabase: Awaited<ReturnType<typeof createClient>> | null = null;
 
   try {
@@ -120,36 +125,27 @@ export async function PATCH(
       }
 
       const newImageUrls: string[] = [];
-      const folder = `${id}-edit-${Date.now()}`;
 
-      for (const [index, file] of newFiles.entries()) {
+      for (const file of newFiles) {
         const extension = file.name.split(".").pop()?.toLowerCase() || "jpg";
-        const path = `${folder}/${String(index + 1).padStart(2, "0")}.${extension}`;
-        const upload = await supabase.storage.from(imageBucket).upload(path, file, {
-          contentType: file.type,
-          upsert: false,
-        });
-
-        if (upload.error) {
-          throw new Error(`Image upload failed: ${upload.error.message}`);
-        }
-
-        uploadedPaths.push(path);
-        newImageUrls.push(supabase.storage.from(imageBucket).getPublicUrl(path).data.publicUrl);
+        const filename = `${crypto.randomUUID()}.${extension}`;
+        const buffer = Buffer.from(await file.arrayBuffer());
+        const url = await saveLocalMediaFile(filename, buffer);
+        savedFilenames.push(filename);
+        newImageUrls.push(url);
       }
 
       update.image_urls = [...(existingImages as string[]), ...newImageUrls];
 
-      // Clean up storage for any image the admin removed.
+      // Clean up whichever image the admin removed, wherever it
+      // actually lives (local disk or, for a car not yet migrated,
+      // the legacy Supabase bucket).
       const previousUrls: string[] = current.image_urls ?? [];
       const keptSet = new Set(existingImages as string[]);
-      const removedPaths = previousUrls
-        .filter((url) => !keptSet.has(url))
-        .map((url) => url.split(`/${imageBucket}/`)[1])
-        .filter((path): path is string => Boolean(path));
+      const removedUrls = previousUrls.filter((url) => !keptSet.has(url));
 
-      if (removedPaths.length > 0) {
-        await supabase.storage.from(imageBucket).remove(removedPaths);
+      for (const url of removedUrls) {
+        await deleteMediaByUrl(supabase, url, legacyImageBucket);
       }
     }
 
@@ -165,8 +161,8 @@ export async function PATCH(
 
     return NextResponse.json({ ok: true });
   } catch (error) {
-    if (supabase && uploadedPaths.length > 0) {
-      await supabase.storage.from(imageBucket).remove(uploadedPaths);
+    for (const filename of savedFilenames) {
+      await deleteLocalMediaFile(filename).catch(() => {});
     }
 
     console.error("[cars:id] PATCH failed:", error);
@@ -212,16 +208,12 @@ export async function DELETE(
 
     // Best-effort image cleanup — the record is already gone at this
     // point, so a storage hiccup here shouldn't surface as a failure.
-    const paths: string[] = (car.image_urls ?? [])
-      .map((url: string) => url.split(`/${imageBucket}/`)[1])
-      .filter((path: string | undefined): path is string => Boolean(path));
-
-    if (paths.length > 0) {
-      try {
-        await supabase.storage.from(imageBucket).remove(paths);
-      } catch (cleanupError) {
-        console.error("[cars:id] image cleanup failed:", cleanupError);
+    try {
+      for (const url of car.image_urls ?? []) {
+        await deleteMediaByUrl(supabase, url, legacyImageBucket);
       }
+    } catch (cleanupError) {
+      console.error("[cars:id] image cleanup failed:", cleanupError);
     }
 
     return NextResponse.json({ ok: true });

@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
 import { isAdmin } from "@/lib/supabase/admin";
+import { saveLocalMediaFile, deleteLocalMediaFile, deleteMediaByUrl } from "@/lib/localStorage";
 
 const schema = z
   .object({
@@ -10,20 +11,20 @@ const schema = z
   })
   .partial();
 
-const bucket = "car-images";
+// Only still relevant for a photo saved before the move to local disk
+// storage (see lib/localStorage.ts) — new uploads never touch this
+// bucket, but an old URL pointing at it still needs to be cleaned up
+// correctly when replaced or removed.
+const legacyBucket = "car-images";
 const allowedTypes = new Set(["image/jpeg", "image/png", "image/webp"]);
 const maxSize = 10 * 1024 * 1024;
-
-function storagePathFor(url: string): string | null {
-  return url.split(`/${bucket}/`)[1] || null;
-}
 
 export async function PATCH(
   request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
   const { id } = await params;
-  let uploadedPath: string | null = null;
+  let savedFilename: string | null = null;
   let supabase: Awaited<ReturnType<typeof createClient>> | null = null;
 
   try {
@@ -62,17 +63,14 @@ export async function PATCH(
         .maybeSingle();
 
       const extension = file.name.split(".").pop()?.toLowerCase() || "jpg";
-      const path = `testimonials/${id}-edit-${Date.now()}.${extension}`;
-      const upload = await supabase.storage.from(bucket).upload(path, file, {
-        contentType: file.type,
-        upsert: false,
-      });
-      if (upload.error) throw new Error(`Upload failed: ${upload.error.message}`);
-      uploadedPath = path;
-      update.photo_url = supabase.storage.from(bucket).getPublicUrl(path).data.publicUrl;
+      const filename = `${crypto.randomUUID()}.${extension}`;
+      const buffer = Buffer.from(await file.arrayBuffer());
+      update.photo_url = await saveLocalMediaFile(filename, buffer);
+      savedFilename = filename;
 
-      const oldPath = current?.photo_url ? storagePathFor(current.photo_url) : null;
-      if (oldPath) await supabase.storage.from(bucket).remove([oldPath]);
+      if (current?.photo_url) {
+        await deleteMediaByUrl(supabase, current.photo_url, legacyBucket);
+      }
     }
 
     if (Object.keys(update).length === 0) {
@@ -92,8 +90,8 @@ export async function PATCH(
 
     return NextResponse.json({ ok: true });
   } catch (error) {
-    if (supabase && uploadedPath) {
-      await supabase.storage.from(bucket).remove([uploadedPath]);
+    if (savedFilename) {
+      await deleteLocalMediaFile(savedFilename).catch(() => {});
     }
     console.error("[testimonials:id] PATCH failed:", error);
     return NextResponse.json(
@@ -136,13 +134,10 @@ export async function DELETE(
       throw new Error("Delete didn't go through — likely a missing database permission (RLS policy).");
     }
 
-    const path = storagePathFor(row.photo_url);
-    if (path) {
-      try {
-        await supabase.storage.from(bucket).remove([path]);
-      } catch (cleanupError) {
-        console.error("[testimonials:id] cleanup failed:", cleanupError);
-      }
+    try {
+      await deleteMediaByUrl(supabase, row.photo_url, legacyBucket);
+    } catch (cleanupError) {
+      console.error("[testimonials:id] cleanup failed:", cleanupError);
     }
 
     return NextResponse.json({ ok: true });

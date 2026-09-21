@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
 import { isAdmin } from "@/lib/supabase/admin";
-import { saveVideoFile, deleteVideoFile } from "@/lib/videoStorage";
+import { saveLocalMediaFile, deleteLocalMediaFile } from "@/lib/localStorage";
 
 const deliverySchema = z.object({
   brand: z.string().trim().min(1),
@@ -10,8 +10,6 @@ const deliverySchema = z.object({
   caption: z.string().trim().max(500).optional(),
   mediaKind: z.enum(["video", "photo"]),
 });
-
-const imageBucket = "car-images";
 
 const allowedImageTypes = new Set(["image/jpeg", "image/png", "image/webp"]);
 const allowedVideoTypes = new Set(["video/mp4", "video/webm", "video/quicktime"]);
@@ -21,8 +19,7 @@ const maxVideoSize = 150 * 1024 * 1024; // 150 MB
 const maxFiles = 10;
 
 export async function POST(request: Request) {
-  const uploadedPaths: string[] = [];
-  const savedVideoFilenames: string[] = [];
+  const savedFilenames: string[] = [];
   const insertedIds: string[] = [];
   let supabase: Awaited<ReturnType<typeof createClient>> | null = null;
 
@@ -87,23 +84,14 @@ export async function POST(request: Request) {
       }
 
       const imageUrls: string[] = [];
-      const folder = `deliveries/${crypto.randomUUID()}`;
 
-      for (const [index, file] of files.entries()) {
+      for (const file of files) {
         const extension = file.name.split(".").pop()?.toLowerCase() || "jpg";
-        const path = `${folder}/${String(index + 1).padStart(2, "0")}.${extension}`;
-
-        const upload = await supabase.storage.from(imageBucket).upload(path, file, {
-          contentType: file.type,
-          upsert: false,
-        });
-
-        if (upload.error) {
-          throw new Error(`Upload failed for "${file.name}": ${upload.error.message}`);
-        }
-
-        uploadedPaths.push(path);
-        imageUrls.push(supabase.storage.from(imageBucket).getPublicUrl(path).data.publicUrl);
+        const filename = `${crypto.randomUUID()}.${extension}`;
+        const buffer = Buffer.from(await file.arrayBuffer());
+        const url = await saveLocalMediaFile(filename, buffer);
+        savedFilenames.push(filename);
+        imageUrls.push(url);
       }
 
       const { data, error } = await supabase
@@ -160,12 +148,12 @@ export async function POST(request: Request) {
         const extension = file.name.split(".").pop()?.toLowerCase() || "mp4";
 
         // Videos go to this server's own disk instead of Supabase
-        // Storage — see lib/videoStorage.ts for why (free-tier size
+        // Storage — see lib/localStorage.ts for why (free-tier size
         // limits) and how (served back via app/api/media).
         const filename = `${crypto.randomUUID()}.${extension}`;
         const buffer = Buffer.from(await file.arrayBuffer());
-        const mediaUrl = await saveVideoFile(filename, buffer);
-        savedVideoFilenames.push(filename);
+        const mediaUrl = await saveLocalMediaFile(filename, buffer);
+        savedFilenames.push(filename);
 
         const { data, error } = await supabase
           .from("deliveries")
@@ -189,16 +177,11 @@ export async function POST(request: Request) {
 
     return NextResponse.json({ ids: insertedIds }, { status: 201 });
   } catch (error) {
-    if (supabase) {
-      if (uploadedPaths.length > 0) {
-        await supabase.storage.from(imageBucket).remove(uploadedPaths);
-      }
-      if (insertedIds.length > 0) {
-        await supabase.from("deliveries").delete().in("id", insertedIds);
-      }
+    if (supabase && insertedIds.length > 0) {
+      await supabase.from("deliveries").delete().in("id", insertedIds);
     }
-    for (const filename of savedVideoFilenames) {
-      await deleteVideoFile(filename).catch(() => {});
+    for (const filename of savedFilenames) {
+      await deleteLocalMediaFile(filename).catch(() => {});
     }
 
     console.error("[deliveries] POST failed:", error);

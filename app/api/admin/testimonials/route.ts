@@ -2,18 +2,18 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
 import { isAdmin } from "@/lib/supabase/admin";
+import { saveLocalMediaFile, deleteLocalMediaFile } from "@/lib/localStorage";
 
 const schema = z.object({
   customerName: z.string().trim().min(1),
   message: z.string().trim().min(1).max(600),
 });
 
-const bucket = "car-images";
 const allowedTypes = new Set(["image/jpeg", "image/png", "image/webp"]);
 const maxSize = 10 * 1024 * 1024; // 10 MB
 
 export async function POST(request: Request) {
-  let uploadedPath: string | null = null;
+  let savedFilename: string | null = null;
   let supabase: Awaited<ReturnType<typeof createClient>> | null = null;
 
   try {
@@ -44,15 +44,10 @@ export async function POST(request: Request) {
     supabase = await createClient();
 
     const extension = file.name.split(".").pop()?.toLowerCase() || "jpg";
-    const path = `testimonials/${crypto.randomUUID()}.${extension}`;
-    const upload = await supabase.storage.from(bucket).upload(path, file, {
-      contentType: file.type,
-      upsert: false,
-    });
-    if (upload.error) throw new Error(`Upload failed: ${upload.error.message}`);
-    uploadedPath = path;
-
-    const photoUrl = supabase.storage.from(bucket).getPublicUrl(path).data.publicUrl;
+    const filename = `${crypto.randomUUID()}.${extension}`;
+    const buffer = Buffer.from(await file.arrayBuffer());
+    const photoUrl = await saveLocalMediaFile(filename, buffer);
+    savedFilename = filename;
 
     const { data, error } = await supabase
       .from("testimonials")
@@ -68,8 +63,8 @@ export async function POST(request: Request) {
 
     return NextResponse.json({ id: data.id }, { status: 201 });
   } catch (error) {
-    if (supabase && uploadedPath) {
-      await supabase.storage.from(bucket).remove([uploadedPath]);
+    if (savedFilename) {
+      await deleteLocalMediaFile(savedFilename).catch(() => {});
     }
     console.error("[testimonials] POST failed:", error);
     return NextResponse.json(
