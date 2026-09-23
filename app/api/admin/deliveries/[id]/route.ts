@@ -3,6 +3,7 @@ import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
 import { isAdmin } from "@/lib/supabase/admin";
 import { saveLocalMediaFile, deleteLocalMediaFile, deleteMediaByUrl } from "@/lib/localStorage";
+import { compressVideo } from "@/lib/videoCompression";
 
 const deliveryUpdateSchema = z
   .object({
@@ -100,12 +101,22 @@ export async function PATCH(
         );
       }
 
-      const extension = file.name.split(".").pop()?.toLowerCase() || "mp4";
+      const originalExtension = file.name.split(".").pop()?.toLowerCase() || "mp4";
+      let buffer: Buffer<ArrayBufferLike> = Buffer.from(await file.arrayBuffer());
+      let extension = originalExtension;
+
+      // Re-encode at a high-quality CRF before saving — see the
+      // matching comment in the POST handler above.
+      try {
+        buffer = await compressVideo(buffer, originalExtension);
+        extension = "mp4";
+      } catch (compressionError) {
+        console.error("[deliveries:id] video compression failed, saving original:", compressionError);
+      }
 
       // Videos go to this server's own disk instead of Supabase
       // Storage — see lib/localStorage.ts.
       const filename = `${id}-edit-${Date.now()}.${extension}`;
-      const buffer = Buffer.from(await file.arrayBuffer());
       update.media_url = await saveLocalMediaFile(filename, buffer);
       savedFilenames.push(filename);
 

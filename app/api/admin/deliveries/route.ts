@@ -3,6 +3,7 @@ import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
 import { isAdmin } from "@/lib/supabase/admin";
 import { saveLocalMediaFile, deleteLocalMediaFile } from "@/lib/localStorage";
+import { compressVideo } from "@/lib/videoCompression";
 
 const deliverySchema = z.object({
   brand: z.string().trim().min(1),
@@ -145,13 +146,27 @@ export async function POST(request: Request) {
       }
 
       for (const file of files) {
-        const extension = file.name.split(".").pop()?.toLowerCase() || "mp4";
+        const originalExtension = file.name.split(".").pop()?.toLowerCase() || "mp4";
+        let buffer: Buffer<ArrayBufferLike> = Buffer.from(await file.arrayBuffer());
+        let extension = originalExtension;
+
+        // Re-encode at a high-quality CRF before saving — phone
+        // cameras record at a fixed high bitrate rather than an
+        // efficient one, so this usually shrinks the file a lot with
+        // no visible quality loss. Falls back to the original file if
+        // ffmpeg isn't available/working in this environment, rather
+        // than failing the whole upload over it.
+        try {
+          buffer = await compressVideo(buffer, originalExtension);
+          extension = "mp4";
+        } catch (compressionError) {
+          console.error("[deliveries] video compression failed, saving original:", compressionError);
+        }
 
         // Videos go to this server's own disk instead of Supabase
         // Storage — see lib/localStorage.ts for why (free-tier size
         // limits) and how (served back via app/api/media).
         const filename = `${crypto.randomUUID()}.${extension}`;
-        const buffer = Buffer.from(await file.arrayBuffer());
         const mediaUrl = await saveLocalMediaFile(filename, buffer);
         savedFilenames.push(filename);
 
