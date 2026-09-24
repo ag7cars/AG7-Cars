@@ -67,19 +67,36 @@ export default function CarImageGallery({
             a blank frame until it caught up. This way every photo
             starts loading up front, so switching is instant. */}
         {images.map((src, index) => (
-          <Image
+          <div
             key={src}
-            src={src}
-            alt={alt}
-            fill
-            sizes="(min-width: 1024px) 640px, 100vw"
-            className={`object-cover transition-opacity duration-300 ease-out ${
+            className={`absolute inset-0 transition-opacity duration-300 ease-out ${
               index === active ? "opacity-100" : "opacity-0"
             }`}
-            style={{ pointerEvents: "none" }}
-            draggable={false}
-            priority={index === 0}
-          />
+          >
+            {/* Blurred, zoomed-in copy fills the background — so a
+                photo that isn't naturally this box's shape shows in
+                full (object-contain) without a flat black bar. */}
+            <Image
+              src={src}
+              alt=""
+              aria-hidden="true"
+              fill
+              sizes="(min-width: 1024px) 640px, 100vw"
+              className="scale-125 object-cover opacity-50 blur-2xl"
+              style={{ pointerEvents: "none" }}
+              draggable={false}
+            />
+            <Image
+              src={src}
+              alt={alt}
+              fill
+              sizes="(min-width: 1024px) 640px, 100vw"
+              className="relative object-contain"
+              style={{ pointerEvents: "none" }}
+              draggable={false}
+              priority={index === 0}
+            />
+          </div>
         ))}
 
         {count > 1 && (
