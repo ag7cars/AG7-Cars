@@ -56,7 +56,7 @@ export default function CarImageGallery({
           Capped width on large screens — full column width made it
           enormous on wide monitors. */}
       <div
-        className="relative aspect-[3/4] w-full touch-pan-y select-none overflow-hidden rounded-3xl border border-white/5 bg-black"
+        className="relative aspect-[3/4] w-full touch-pan-y select-none overflow-hidden rounded-3xl border border-white/5 bg-white"
         onPointerDown={handlePointerDown}
         onPointerUp={handlePointerUp}
       >
@@ -67,36 +67,19 @@ export default function CarImageGallery({
             a blank frame until it caught up. This way every photo
             starts loading up front, so switching is instant. */}
         {images.map((src, index) => (
-          <div
+          <Image
             key={src}
-            className={`absolute inset-0 transition-opacity duration-300 ease-out ${
+            src={src}
+            alt={alt}
+            fill
+            sizes="(min-width: 1024px) 640px, 100vw"
+            className={`object-contain transition-opacity duration-300 ease-out ${
               index === active ? "opacity-100" : "opacity-0"
             }`}
-          >
-            {/* Blurred, zoomed-in copy fills the background — so a
-                photo that isn't naturally this box's shape shows in
-                full (object-contain) without a flat black bar. */}
-            <Image
-              src={src}
-              alt=""
-              aria-hidden="true"
-              fill
-              sizes="(min-width: 1024px) 640px, 100vw"
-              className="scale-125 object-cover opacity-50 blur-2xl"
-              style={{ pointerEvents: "none" }}
-              draggable={false}
-            />
-            <Image
-              src={src}
-              alt={alt}
-              fill
-              sizes="(min-width: 1024px) 640px, 100vw"
-              className="relative object-contain"
-              style={{ pointerEvents: "none" }}
-              draggable={false}
-              priority={index === 0}
-            />
-          </div>
+            style={{ pointerEvents: "none" }}
+            draggable={false}
+            priority={index === 0}
+          />
         ))}
 
         {count > 1 && (

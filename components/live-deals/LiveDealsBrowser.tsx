@@ -48,29 +48,15 @@ function DealCard({ deal }: { deal: BrowseDeal }) {
         revealed ? "ring-red-400/40" : "ring-white/10"
       }`}
     >
-      <div className="relative aspect-[4/5] w-full overflow-hidden">
+      <div className="relative aspect-[4/5] w-full overflow-hidden bg-white">
         {deal.image ? (
-          <>
-            {/* Blurred, zoomed-in copy of the same photo fills the
-                background — so a photo that isn't naturally 4:5 shows
-                in full up front (object-contain) without leaving a
-                flat black bar above/below it. */}
-            <Image
-              src={deal.image}
-              alt=""
-              aria-hidden="true"
-              fill
-              sizes="(min-width: 1024px) 380px, (min-width: 640px) 45vw, 46vw"
-              className="scale-125 object-cover opacity-50 blur-2xl"
-            />
-            <Image
-              src={deal.image}
-              alt={`${deal.brand} ${deal.name}${deal.color ? ` in ${deal.color}` : ""} — live deal at AG7 Cars`}
-              fill
-              sizes="(min-width: 1024px) 380px, (min-width: 640px) 45vw, 46vw"
-              className={`relative object-contain transition-transform duration-700 ease-out group-hover:scale-105 ${revealed ? "scale-105" : ""}`}
-            />
-          </>
+          <Image
+            src={deal.image}
+            alt={`${deal.brand} ${deal.name}${deal.color ? ` in ${deal.color}` : ""} — live deal at AG7 Cars`}
+            fill
+            sizes="(min-width: 1024px) 380px, (min-width: 640px) 45vw, 46vw"
+            className={`object-contain transition-transform duration-700 ease-out group-hover:scale-105 ${revealed ? "scale-105" : ""}`}
+          />
         ) : (
           <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-white/10 to-white/[0.02]">
             <span className="text-[10px] uppercase tracking-[0.3em] text-white/30">No Image</span>

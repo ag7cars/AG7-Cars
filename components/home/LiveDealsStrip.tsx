@@ -35,32 +35,18 @@ function DealCardContent({ deal, isFront }: { deal: LiveDeal; isFront: boolean }
 
   return (
     <div
-      className={`relative h-full w-full overflow-hidden rounded-3xl border transition-colors duration-500 ${
-        isFront ? "border-white/15 bg-white/[0.06]" : "border-white/5 bg-white/[0.03]"
+      className={`relative h-full w-full overflow-hidden rounded-3xl border bg-white transition-colors duration-500 ${
+        isFront ? "border-white/15" : "border-white/5"
       }`}
     >
       {deal.image ? (
-        <>
-          {/* Blurred, zoomed-in copy of the same photo fills the
-              background — so a photo that isn't naturally this card's
-              shape shows in full up front (object-contain) without
-              leaving a flat black bar above/below it. */}
-          <Image
-            src={deal.image}
-            alt=""
-            aria-hidden="true"
-            fill
-            sizes="(min-width: 1024px) 320px, (min-width: 640px) 260px, 180px"
-            className="scale-125 object-cover opacity-50 blur-2xl"
-          />
-          <Image
-            src={deal.image}
-            alt={`${deal.brand} ${deal.name}${deal.color ? ` in ${deal.color}` : ""} — live deal at AG7 Cars`}
-            fill
-            sizes="(min-width: 1024px) 320px, (min-width: 640px) 260px, 180px"
-            className="relative object-contain"
-          />
-        </>
+        <Image
+          src={deal.image}
+          alt={`${deal.brand} ${deal.name}${deal.color ? ` in ${deal.color}` : ""} — live deal at AG7 Cars`}
+          fill
+          sizes="(min-width: 1024px) 320px, (min-width: 640px) 260px, 180px"
+          className="object-contain"
+        />
       ) : (
         <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-white/10 to-white/[0.02]">
           <span className="text-[10px] uppercase tracking-[0.3em] text-white/30">
