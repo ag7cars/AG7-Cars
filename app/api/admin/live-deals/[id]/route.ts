@@ -8,8 +8,8 @@ const liveDealUpdateSchema = z
   .object({
     brand: z.string().trim().min(1),
     name: z.string().trim().min(1),
-    original_price: z.number().positive(),
-    deal_price: z.number().positive(),
+    original_price: z.number().positive().nullable(),
+    deal_price: z.number().positive().nullable(),
     currency: z.string().trim().min(1),
     category: z.enum(["Pre-Owned", "New", "Demo"]),
     description: z.string().nullable(),

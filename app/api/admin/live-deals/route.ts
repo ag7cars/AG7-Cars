@@ -7,8 +7,8 @@ import { saveLocalMediaFile, deleteLocalMediaFile } from "@/lib/localStorage";
 const liveDealSchema = z.object({
   brand: z.string().trim().min(1),
   name: z.string().trim().min(1),
-  original_price: z.number().positive(),
-  deal_price: z.number().positive(),
+  original_price: z.number().positive().optional(),
+  deal_price: z.number().positive().optional(),
   currency: z.string().trim().min(1),
   category: z.enum(["Pre-Owned", "New", "Demo"]),
   description: z.string().optional(),

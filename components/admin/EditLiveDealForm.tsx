@@ -9,8 +9,10 @@ import { zodResolver } from "@hookform/resolvers/zod";
 const liveDealSchema = z.object({
   brand: z.string().trim().min(1, "Brand is required"),
   name: z.string().trim().min(1, "Name is required"),
-  original_price: z.number({ error: "Original price is required" }).positive("Enter a valid price"),
-  deal_price: z.number({ error: "Deal price is required" }).positive("Enter a valid price"),
+  // Both optional — some deals are listed as available without a
+  // price shown at all yet.
+  original_price: z.number().positive("Enter a valid price").optional(),
+  deal_price: z.number().positive("Enter a valid price").optional(),
   currency: z.string().trim().min(1),
   category: z.enum(["Pre-Owned", "New", "Demo"]),
   description: z.string().optional(),
@@ -117,7 +119,17 @@ export default function EditLiveDealForm({ deal }: { deal: EditableLiveDeal }) {
 
     try {
       const formData = new FormData();
-      formData.append("deal", JSON.stringify(values));
+      // Both prices are sent explicitly as null (rather than omitted)
+      // when cleared, so the server's partial update actually clears
+      // the column instead of leaving the previous value in place.
+      formData.append(
+        "deal",
+        JSON.stringify({
+          ...values,
+          original_price: values.original_price ?? null,
+          deal_price: values.deal_price ?? null,
+        })
+      );
       formData.append("existingImages", JSON.stringify(existingImages));
       newImages.forEach((image) => formData.append("images", image));
 
@@ -176,21 +188,28 @@ export default function EditLiveDealForm({ deal }: { deal: EditableLiveDeal }) {
             </select>
           </Field>
 
-          <Field label="Original Price" error={errors.original_price?.message}>
+          <Field label="Original Price (Optional)" error={errors.original_price?.message}>
             <input
               type="number"
               step="0.01"
-              {...register("original_price", { valueAsNumber: true })}
+              {...register("original_price", {
+                // Empty input becomes undefined (optional field) rather
+                // than NaN, which valueAsNumber would produce and which
+                // z.number() always rejects, even when .optional().
+                setValueAs: (value) => (value === "" || value === null ? undefined : Number(value)),
+              })}
               placeholder="9500000"
               className={inputClass}
             />
           </Field>
 
-          <Field label="Deal Price" error={errors.deal_price?.message}>
+          <Field label="Deal Price (Optional)" error={errors.deal_price?.message}>
             <input
               type="number"
               step="0.01"
-              {...register("deal_price", { valueAsNumber: true })}
+              {...register("deal_price", {
+                setValueAs: (value) => (value === "" || value === null ? undefined : Number(value)),
+              })}
               placeholder="8200000"
               className={inputClass}
             />

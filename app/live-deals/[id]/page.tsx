@@ -49,18 +49,21 @@ export async function generateMetadata({
     return { title: "Deal Not Found" };
   }
 
-  const discount = Math.round(
-    ((deal.original_price - deal.deal_price) / deal.original_price) * 100
-  );
-  const title = `${deal.brand} ${deal.name} — ${discount}% Off | Live Deal`;
-  const description =
-    `Limited-period deal: ${deal.brand} ${deal.name}${deal.color ? ` in ${deal.color}` : ""} now at ${formatPrice(
-      deal.deal_price,
-      deal.currency
-    )} (was ${formatPrice(deal.original_price, deal.currency)}) at AG7 Cars, Indore. Enquire before it's gone.`.slice(
-      0,
-      160
-    );
+  const hasPricing = deal.original_price !== null && deal.deal_price !== null;
+  const discount = hasPricing
+    ? Math.round(((deal.original_price! - deal.deal_price!) / deal.original_price!) * 100)
+    : null;
+  const title = hasPricing
+    ? `${deal.brand} ${deal.name} — ${discount}% Off | Live Deal`
+    : `${deal.brand} ${deal.name} | Live Deal`;
+  const description = (
+    hasPricing
+      ? `Limited-period deal: ${deal.brand} ${deal.name}${deal.color ? ` in ${deal.color}` : ""} now at ${formatPrice(
+          deal.deal_price!,
+          deal.currency
+        )} (was ${formatPrice(deal.original_price!, deal.currency)}) at AG7 Cars, Indore. Enquire before it's gone.`
+      : `Limited-period deal: ${deal.brand} ${deal.name}${deal.color ? ` in ${deal.color}` : ""} at AG7 Cars, Indore — price on request. Enquire before it's gone.`
+  ).slice(0, 160);
   const url = `/live-deals/${deal.id}`;
   const image = deal.image_urls?.[0];
 
@@ -89,10 +92,12 @@ export default async function LiveDealDetailPage({
     notFound();
   }
 
-  const discount = Math.round(
-    ((deal.original_price - deal.deal_price) / deal.original_price) * 100
-  );
-  const savings = deal.original_price - deal.deal_price;
+  const hasPricing = deal.original_price !== null && deal.deal_price !== null;
+  const discount = hasPricing
+    ? Math.round(((deal.original_price! - deal.deal_price!) / deal.original_price!) * 100)
+    : null;
+  const savings = hasPricing ? deal.original_price! - deal.deal_price! : 0;
+  const dealPriceLabel = hasPricing ? formatPrice(deal.deal_price!, deal.currency) : "Price on Request";
 
   const dealUrl = `${SITE_URL}/live-deals/${deal.id}`;
 
@@ -102,7 +107,7 @@ export default async function LiveDealDetailPage({
   // exactly which deal someone's claiming, not just "an enquiry."
   const enquiryParams = new URLSearchParams({
     deal: deal.id,
-    dealLabel: `${deal.brand} ${deal.name} — ${formatPrice(deal.deal_price, deal.currency)}`,
+    dealLabel: `${deal.brand} ${deal.name} — ${dealPriceLabel}`,
   });
   const enquiryHref = `/?${enquiryParams.toString()}#contact`;
 
@@ -112,10 +117,7 @@ export default async function LiveDealDetailPage({
   // button is for a quick "I'm interested, here's who I am" rather
   // than a full enquiry) so AG7 knows who to follow up with.
   const whatsappHref = whatsappEnquiryLink(
-    `Hi AG7 Cars! I'd like to claim this deal: ${deal.brand} ${deal.name} (${formatPrice(
-      deal.deal_price,
-      deal.currency
-    )}).\n${dealUrl}\n\nName :`
+    `Hi AG7 Cars! I'd like to claim this deal: ${deal.brand} ${deal.name} (${dealPriceLabel}).\n${dealUrl}\n\nName :`
   );
   const galleryAlt = `${deal.brand} ${deal.name}${
     deal.color ? ` in ${deal.color}` : ""
@@ -180,9 +182,11 @@ export default async function LiveDealDetailPage({
                     </span>
                     Live Deal
                   </span>
-                  <span className="rounded-full bg-red-500 px-3 py-1 text-xs font-bold text-white">
-                    {discount}% OFF
-                  </span>
+                  {hasPricing && (
+                    <span className="rounded-full bg-red-500 px-3 py-1 text-xs font-bold text-white">
+                      {discount}% OFF
+                    </span>
+                  )}
                 </div>
 
                 <div className="px-5 pt-4 sm:px-6">
@@ -201,19 +205,27 @@ export default async function LiveDealDetailPage({
                 </div>
 
                 <div className="px-5 py-6 sm:px-6 sm:py-7">
-                  <p className="text-xs uppercase tracking-[0.2em] text-white/40">You Save</p>
-                  <p className="mt-1 break-words font-display text-2xl font-black text-red-400 sm:text-5xl">
-                    {formatPrice(savings, deal.currency)}
-                  </p>
+                  {hasPricing ? (
+                    <>
+                      <p className="text-xs uppercase tracking-[0.2em] text-white/40">You Save</p>
+                      <p className="mt-1 break-words font-display text-2xl font-black text-red-400 sm:text-5xl">
+                        {formatPrice(savings, deal.currency)}
+                      </p>
 
-                  <div className="mt-5 flex flex-wrap items-baseline gap-x-3 gap-y-1">
-                    <span className="text-sm text-white/40 line-through sm:text-lg">
-                      {formatPrice(deal.original_price, deal.currency)}
-                    </span>
-                    <span className="text-lg font-bold text-white sm:text-3xl">
-                      {formatPrice(deal.deal_price, deal.currency)}
-                    </span>
-                  </div>
+                      <div className="mt-5 flex flex-wrap items-baseline gap-x-3 gap-y-1">
+                        <span className="text-sm text-white/40 line-through sm:text-lg">
+                          {formatPrice(deal.original_price!, deal.currency)}
+                        </span>
+                        <span className="text-lg font-bold text-white sm:text-3xl">
+                          {dealPriceLabel}
+                        </span>
+                      </div>
+                    </>
+                  ) : (
+                    <p className="break-words font-display text-2xl font-black text-white sm:text-4xl">
+                      Price on Request
+                    </p>
+                  )}
                 </div>
               </div>
 

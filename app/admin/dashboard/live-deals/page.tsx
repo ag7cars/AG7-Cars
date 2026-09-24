@@ -103,10 +103,10 @@ export default async function AdminLiveDealsListPage() {
                       </div>
                     </td>
                     <td className="px-4 py-3 text-white/40 line-through">
-                      {formatPrice(deal.original_price, deal.currency)}
+                      {deal.original_price !== null ? formatPrice(deal.original_price, deal.currency) : "—"}
                     </td>
                     <td className="px-4 py-3 font-medium text-emerald-300">
-                      {formatPrice(deal.deal_price, deal.currency)}
+                      {deal.deal_price !== null ? formatPrice(deal.deal_price, deal.currency) : "—"}
                     </td>
                     <td className="px-4 py-3">
                       <span

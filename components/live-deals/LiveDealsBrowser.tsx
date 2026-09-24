@@ -8,8 +8,8 @@ export type BrowseDeal = {
   id: string;
   brand: string;
   name: string;
-  originalPrice: number;
-  dealPrice: number;
+  originalPrice: number | null;
+  dealPrice: number | null;
   currency: string;
   category: string;
   image: string | null;
@@ -35,10 +35,11 @@ function formatPrice(price: number, currency: string) {
 // rounded gauge cards.
 function DealCard({ deal }: { deal: BrowseDeal }) {
   const { ref, revealed } = useTouchReveal<HTMLDivElement>();
-  const discount = Math.round(
-    ((deal.originalPrice - deal.dealPrice) / deal.originalPrice) * 100
-  );
-  const savings = deal.originalPrice - deal.dealPrice;
+  const hasPricing = deal.originalPrice !== null && deal.dealPrice !== null;
+  const discount = hasPricing
+    ? Math.round(((deal.originalPrice! - deal.dealPrice!) / deal.originalPrice!) * 100)
+    : 0;
+  const savings = hasPricing ? deal.originalPrice! - deal.dealPrice! : 0;
 
   return (
     <div
@@ -54,7 +55,7 @@ function DealCard({ deal }: { deal: BrowseDeal }) {
             alt={`${deal.brand} ${deal.name}${deal.color ? ` in ${deal.color}` : ""} — live deal at AG7 Cars`}
             fill
             sizes="(min-width: 1024px) 380px, (min-width: 640px) 45vw, 46vw"
-            className={`object-cover transition-transform duration-700 ease-out group-hover:scale-105 ${revealed ? "scale-105" : ""}`}
+            className={`object-contain transition-transform duration-700 ease-out group-hover:scale-105 ${revealed ? "scale-105" : ""}`}
           />
         ) : (
           <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-white/10 to-white/[0.02]">
@@ -72,9 +73,11 @@ function DealCard({ deal }: { deal: BrowseDeal }) {
 
         {/* A plain pill instead of a rotated corner banner — the
             banner clipped its own text off-card on narrow phones. */}
-        <div className="absolute right-2 top-2 rounded-full bg-red-500 px-2 py-1 text-[9px] font-bold text-white shadow-lg sm:right-3 sm:top-3 sm:px-2.5 sm:text-[10px]">
-          {discount}% OFF
-        </div>
+        {hasPricing && (
+          <div className="absolute right-2 top-2 rounded-full bg-red-500 px-2 py-1 text-[9px] font-bold text-white shadow-lg sm:right-3 sm:top-3 sm:px-2.5 sm:text-[10px]">
+            {discount}% OFF
+          </div>
+        )}
       </div>
 
       {/* Punched ticket divider — half-circle notches cut from both
@@ -97,18 +100,20 @@ function DealCard({ deal }: { deal: BrowseDeal }) {
       </div>
 
       <div className="p-3 sm:p-4">
-        <div className="flex flex-col gap-1 sm:flex-row sm:items-baseline sm:justify-between sm:gap-2">
-          <span className="text-[10px] text-white/40 line-through sm:text-xs">
-            {formatPrice(deal.originalPrice, deal.currency)}
-          </span>
-          <span className="inline-block w-fit rounded bg-red-500/15 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wide text-red-300 sm:text-[10px]">
-            Save {formatPrice(savings, deal.currency)}
-          </span>
-        </div>
+        {hasPricing && (
+          <div className="flex flex-col gap-1 sm:flex-row sm:items-baseline sm:justify-between sm:gap-2">
+            <span className="text-[10px] text-white/40 line-through sm:text-xs">
+              {formatPrice(deal.originalPrice!, deal.currency)}
+            </span>
+            <span className="inline-block w-fit rounded bg-red-500/15 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wide text-red-300 sm:text-[10px]">
+              Save {formatPrice(savings, deal.currency)}
+            </span>
+          </div>
+        )}
 
         <div className="mt-2 flex items-center justify-between gap-2">
           <span className="min-w-0 truncate text-base font-black text-white sm:text-2xl">
-            {formatPrice(deal.dealPrice, deal.currency)}
+            {hasPricing ? formatPrice(deal.dealPrice!, deal.currency) : "Price on Request"}
           </span>
           <span
             className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full border text-xs text-white transition-all duration-300 group-hover:border-red-400 group-hover:bg-red-500 sm:h-8 sm:w-8 sm:text-sm ${

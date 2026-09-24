@@ -8,8 +8,8 @@ export type LiveDeal = {
   id: string;
   brand: string;
   name: string;
-  originalPrice: number;
-  dealPrice: number;
+  originalPrice: number | null;
+  dealPrice: number | null;
   currency: string;
   category: string;
   image: string | null;
@@ -30,7 +30,8 @@ function formatPrice(price: number, currency: string) {
 }
 
 function DealCardContent({ deal, isFront }: { deal: LiveDeal; isFront: boolean }) {
-  const savings = deal.originalPrice - deal.dealPrice;
+  const hasPricing = deal.originalPrice !== null && deal.dealPrice !== null;
+  const savings = hasPricing ? deal.originalPrice! - deal.dealPrice! : 0;
 
   return (
     <div
@@ -44,7 +45,7 @@ function DealCardContent({ deal, isFront }: { deal: LiveDeal; isFront: boolean }
           alt={`${deal.brand} ${deal.name}${deal.color ? ` in ${deal.color}` : ""} — live deal at AG7 Cars`}
           fill
           sizes="(min-width: 1024px) 320px, (min-width: 640px) 260px, 180px"
-          className="object-cover"
+          className="object-contain"
         />
       ) : (
         <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-white/10 to-white/[0.02]">
@@ -60,9 +61,11 @@ function DealCardContent({ deal, isFront }: { deal: LiveDeal; isFront: boolean }
         {deal.category}
       </div>
 
-      <div className="absolute right-2 top-2 max-w-[55%] rounded-full bg-red-500 px-1.5 py-0.5 text-[8px] font-bold text-white sm:right-3 sm:top-3 sm:px-2.5 sm:py-1 sm:text-[10px]">
-        Save {formatPrice(savings, deal.currency)}
-      </div>
+      {hasPricing && (
+        <div className="absolute right-2 top-2 max-w-[55%] rounded-full bg-red-500 px-1.5 py-0.5 text-[8px] font-bold text-white sm:right-3 sm:top-3 sm:px-2.5 sm:py-1 sm:text-[10px]">
+          Save {formatPrice(savings, deal.currency)}
+        </div>
+      )}
 
       <div className="absolute inset-x-0 bottom-0 p-2.5 sm:p-4 lg:p-5">
         <p className="truncate text-[9px] uppercase tracking-[0.15em] text-white/50 sm:text-[11px] sm:tracking-[0.2em]">
@@ -72,12 +75,20 @@ function DealCardContent({ deal, isFront }: { deal: LiveDeal; isFront: boolean }
           {deal.name}
         </h3>
         <div className="mt-0.5 flex items-baseline gap-1.5 sm:mt-1 sm:gap-2">
-          <span className="truncate text-[10px] text-white/40 line-through sm:text-xs">
-            {formatPrice(deal.originalPrice, deal.currency)}
-          </span>
-          <span className="truncate text-xs font-semibold text-emerald-300 sm:text-sm">
-            {formatPrice(deal.dealPrice, deal.currency)}
-          </span>
+          {hasPricing ? (
+            <>
+              <span className="truncate text-[10px] text-white/40 line-through sm:text-xs">
+                {formatPrice(deal.originalPrice!, deal.currency)}
+              </span>
+              <span className="truncate text-xs font-semibold text-emerald-300 sm:text-sm">
+                {formatPrice(deal.dealPrice!, deal.currency)}
+              </span>
+            </>
+          ) : (
+            <span className="truncate text-xs font-semibold text-white sm:text-sm">
+              Price on Request
+            </span>
+          )}
         </div>
       </div>
     </div>
