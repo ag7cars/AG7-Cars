@@ -119,7 +119,7 @@ export default async function Home() {
     .eq("media_type", "video")
     .order("display_order", { ascending: true })
     .order("created_at", { ascending: false })
-    .limit(20);
+    .limit(50);
 
   const { data: deliveryPhotosData } = await supabase
     .from("deliveries")
@@ -128,7 +128,7 @@ export default async function Home() {
     .eq("media_type", "image")
     .order("display_order", { ascending: true })
     .order("created_at", { ascending: false })
-    .limit(20);
+    .limit(50);
 
   const mapDelivery = (delivery: {
     id: string;
