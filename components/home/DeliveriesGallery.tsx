@@ -308,6 +308,7 @@ export default function DeliveriesGallery({
             autoAdvanceMs={5000}
             paused={videoPlaying}
             range={videos.length}
+            maxDots={5}
             renderCard={(delivery, isFront, side, distance) => (
               <DeliveryCardFace
                 delivery={delivery}
@@ -328,6 +329,7 @@ export default function DeliveriesGallery({
             getKey={(delivery) => delivery.id}
             autoAdvanceMs={5000}
             aspectClass="aspect-[4/5]"
+            maxDots={5}
             renderCard={(delivery, isFront) => <DeliveryPhotoCardFace delivery={delivery} isFront={isFront} />}
             emptyMessage="No delivery photos have been posted yet. Check back soon."
           />

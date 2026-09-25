@@ -35,6 +35,12 @@ export type CoverflowCarouselProps<T> = {
   range?: number;
   /** Soft-focus blur on the background cards for extra depth. Defaults to false. */
   blurSideCards?: boolean;
+  /** Caps how many dot indicators are shown below the carousel — a
+      long list (e.g. 50 delivery videos) would otherwise render one
+      dot per item. When set below `items.length`, each dot instead
+      represents a proportional slice of the full list. Omitted (the
+      default) shows one dot per item, unchanged from before. */
+  maxDots?: number;
 };
 
 // The mobile/tablet fan (below DESKTOP_QUERY) deliberately keeps its
@@ -106,6 +112,7 @@ export default function CoverflowCarousel<T>({
   onActiveIndexChange,
   range = 2,
   blurSideCards = false,
+  maxDots,
 }: CoverflowCarouselProps<T>) {
   const [active, setActive] = useState(0);
   const [touchPaused, setTouchPaused] = useState(false);
@@ -271,19 +278,28 @@ export default function CoverflowCarousel<T>({
               get the arrows (swipe covers that), but still need some
               way to see which card is active. The active dot lifts
               up slightly instead of just widening, so it reads at a
-              glance even at this small size. */}
+              glance even at this small size. When maxDots caps the
+              count below the item count, each dot instead represents
+              a proportional slice of the full list — clicking one
+              jumps to the first item in that slice. */}
           <div className="flex items-end gap-2">
-            {items.map((item, index) => (
-              <button
-                key={getKey(item)}
-                type="button"
-                onClick={() => goTo(index)}
-                aria-label={`Go to item ${index + 1}`}
-                className={`h-1.5 rounded-full transition-all duration-300 ${
-                  index === active ? "w-6 -translate-y-1 bg-white" : "w-1.5 bg-white/30"
-                }`}
-              />
-            ))}
+            {(() => {
+              const dotCount = maxDots && maxDots < count ? maxDots : count;
+              const activeDot =
+                dotCount === count ? active : Math.min(dotCount - 1, Math.floor((active / count) * dotCount));
+
+              return Array.from({ length: dotCount }, (_, index) => (
+                <button
+                  key={index}
+                  type="button"
+                  onClick={() => goTo(dotCount === count ? index : Math.round((index / dotCount) * count))}
+                  aria-label={`Go to item ${index + 1}`}
+                  className={`h-1.5 rounded-full transition-all duration-300 ${
+                    index === activeDot ? "w-6 -translate-y-1 bg-white" : "w-1.5 bg-white/30"
+                  }`}
+                />
+              ));
+            })()}
           </div>
 
           <button
