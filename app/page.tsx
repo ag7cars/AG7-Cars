@@ -45,10 +45,70 @@ export const metadata: Metadata = {
 export default async function Home() {
   const supabase = await createClient();
 
-  const { data: heroImagesData } = await supabase
-    .from("hero_images")
-    .select("slot, position, image_url")
-    .order("position", { ascending: true });
+  const deliveriesSelect = "id, media_url, media_type, image_urls, brand, model, color, color_hex";
+
+  // All seven queries are independent of one another, so they run
+  // concurrently instead of one after another — sequential awaits
+  // here meant the homepage's response time was the SUM of every
+  // query's round-trip to Supabase (this route is what every "go
+  // home" click and logo click on the site waits on), rather than
+  // just the slowest one.
+  const [
+    { data: heroImagesData },
+    { data: carsData },
+    { data: dealsData },
+    { data: deliveryVideosData },
+    { data: deliveryPhotosData },
+    { data: founderData },
+    { data: testimonialsData },
+  ] = await Promise.all([
+    supabase
+      .from("hero_images")
+      .select("slot, position, image_url")
+      .order("position", { ascending: true }),
+    supabase
+      .from("cars")
+      .select(
+        "id, slug, brand, name, price, currency, status, image_urls, color, color_hex, year, manufacturing_year, registration, ownership, fuel, km_driven"
+      )
+      .eq("is_published", true)
+      // Sold and booked cars stay off the homepage teaser carousel —
+      // it's meant to showcase what's actually available right now;
+      // the full Collection page still lists every status.
+      .eq("status", "available")
+      .order("created_at", { ascending: false })
+      .limit(20),
+    supabase
+      .from("live_deals")
+      .select("id, brand, name, original_price, deal_price, currency, category, image_urls, color, color_hex")
+      .eq("is_published", true)
+      .order("created_at", { ascending: false })
+      .limit(20),
+    supabase
+      .from("deliveries")
+      .select(deliveriesSelect)
+      .eq("is_published", true)
+      .eq("media_type", "video")
+      .order("display_order", { ascending: true })
+      .order("created_at", { ascending: false })
+      .limit(50),
+    supabase
+      .from("deliveries")
+      .select(deliveriesSelect)
+      .eq("is_published", true)
+      .eq("media_type", "image")
+      .order("display_order", { ascending: true })
+      .order("created_at", { ascending: false })
+      .limit(50),
+    supabase.from("founder_profile").select("name, title, message, photo_url").eq("id", "main").maybeSingle(),
+    supabase
+      .from("testimonials")
+      .select("id, customer_name, photo_url, message")
+      .eq("is_published", true)
+      .order("display_order", { ascending: true })
+      .order("created_at", { ascending: false })
+      .limit(12),
+  ]);
 
   const desktopImages: string[] = [];
   const mobileImages: string[] = [];
@@ -57,19 +117,6 @@ export default async function Home() {
     if (row.slot === "desktop") desktopImages.push(row.image_url);
     if (row.slot === "mobile") mobileImages.push(row.image_url);
   }
-
-  const { data: carsData } = await supabase
-    .from("cars")
-    .select(
-      "id, slug, brand, name, price, currency, status, image_urls, color, color_hex, year, manufacturing_year, registration, ownership, fuel, km_driven"
-    )
-    .eq("is_published", true)
-    // Sold and booked cars stay off the homepage teaser carousel —
-    // it's meant to showcase what's actually available right now;
-    // the full Collection page still lists every status.
-    .eq("status", "available")
-    .order("created_at", { ascending: false })
-    .limit(20);
 
   const cars: CollectionCar[] = (carsData ?? []).map((car) => ({
     id: car.id,
@@ -90,13 +137,6 @@ export default async function Home() {
     kmDriven: car.km_driven,
   }));
 
-  const { data: dealsData } = await supabase
-    .from("live_deals")
-    .select("id, brand, name, original_price, deal_price, currency, category, image_urls, color, color_hex")
-    .eq("is_published", true)
-    .order("created_at", { ascending: false })
-    .limit(20);
-
   const deals: LiveDeal[] = (dealsData ?? []).map((deal) => ({
     id: deal.id,
     brand: deal.brand,
@@ -109,26 +149,6 @@ export default async function Home() {
     color: deal.color,
     colorHex: deal.color_hex,
   }));
-
-  const deliveriesSelect = "id, media_url, media_type, image_urls, brand, model, color, color_hex";
-
-  const { data: deliveryVideosData } = await supabase
-    .from("deliveries")
-    .select(deliveriesSelect)
-    .eq("is_published", true)
-    .eq("media_type", "video")
-    .order("display_order", { ascending: true })
-    .order("created_at", { ascending: false })
-    .limit(50);
-
-  const { data: deliveryPhotosData } = await supabase
-    .from("deliveries")
-    .select(deliveriesSelect)
-    .eq("is_published", true)
-    .eq("media_type", "image")
-    .order("display_order", { ascending: true })
-    .order("created_at", { ascending: false })
-    .limit(50);
 
   const mapDelivery = (delivery: {
     id: string;
@@ -153,12 +173,6 @@ export default async function Home() {
   const deliveryVideos: Delivery[] = (deliveryVideosData ?? []).map(mapDelivery);
   const deliveryPhotos: Delivery[] = (deliveryPhotosData ?? []).map(mapDelivery);
 
-  const { data: founderData } = await supabase
-    .from("founder_profile")
-    .select("name, title, message, photo_url")
-    .eq("id", "main")
-    .maybeSingle();
-
   const founder = founderData
     ? {
         name: founderData.name,
@@ -167,14 +181,6 @@ export default async function Home() {
         photoUrl: founderData.photo_url,
       }
     : null;
-
-  const { data: testimonialsData } = await supabase
-    .from("testimonials")
-    .select("id, customer_name, photo_url, message")
-    .eq("is_published", true)
-    .order("display_order", { ascending: true })
-    .order("created_at", { ascending: false })
-    .limit(12);
 
   const testimonials = (testimonialsData ?? []).map((testimonial) => ({
     id: testimonial.id,
