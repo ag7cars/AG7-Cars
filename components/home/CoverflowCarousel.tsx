@@ -116,9 +116,10 @@ export default function CoverflowCarousel<T>({
 }: CoverflowCarouselProps<T>) {
   const [active, setActive] = useState(0);
   const [touchPaused, setTouchPaused] = useState(false);
+  const [hoverPaused, setHoverPaused] = useState(false);
   const touchStartX = useRef<number | null>(null);
   const count = items.length;
-  const paused = externalPaused || touchPaused;
+  const paused = externalPaused || touchPaused || hoverPaused;
 
   // Defaults to the mobile/tablet layout (matches server-rendered
   // markup) and upgrades to the desktop one once measured client-side
@@ -140,23 +141,38 @@ export default function CoverflowCarousel<T>({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [active]);
 
+  // Restarted (not just left running) on every manual goTo below, so
+  // picking a card gives the full autoAdvanceMs window before the
+  // carousel can move again — without this, the timer could tick
+  // moments after a click brought a card to front, sweeping it away
+  // right as the visitor went to click it again to open it, which
+  // took several tries to actually land on the card's own link.
+  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  const startTimer = useCallback(() => {
+    if (timerRef.current) clearInterval(timerRef.current);
+    timerRef.current = null;
+    if (count <= 1 || paused) return;
+    timerRef.current = setInterval(() => {
+      setActive((current) => (current + 1) % count);
+    }, autoAdvanceMs);
+  }, [count, paused, autoAdvanceMs]);
+
+  useEffect(() => {
+    startTimer();
+    return () => {
+      if (timerRef.current) clearInterval(timerRef.current);
+    };
+  }, [startTimer]);
+
   const goTo = useCallback(
     (index: number) => {
       if (count === 0) return;
       setActive(((index % count) + count) % count);
+      startTimer();
     },
-    [count]
+    [count, startTimer]
   );
-
-  useEffect(() => {
-    if (count <= 1 || paused) return;
-
-    const timer = setInterval(() => {
-      setActive((current) => (current + 1) % count);
-    }, autoAdvanceMs);
-
-    return () => clearInterval(timer);
-  }, [count, paused, autoAdvanceMs]);
 
   function handleTouchStart(event: React.TouchEvent) {
     touchStartX.current = event.touches[0]?.clientX ?? null;
@@ -190,6 +206,8 @@ export default function CoverflowCarousel<T>({
         className={`relative mx-auto ${aspectClass} ${widthClass}`}
         onTouchStart={handleTouchStart}
         onTouchEnd={handleTouchEnd}
+        onMouseEnter={() => setHoverPaused(true)}
+        onMouseLeave={() => setHoverPaused(false)}
       >
         {items.map((item, index) => {
           // Signed circular distance from the active index — items
