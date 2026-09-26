@@ -9,6 +9,13 @@ const nextConfig = {
     proxyClientMaxBodySize: "550mb",
   },
   images: {
+    // Defaults to just 60 seconds, so the server was re-running the
+    // (CPU-heavy) resize for every popular image roughly once a
+    // minute — these are served from our own disk with an immutable,
+    // year-long Cache-Control already (see app/api/media), and a
+    // replaced photo gets a brand-new filename, so caching the
+    // optimized output this long is safe.
+    minimumCacheTTL: 31536000,
     remotePatterns: [
       {
         protocol: "https",

@@ -132,7 +132,6 @@ export default function LiveDealsStrip({
           items={deals}
           getKey={(deal) => deal.id}
           autoAdvanceMs={4000}
-          range={deals.length}
           renderCard={(deal, isFront) => (
             // Always a Link, front or not — the carousel's own click
             // handler on the outer card brings a background card to
