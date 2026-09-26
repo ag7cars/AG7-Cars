@@ -165,6 +165,7 @@ export default async function LiveDealDetailPage({
                 images={deal.image_urls ?? []}
                 alt={galleryAlt}
                 thumbnails
+                fit="contain"
               />
             </div>
 

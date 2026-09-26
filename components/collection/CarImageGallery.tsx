@@ -7,6 +7,7 @@ export default function CarImageGallery({
   images,
   alt,
   thumbnails = false,
+  fit = "cover",
 }: {
   images: string[];
   alt: string;
@@ -14,6 +15,12 @@ export default function CarImageGallery({
       of just dots — for pages with room (and reason) to browse more
       deliberately through every shot. */
   thumbnails?: boolean;
+  /** "cover" (default) fills the frame, cropping edges as needed —
+      the original Collection/car detail page look. "contain" shows
+      the full photo with no cropping, letterboxed on a white
+      background where the image doesn't fill the frame — used on
+      Live Deals only. */
+  fit?: "cover" | "contain";
 }) {
   const [active, setActive] = useState(0);
   const count = images.length;
@@ -56,7 +63,9 @@ export default function CarImageGallery({
           Capped width on large screens — full column width made it
           enormous on wide monitors. */}
       <div
-        className="relative aspect-[3/4] w-full touch-pan-y select-none overflow-hidden rounded-3xl border border-white/5 bg-white"
+        className={`relative aspect-[3/4] w-full touch-pan-y select-none overflow-hidden rounded-3xl border border-white/5 ${
+          fit === "contain" ? "bg-white" : "bg-black"
+        }`}
         onPointerDown={handlePointerDown}
         onPointerUp={handlePointerUp}
       >
@@ -73,7 +82,7 @@ export default function CarImageGallery({
             alt={alt}
             fill
             sizes="(min-width: 1024px) 640px, 100vw"
-            className={`object-contain transition-opacity duration-300 ease-out ${
+            className={`${fit === "contain" ? "object-contain" : "object-cover"} transition-opacity duration-300 ease-out ${
               index === active ? "opacity-100" : "opacity-0"
             }`}
             style={{ pointerEvents: "none" }}

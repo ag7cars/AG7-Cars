@@ -26,18 +26,18 @@ const FALLBACK_MOBILE_IMAGES = [
 
 const ROTATE_INTERVAL_MS = 3000;
 
-function useAutoRotate(length: number, intervalMs: number) {
+function useAutoRotate(length: number, intervalMs: number, paused: boolean) {
   const [index, setIndex] = useState(0);
 
   useEffect(() => {
-    if (length <= 1) return;
+    if (length <= 1 || paused) return;
 
     const timer = setInterval(() => {
       setIndex((current) => (current + 1) % length);
     }, intervalMs);
 
     return () => clearInterval(timer);
-  }, [length, intervalMs]);
+  }, [length, intervalMs, paused]);
 
   return index;
 }
@@ -46,12 +46,19 @@ function RotatingBackground({
   images,
   alt,
   objectPosition,
+  paused,
 }: {
   images: string[];
   alt: string;
   objectPosition: string;
+  /** Pauses the rotation timer — while the visitor is hovering/
+      touching the hero, there's no reason to keep re-rendering the
+      crossfade in the background, and it was competing with the
+      Explore/Enquire buttons for the main thread right when someone
+      was about to click one. */
+  paused: boolean;
 }) {
-  const activeIndex = useAutoRotate(images.length, ROTATE_INTERVAL_MS);
+  const activeIndex = useAutoRotate(images.length, ROTATE_INTERVAL_MS, paused);
 
   return (
     <>
@@ -85,8 +92,15 @@ export default function Hero({
   const resolvedMobileImages =
     mobileImages && mobileImages.length > 0 ? mobileImages : FALLBACK_MOBILE_IMAGES;
 
+  const [interacting, setInteracting] = useState(false);
+
   return (
-    <section className="relative min-h-screen overflow-hidden bg-black">
+    <section
+      className="relative min-h-screen overflow-hidden bg-black"
+      onMouseEnter={() => setInteracting(true)}
+      onMouseLeave={() => setInteracting(false)}
+      onTouchStart={() => setInteracting(true)}
+    >
       {/* =========================================================
           DESKTOP HERO — the photo starts right below the (now
           solid black) navbar instead of running full-bleed behind
@@ -97,6 +111,7 @@ export default function Hero({
           images={resolvedDesktopImages}
           alt="Supercars and luxury cars at AG7 Cars showroom, Indore"
           objectPosition="center 55%"
+          paused={interacting}
         />
         <div className="absolute inset-0 bg-gradient-to-r from-black/95 via-black/65 to-black/10" />
         <div className="absolute inset-x-0 bottom-0 h-40 bg-gradient-to-t from-black to-transparent" />
@@ -164,6 +179,7 @@ export default function Hero({
             images={resolvedMobileImages}
             alt="Supercars and luxury cars at AG7 Cars showroom, Indore"
             objectPosition="center 62%"
+            paused={interacting}
           />
 
           {/* Dark band at the top (behind heading) and bottom
